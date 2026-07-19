@@ -274,6 +274,33 @@ Constants (defaults; amendable pre-B2 by dated note):
   terminal states; `--full` therefore resumes mid-pull for free. `failed`
   is always re-attempted.
 
+**2026-07-19 dated amendment (owner-directed, mid-B2).** B2's first live `--full`
+run measured that 2015-2019 (and part of 2022) are structurally, not just
+transiently, absent for the detailed feeds — the circuit breaker tripped
+almost immediately, and under the literal constants above ("drop to 1
+worker for the remainder of the run", full 5-attempt ladder on every
+request) that projected to 10-50+ hours of wall clock, because every
+confirmed-absent request still paid the full ladder, permanently
+serialized. Owner asked for a way to speed this up "without overwhelming
+the endpoints"; three changes shipped, none of which raise the request
+rate against cf.nascar.com (the 5 req/s aggregate cap and per-URL backoff
+shape are untouched):
+1. **Task order is newest-year-first**, not ascending. Recent years are
+   far likelier to have real data; processing them first banks that data
+   at full concurrency before any trip, instead of hitting the
+   absence-heavy years immediately and staying throttled for the healthy
+   years too.
+2. **Once tripped, the ladder shortens** to 2 attempts / 2s (from 5
+   attempts / 2-4-8-16-32s) for the duration of the trip. This resolves
+   confirmed-absent URLs faster *and* sends fewer total requests at an
+   endpoint already showing sustained 403s — strictly more polite, not
+   less. Pre-trip behavior is unchanged.
+3. **The circuit breaker now recovers**: once the trailing 30-request
+   window drops to ≤1/30 403s, concurrency and the full ladder are
+   restored (it can trip again later if another absence-heavy stretch
+   follows). Previously the drop to 1 worker was permanent for the rest
+   of the run even after returning to healthy years.
+
 ### 2.5 Immutability and versioning rules
 
 1. Nothing under `data/bronze/` (except `.tmp/`) is ever modified or

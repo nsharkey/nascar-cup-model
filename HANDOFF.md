@@ -175,8 +175,14 @@ DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
 src/                pipeline: download.py, parse_lib.py, parse.py,
                     update_data.py, predict_next.py, walkforward.py (engine),
                     report_plan.py (plan renderer), step2/3/4/6 (audit analyses)
+                    -- medallion rebuild (B2): bronze_fetch.py (ingestion,
+                    --full/--update/--verify), warehouse.py (duckdb catalog),
+                    bronze_report.py (coverage matrix)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
+data/               gitignored medallion foundation (bronze/silver/gold +
+                    nascar.duckdb); see specs/medallion_architecture.md
+                    section 1.1 and DATA_DICTIONARY.md section 8
 ```
 
 ## Sprint-plan display (read before touching the plan)

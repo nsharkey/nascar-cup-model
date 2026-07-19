@@ -227,3 +227,78 @@ One row per era-range (`sonoma_short` has two). Phoenix 2018 needs a race
 month, not just a season (`date_note`); helper:
 `track_audit.track_id_for(name, season, month=None)`. Both ID systems are
 preserved — neither replaces the other.
+
+---
+
+## 8. Bronze layer — `data/bronze/` (medallion rebuild, B2)
+
+Immutable, versioned, hashed archive of raw cf.nascar.com JSON, gzipped.
+Layout/protocol: `specs/medallion_architecture.md` sections 1.1/2. Built by
+`src/bronze_fetch.py`; cataloged in DuckDB by `src/warehouse.py`
+(`data/nascar.duckdb`, schema `bronze` — always rebuildable from disk, never
+authoritative itself). Reported by `src/bronze_report.py`.
+
+### 8a. `data/bronze/manifest.jsonl` — append-only fetch ledger
+
+One JSON object per terminal fetch outcome (not one per file — `unchanged`/
+`absent`/`failed` outcomes don't produce a new file).
+
+| field | type | meaning |
+|-------|------|---------|
+| `run_id` | str | UTC compact timestamp (`YYYYMMDDTHHMMSSZ`) of the `bronze_fetch.py` invocation. |
+| `fetch_utc` | str (ISO) | When this outcome was recorded. |
+| `url` | str \| null | Full request URL (`null` for `legacy_import`). |
+| `feed` | str | `weekend-feed` \| `lap-times` \| `live-pit-data` \| `live-flag-data` \| `lap-notes` \| `live-feed` \| `race_list` \| `legacy_import`. |
+| `series_id` | int \| null | 1 Cup / 2 Xfinity / 3 Trucks; `null` for `race_list`/`legacy_import`. |
+| `year` | int \| null | URL year segment; `null` for `legacy_import`. |
+| `race_id` | int \| null | `null` for `race_list`/`legacy_import`. |
+| `outcome` | str | `stored` (new version written) \| `unchanged` (payload sha matched the latest on disk) \| `absent` (terminal, two-pass confirmed) \| `failed` (retried next run) \| `imported` (legacy cache import). |
+| `http_status` | int \| str \| null | Last HTTP status, or `unparseable` if 200 with invalid JSON. |
+| `sha256` | str \| null | Of the **uncompressed** payload bytes; `null` on absent/failed. |
+| `bytes_raw`, `bytes_gz` | int \| null | Uncompressed / gzipped size. |
+| `path` | str \| null | Repo-root-relative path to the stored `.json.gz` (matches disk layout exactly); `null` on absent/failed. |
+| `attempts` | int | Retry-ladder attempts used (shorter once the circuit breaker has tripped — 2026-07-19 amendment, spec 2.4). |
+| `error` | str \| null | Last error/status text on failure. |
+
+### 8b. Warehouse catalog (`data/nascar.duckdb`, schema `bronze`)
+
+| object | kind | grain / definition |
+|-------|------|---------------------|
+| `bronze.manifest` | view | `manifest.jsonl` read directly (`read_json_auto`). |
+| `bronze.files` | table | One row per file actually on disk (from a `glob()`, path/series_id/year/race_id/feed/fetch_ts parsed from the filename), left-joined to its latest manifest record for `sha256`/`bytes_raw`/`bytes_gz`. |
+| `bronze.files_latest` | view | `bronze.files` deduped to the latest `fetch_ts` per `(feed, series_id, year, race_id)` — the version silver must read. |
+| `bronze.manifest_latest` | view | `bronze.manifest` deduped to the latest `fetch_utc` per `(feed, series_id, year, race_id)` — used to resolve `absent`/`failed` when no file exists. |
+| `bronze.races_index` | table | One row per `(series_id, year, race_id)` from the latest on-disk `race_list` snapshot per year: `race_type_id`, `race_date`, `track_name`, `has_winner` (see §8c). A year whose index content doesn't match its own URL year (the 2017 aliasing quirk, §8d) is skipped entirely — never loaded into this table even though the misfetched file stays on disk (bronze immutability forbids deleting it). |
+| `bronze.coverage` | view | Cross join of `bronze.races_index` × the 6 feeds, terminal state `stored \| absent \| failed \| pending` per the same precedence as `manifest_latest`. |
+
+### 8c. `race_has_run(r)` — completion signal (2026-07-19 finding)
+
+The index's own `winner_driver_id` field (spec 2.2's literal "not yet run"
+gate) is **absent for every 2015-2019 race and 12/41 of 2022's** — an older
+index-schema variant that never populated it, even for long-settled races.
+`bronze_fetch.race_has_run()` (reused by `warehouse._load_races_index()`)
+instead treats a race as run iff `winner_driver_id` is truthy **or**
+`average_speed > 0` **or** `total_race_time` is non-empty — both populated
+post-race and 0/empty pre-race in every observed year (verified against
+2026 race 5618, not yet run as of this session).
+
+### 8d. Index year-aliasing quirk (2017)
+
+`https://cf.nascar.com/cacher/2017/race_list_basic.json` 200s with the
+**exact 2018 season's races** (`race_season=2018` throughout) instead of
+403ing like the genuinely-absent 2013/2014. Verified reproducible via a
+fresh independent request, isolated to 2017 (every other year 2015-2026 is
+self-consistent). `bronze_fetch.index_year_matches()` detects any
+recurrence by majority vote on `race_season` vs. the requested URL year and
+treats a mismatch as `absent` — 2017's real races are fully covered via the
+(correct) 2018 fetch, so nothing is lost.
+
+### 8e. Detailed-feed floor discovered by the B2 pull (2026-07-19)
+
+Per §8c/8d fixes, all three series, all six feeds, 2015-2026 (minus the
+aliased 2017) were attempted. Result: 4,222 stored, 1,964 confirmed
+`absent`, 0 `failed`. The index floor (2015) and the detailed-feed floor
+are **not the same** — `weekend-feed`/`live-feed` start 2018, `live-flag-data`
+2019, `lap-times`/`live-pit-data`/`lap-notes` 2020, uniformly across all
+three series. 2015-2017 detailed feeds are archived-absent, not missing —
+the pull attempted them and got a two-pass-confirmed 403.

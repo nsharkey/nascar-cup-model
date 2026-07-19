@@ -4,3 +4,4 @@ src/data/
 src/races_parsed.pkl
 *.pkl
 .DS_Store
+data/
