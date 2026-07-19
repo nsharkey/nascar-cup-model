@@ -37,9 +37,10 @@ REFUTE, not confirm. An empty findings report is a valid outcome.
 |---|---|---|---|
 | 1 (URGENT — executes tomorrow) | specs/scoring_methodology.md | **DONE** (agent survived a session-cap interruption via transcript resume). Verdict: 1 MAJOR(urgent) + 3 MINOR + 5 NIT; zero arithmetic errors; hash machinery verified sound | review/findings_phase1.md |
 | 1a | Adjudication of Phase 1 findings (run AHEAD of Phases 2–3: the scoring-spec amendment window closes at race 5618's green flag; Phases 2–3 specs have months of runway) | **DONE** — all 9 ACCEPT, amendments applied verbatim to specs/scoring_methodology.md as dated AMENDMENT blocks; no OWNER escalations needed | adjudication table in review/findings_phase1.md |
-| 2 | specs/market_benchmark_decision_rule.md (reviewer must read the AMENDED scoring spec — the provenance amendment interacts with benchmark admissibility) | pending | review/findings_phase2.md |
+| 2 | specs/market_benchmark_decision_rule.md | **DONE**. Verdict: 1 CRITICAL + 3 MAJOR + 4 MINOR + 3 NIT. CRITICAL: interim bootstrap boundary uncalibrated at small K (false-EDGE 4×–190× nominal; total α 0.061–0.096 vs claimed ~0.05); reviewer verified the repair by simulation (α restored to 0.044–0.049). MAJORs: admissibility circularity, operator-escapable schedule, post-peek extension hatch | review/findings_phase2.md |
+| 2a | Adjudication of Phase 2 findings | **DONE** — all 11 ACCEPT, amendments applied verbatim to specs/market_benchmark_decision_rule.md. Three accepted items change OWNER obligations (full-board recording duty; 2028-02-15 calendar backstop; primary-book binding at first price) — owner may overturn by dated addendum BEFORE first price is recorded | adjudication table in review/findings_phase2.md |
 | 3 | specs/dnf_status_feature.md + specs/team_mfr_pooling.md | pending | review/findings_phase3.md |
-| 4 | Adjudication of Phases 2–3 findings | pending | recorded in findings files + spec AMENDMENT blocks |
+| 4 | Adjudication of Phase 3 findings | pending | recorded in findings files + spec AMENDMENT blocks |
 
 ## How to resume in a NEW session
 

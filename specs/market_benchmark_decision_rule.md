@@ -139,7 +139,162 @@ end-2026 and ≈ 250–400 by end-2027.** Consequences, stated up front:
 
 ## Flagged (owner decisions, non-blocking)
 
-- Primary book designation (§2).
+- Primary book designation (§2). [Superseded by the primary-book-binding
+  amendment below: still the owner's choice, but it becomes fixed in the
+  same commit as the first recorded price.]
 - If NASCAR H2H markets turn out too thin to yield ≥5 priced matchups/race
   at the accessible book, the accrual estimates in §5 shrink; the rule
   itself is unchanged, but expect UNDERPOWERED and plan accordingly.
+
+---
+
+# Amendments — adversarial review, 2026-07-19 (pre-data; no book price has
+# been recorded). Source: review/findings_phase2.md, adjudicated per
+# review/STATE.md. Verbatim as proposed by the reviewer, who verified the
+# statistical repairs by simulation before proposing them.
+
+## AMENDMENT (2026-07-18, pre-data — no book price has been recorded):
+small-sample calibration guards and pinned resampling mechanics (binds §3, §4, §6)
+
+1. **Naming, recorded.** §3's p ("fraction of resamples with total ≤ 0") is the
+   inversion of the one-sided percentile-bootstrap confidence bound — a
+   first-order-valid test of H0 "E[profit] ≤ 0", retained as the primary
+   statistic. The items below fix its small-sample calibration and determinism,
+   not its identity.
+2. **Race-count floor K ≥ 20.** Let K = number of races contributing ≥ 1 graded
+   pick. No decision boundary — interim efficacy, futility, or the final look's
+   EDGE arm — may fire at a look with K < 20; a final look with K < 20 returns
+   UNDERPOWERED. Reason, computed 2026-07-18: with few clusters, "every
+   contributing race net-positive" forces p = 0 regardless of magnitudes; under
+   the exact break-even null its probability is ≈ 0.19 at K = 2 (25 picks/race),
+   ≈ 0.02 at K = 5 (10/race), ≈ 0.008–0.014 at K = 10 — one to two orders of
+   magnitude above the 0.001 the Haybittle–Peto interim boundary assumes.
+3. **Add-one convention.** p = (1 + #{resamples with total ≤ 0}) / (B + 1). The
+   futility bound is the 9,501st ascending order statistic of the B = 10,000
+   resampled mean-profit-per-pick values.
+4. **Dual interim boundary.** An interim EDGE requires, in addition to p ≤ 0.001,
+   a one-sided one-sample t-test on the K per-race profit totals (H0: mean ≤ 0,
+   df = K − 1; a degenerate sd yields no rejection) with p_t ≤ 0.001. Verified
+   by simulation 2026-07-18: with the K ≥ 20 floor the combined rule's per-look
+   size is ≈ 0.001 at near-even prices (worst measured stress case, all picks
+   at −300: ≈ 0.003), and the full sequential design's total type I error is
+   0.044 (5 picks/race) / 0.049 (10 picks/race) vs 0.061 / 0.096 unamended,
+   at a power cost of ≤ 0.02 at true win rate 0.58.
+5. **Pinned mechanics (two independent implementations must agree exactly).**
+   Contributing races sorted ascending by (race_date, race_id); rng =
+   numpy.random.default_rng(20260718) constructed fresh at each look; index
+   matrix = rng.integers(0, K, size=(B, K)); each resample's mean profit per
+   pick = pooled resampled total profit / pooled resampled pick count (not a
+   mean of per-race means); B = 10,000.
+6. **Unchanged:** the §4 thresholds (0.001, 0.045, 95% futility bound), the
+   verdicts, and the schedule itself.
+
+## AMENDMENT (2026-07-18, pre-data): admissibility of price entries (binds §1, §2)
+
+A `book_prices` entry is **admissible** for this spec's statistic only if the
+first git commit whose version of the race's prediction JSON contains that
+entry (matched on unordered driver pair + book + recorded_utc) is committed
+earlier than the race's scheduled start — the `start_time_utc` of the
+`event_name == "Race"` entry in the race's `schedule` block of that year's
+`race_list_basic.json`. Inadmissible entries are excluded from graded picks
+and from N, and the §6 script reports each one; they remain in the JSON and in
+the scoring spec's descriptive counts (flagged `post-race price entry` per its
+provenance amendment, whose "admissibility is governed by that spec's §2"
+sentence resolves to exactly this rule). Once the repo has a public remote,
+the qualifying commit must additionally be an ancestor of a ref pushed before
+the scheduled start; until then local committer timestamps govern — the same
+integrity basis, and the same known limitation, as the prediction seal itself.
+
+## AMENDMENT (2026-07-18, pre-data): deterministic look sequence, calendar
+backstop, and full-board recording (binds §2, §4)
+
+1. **Looks are states, not acts.** At every run, the §6 script reconstructs the
+   full look sequence — the state after each scored race, in ascending
+   (race_date, race_id) order — and the standing verdict is the FIRST boundary
+   crossing in that reconstructed sequence. Scoring late, or in batches, cannot
+   skip a crossing: the crossing is found retroactively and governs.
+2. **Calendar backstop.** The final look occurs at the first of: N ≥ 400; the
+   last 2027 points race scored; or the first benchmark run on or after
+   2028-02-15 — and one such run must be made and its verdict reported.
+   Ceasing to score or record does not prevent the final look; picks graded as
+   of that date decide it.
+3. **Full-board duty.** For every priced race, record ALL head-to-head matchups
+   the primary book offers whose two drivers are in the predicted field — never
+   a chosen subset. If capture was partial (market pulled, access failure), the
+   race's scores row must carry a note naming what was missed and why; the §6
+   script reports the per-race recorded counts at every look so thin recording
+   is visible in the open log.
+
+## AMENDMENT (2026-07-18, pre-data): extension discipline (binds §4)
+
+An extension of the test window may be pre-registered only BEFORE the final
+look's trigger fires. Once the final look has been computed, its verdict is
+terminal for this design: no extension, retest, or successor analysis of the
+same accumulated pick stream may be evaluated against this spec's thresholds.
+A successor test may be pre-registered at any time, but its statistic may use
+only picks first graded after its own registration date (a fresh sample).
+Reason, computed 2026-07-18: retesting the pooled stream at 0.045 after an
+UNDERPOWERED final look (N = 176 extended to 400) carries total one-sided
+type I error ≈ 0.074. This supersedes the §4 sentence permitting extension
+"before further looks", which is recorded here as the defect being patched.
+
+## AMENDMENT (2026-07-18, pre-data): final-look precedence (binds §4)
+
+At the final look the verdict is evaluated in this order: EDGE if p ≤ 0.045
+(subject to the K ≥ 20 floor); else NO-EDGE if N ≥ 200, OR if N ≥ 100 and the
+one-sided 95% bootstrap upper bound of mean profit per pick is < 0 (the
+futility criterion applies at the final look like any other look); else
+UNDERPOWERED. The verdict line must name which arm fired.
+
+## AMENDMENT (2026-07-18, pre-data): §6 inputs pinned (binds §1, §3, §6)
+
+The script's inputs are exactly two file sets: (a) the committed prediction
+JSONs, hash-verified per scoring spec §1.3; (b) for each race, the frozen
+results snapshot `src/data/races/{year}_{race_id}_wf_scored.json` written by
+`score_race.py` at first scoring (scoring spec's snapshot-freeze amendment).
+A race is "scored" for §1/§3 exactly when its snapshot file exists; grading
+uses the snapshot only — never `_wf.json`, never the network, never
+`scores_log.csv`. §6's "single source of truth" sentence is corrected to:
+predictions from the sealed JSONs, outcomes from the frozen snapshots,
+nothing else consulted. Resampling mechanics per the calibration-guards
+amendment, item 5.
+
+## AMENDMENT (2026-07-18, pre-data): primary book binding (binds §2 and §1's
+dedup import)
+
+The primary book is named in the same commit as the first recorded price and
+is thereafter fixed. Only primary-book entries are admissible to this spec's
+statistic; entries recorded at other books remain in the JSON and feed the
+scoring spec's descriptive counts only. If the primary book withdraws NASCAR
+H2H markets, a successor is named by dated addendum BEFORE any successor-book
+price is recorded. Reason, computed 2026-07-18: the imported dedup prefers the
+latest recorded_utc, so multi-book capture lets recording order select the
+best of several books' prices; where books disagree by more than the two-sided
+vig this is +EV under per-book efficiency (±110 disagreement on a 50% pair →
++0.05/pick with zero model skill), which silently converts the tested
+proposition from "beat the closing line" into "beat the best of all lines".
+
+## AMENDMENT (2026-07-18, pre-data): §5 scope note
+
+The §5 table is exact for the test it names — one look, iid binomial win rate,
+H0 = 0.53, α = 0.05 — and is context only; it is not the operating
+characteristic of the §3–§4 procedure. Simulated 2026-07-18 (44 races × 5
+picks at −110, looks after every race, amended boundaries): power ≈ 0.49–0.51
+at true win rate 0.58, ≈ 0.18–0.20 at 0.55, false-futility ≈ 0.05 at 0.55 and
+≈ 0.01 at 0.58. No decision consumes the table; no argument may cite it
+against a verdict.
+
+## AMENDMENT (2026-07-18, pre-data): clarifications from adversarial review
+
+- Clarification (2026-07-18): §1 imports only the entry schema (scoring §5.1)
+  and the malformed→dedup→void pipeline (scoring §5.2 and its pipeline-order
+  amendment). Scoring §5.3's strict-book-favorite filter does NOT apply: a
+  pick'em-priced entry is a graded pick, so this spec's N is not Σ book_n by
+  design.
+- Clarification (2026-07-18): under 1-unit flat stakes the secondary's
+  "stake-weighted mean break-even p*" equals the simple mean of p* over graded
+  picks, and is computed as such.
+- Clarification (2026-07-18): §5's own inputs give N ≈ 220–440 by end-2027
+  (the 400 figure reflecting the N ≥ 400 final-look cap); the low end is 220,
+  not 250, leaving only a 10% margin over the N ≥ 200 NO-EDGE boundary — which
+  the full-board recording duty exists to protect.
