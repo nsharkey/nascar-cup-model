@@ -1845,7 +1845,41 @@
  },
  "book_prices": {
   "note": "fill in matchup/win prices at close, then score",
-  "entries": []
+  "entries": [
+   {
+    "book": "draftkings",
+    "recorded_utc": "2026-07-19T23:14:41+00:00",
+    "closing": true,
+    "driver_id_a": 4030,
+    "driver_id_b": 1361,
+    "price_a": 120,
+    "price_b": -165,
+    "void": false,
+    "note": ""
+   },
+   {
+    "book": "draftkings",
+    "recorded_utc": "2026-07-19T23:14:41+00:00",
+    "closing": true,
+    "driver_id_a": 4025,
+    "driver_id_b": 4368,
+    "price_a": 215,
+    "price_b": -310,
+    "void": false,
+    "note": ""
+   },
+   {
+    "book": "draftkings",
+    "recorded_utc": "2026-07-19T23:14:41+00:00",
+    "closing": true,
+    "driver_id_a": 4231,
+    "driver_id_b": 4062,
+    "price_a": 295,
+    "price_b": -450,
+    "void": false,
+    "note": ""
+   }
+  ]
  },
  "stand_down": false
 }
