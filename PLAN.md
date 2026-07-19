@@ -34,7 +34,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| C1 | Silver driver-race table (behavior-preserving) | ⬅ next | Sonnet 5 · thinking on · high | ~3-5 hr | Rebuild the cleaned per-driver-per-race table the model uses — proven to match today's numbers exactly, so nothing about the validated model changes. | Silver driver-race table in DuckDB/parquet from bronze; field-for-field regression vs races_parsed.pkl (163/163) covering finish/start/status/pace_med85/etc.; dedupe + type conform. |
+| C1 | Silver driver-race table (behavior-preserving) | ✅ done | Sonnet 5 · thinking on · high | ~90 min | Rebuilt the cleaned per-driver-per-race table the model uses. It matches today's numbers exactly on every field except one long-known-unused diagnostic (fepace), which differed only at floating-point noise level due to a numerics-library difference between machines — confirmed harmless, owner-authorized a narrow documented exception, gate passed. Nothing about the validated model changed. | silver_build.py + gate_silver.py built per spec sections 3.1-3.3/4; warehouse.py extended with load_race_records() (full per-race index records) and silver.races/silver.driver_race DuckDB views over parquet. --full build: 601 Cup/Xfinity/Truck race_type_id=1 races parsed ok, 22,463 driver_race rows. Gate vs the 163-race anchor (sha b41e697d2c0f...): 6,083 rows / 92,386 field comparisons; every column bit-identical except fepace (the sole np.linalg.lstsq-derived field), which differed at ULP scale (~1e-15 rel) on 162/163 races — confirmed reproducible, confirmed isolated to fepace, confirmed a BLAS/LAPACK cross-environment artifact (not parser/plumbing, not a NASCAR data revision -- the frozen §4.3's two anticipated causes). Escalated to the owner mid-session; owner authorized a dated §4 amendment exempting fepace via math.isclose(rel_tol=1e-9, abs_tol=1e-12), unused-in-production field, every other column unaffected. Gate re-run: PASS (1 clean, 162 PASS-with-note, 0 fail). report/SILVER_REGRESSION.md committed (full per-race detail); RESULT -- C-gate filled; DATA_DICTIONARY §9 added. |
 | C2 | Silver lap / pit / flag tables | pending | Sonnet 5 · thinking on · high | ~2-4 hr | Build cleaned tables for the richer data we've never used — lap-by-lap, pit stops, and cautions — so it's ready when the model wants it. | Lap-level (times/positions), pit-level (stop timing/tires/positions gained), flag-level (caution/stage transitions) silver tables from the newly-archived feeds; keyed to race+driver. Feeds roadmap-#5 pace work. |
 | C3 | Track reference tables from vendored audit | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize the vendored track audit into queryable reference tables — physical facts, crosswalk, and quarantined analyst priors — so every silver/gold table can join on track configuration. Proposed by the F5 derivation spike (26dff0c); reference tables only, no model change. | Build silver.track_dim (43 configs: physical facts + parsed banking + era bounds + hp750_2026 flag; the ten 1-10 analyst priors excluded by design), silver.track_xwalk (crosswalk verbatim + a race_track join view), silver.track_priors (10 priors long-form, score_type/evidence labels carried so they can never be silently used as measurements), silver.rules_era (6 era keys 2015->2026) + the §2.3 leakage-free derived features (config_age, config/era race number, era_key, hp750_2026). All per research/track_audit_derivation.md §2. Package files untouched (the test_track_audit.py hash gate stays green); extend that gate with re-derivation checks (row counts, banking parse, dim-xwalk integrity). |
 
@@ -44,7 +44,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| D1 | Gold features + re-point engine + re-prove 0.413 | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~4-6 hr (incl. re-validation) | Rebuild the model's inputs on the new foundation and re-confirm it still hits the validated accuracy — the checkpoint that lets us keep standing on the 0.413 result. | Walk-forward feature banks (recency-weighted finish/pace/typed histories, grid) as gold tables in SQL; re-point the engine to gold; hard gate: reproduce 0.413 / 0.476 non-SS / 0.449 2026 before gold replaces the pkl path. |
+| D1 | Gold features + re-point engine + re-prove 0.413 | ⬅ next | Sonnet 5 · thinking on · xhigh | ~4-6 hr (incl. re-validation) | Rebuild the model's inputs on the new foundation and re-confirm it still hits the validated accuracy — the checkpoint that lets us keep standing on the 0.413 result. | Walk-forward feature banks (recency-weighted finish/pace/typed histories, grid) as gold tables in SQL; re-point the engine to gold; hard gate: reproduce 0.413 / 0.476 non-SS / 0.449 2026 before gold replaces the pkl path. |
 | D2 | Gold scoring + benchmark consumers (scores race #1) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~3-5 hr | Move scoring and the market-edge test onto the new foundation and finally score the first race. | Scoring (specs/scoring_methodology.md + amendments) and market_benchmark (amended spec) as gold consumers reading bronze results + sealed predictions; scores prediction #1 (race 5618); absorbs retired R1/R2/R3. |
 
 ## Phase E — Forward test (RUNNING — perishable capture)
@@ -112,49 +112,63 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (C1)
+## Handoff — next session (D1)
 
-**Model & settings:** Sonnet 5, thinking on, effort high.
+**Model & settings:** Sonnet 5, thinking on, effort xhigh.
 
 C1 is a Sonnet build session executing the spec's section-10 C1 checklist with zero design judgment calls (every choice is pre-resolved in the spec; genuine ambiguity means stop and flag, not choose). Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, then specs/medallion_architecture.md sections 3 and 4
-IN FULL (silver build strategy + the FROZEN C-gate) — it is the
-execution contract for this session.
+Read HANDOFF.md, then specs/medallion_architecture.md sections 5 and 6
+IN FULL (gold build design + the FROZEN D-gate) — it is the execution
+contract for this session. Also read the section-4 `## AMENDMENT` block
+and `## RESULT — C-gate` (both just above section 5): C1 found and the
+owner authorized an exception for `fepace` (the only silver.driver_race
+column computed via np.linalg.lstsq) due to a confirmed cross-environment
+BLAS/LAPACK floating-point artifact — every other column is bit-identical.
+fepace is not a production feature, so it should not affect anything
+below, but know the context before reading R1's tolerance language.
 
-BUILD session C1 — silver parity, per the spec's section-10 C1 checklist:
-1. Take the section 4.1 anchor FIRST, before any silver code runs: copy
-   src/races_parsed.pkl to data/anchors/races_parsed_anchor_{YYYYMMDD}.pkl,
-   record its sha256 and race count (163, unless E1 has appended races
-   by then — the universe grows with it).
-2. Build src/silver_build.py's parity path (sections 3.1-3.3): feed each
-   race's latest bronze lap-times + weekend-feed through parse_lib.parse_race()
-   UNMODIFIED — do not rewrite the parser in SQL, that would be re-choosing
-   not preserving. Also build silver.races. Extend src/warehouse.py.
-3. Run a --full silver build, then src/gate_silver.py (sections 4.2-4.4):
-   race presence, race-level fields, driver sets, every driver field
-   (exact == for floats, no epsilon). Run the section 4.3 mismatch-
-   attribution loop until PASS.
-4. KNOWN BLOCKER for section 4.3: B3 (report/BRONZE_COVERAGE.md,
-   ffc3ba8) found the legacy per-race cache (src/data/races/) that
-   races_parsed.pkl was built from does not exist in this checkout —
-   only race_list_2026.json was ever legacy-imported. If every anchor
-   race comes back bit-identical, this never triggers and is moot. If
-   ANY race mismatches, section 4.3's step 1 (compare bronze sha vs.
-   legacy-import sha) has no baseline for it — STOP, do not invent a
-   substitute baseline or guess, and escalate to the owner for a
-   resolution (recover a legacy-cache export, or an owner-directed
-   fallback attribution method) before proceeding on that race.
-5. On gate PASS: commit report/SILVER_REGRESSION.md (anchor sha256 +
-   race count, rows compared, field-comparison counts, every
-   PASS-with-note in full, environment versions); fill in
-   `## RESULT — C-gate` in the spec (dated); extend DATA_DICTIONARY.md.
-Zero design judgment calls: if the spec is genuinely ambiguous anywhere,
-STOP and flag it rather than choosing. If today is a race weekend, E1
-duties (prediction + odds capture) come first. Update plan/schedule.yml
-(C1 -> done; re-evaluate whether C2 becomes the single 'next') and
+BUILD session D1 — gold + re-prove, per the spec's section-10 D1 checklist:
+1. Build `gold.track_typology` (§5.1: the MY_TYPE dict from
+   src/walkforward.py, verbatim, unmapped -> 'UNIQ'), `gold.wf_features`
+   (§5.2: the walk-forward feature bank in SQL — n_hist/fin_h/pace_h/
+   typ_h/start_feat/has_pace/finish, transcribing walkforward.run's
+   history mechanics EXACTLY, including the pace_h subsequence-indexing
+   detail called out as "the classic transcription bug — don't make it"),
+   and the current-form views (§5.3) in `src/gold_build.py`.
+2. Build `src/gate_gold.py`: the adapter (§5.4 — silver_to_races_list()
+   reconstructs the pkl-shaped list-of-dicts from silver, reversing the
+   §3.3 null map), then run R0 -> R1 -> R2 -> R3 IN ORDER, stopping at
+   the first failure:
+   - R0 (legacy path, anchor data): expect 0.413 / 0.476 non-SS / 0.449
+     2026-OOS at 3dp. If R0 doesn't reproduce this trio, STOP — that's
+     an environment/data-integrity problem, report to the owner, do not
+     proceed to R1-R3.
+   - R1 (legacy engine, silver data): per-race rho_PL_fpts exactly equal
+     to R0's, except races on the C-gate's PASS-with-note list (deltas
+     reported individually — expected to be all-zero here per the
+     heads-up above, since fepace isn't a model feature).
+   - R2 (gold SQL vs replay): fin_h/pace_h/typ_h/start_feat within
+     1e-9 relative tolerance, identical NULL/eligibility membership,
+     identical n_hist. Any set-membership difference is a FAIL
+     regardless of magnitude.
+   - R3 (engine on gold): predicted-rank vector equals R1's per scored
+     race (permitted exception: utility-pair near-ties < 1e-7, listed
+     individually); |Δrho| ≤ 1e-6 outside listed races; trio equals R1's
+     at 3dp.
+3. **Failure at any level stops the migration for investigation — do
+   not tune anything to make it pass** (§6: that would be re-choosing,
+   a protocol violation). On PASS: commit `report/GOLD_REPROOF.md`
+   (all four runs, environment versions) and fill `## RESULT — D-gate`
+   (dated) in the spec. On FAIL: report fully, stop, do not proceed to
+   D2.
+Zero design judgment calls: if the spec is genuinely ambiguous
+anywhere, STOP and flag it rather than choosing — exactly as C1 did
+for the fepace finding. If today is a race weekend, E1 duties
+(prediction + odds capture) come first. Update plan/schedule.yml
+(D1 -> done or blocked per outcome; re-evaluate the single 'next') and
 re-render via `python src/report_plan.py`; commit; leave the tree clean.
 ```
 
