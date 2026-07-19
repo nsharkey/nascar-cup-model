@@ -156,9 +156,31 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   anchor races, and can only run mechanically if every anchor race turns out
   bit-identical. Full detail: `report/BRONZE_COVERAGE.md`,
   `## RESULT — B3` in the spec.
+- **2026-07-19 (B4 done, a588563; 2017 confirmed in scope):** the 2017 index
+  URL's aliasing quirk (§8d above) had been assumed to also mean 2017 was
+  below the detailed-feed floor — untested, and wrong. A direct race_id probe
+  recovered the real 2017 season for all 3 series: `weekend-feed`/`live-feed`
+  exist (97/97 races each), `lap-times`/`live-pit-data`/`lap-notes`/
+  `live-flag-data` genuinely don't (confirmed two-pass absent, matching the
+  other years' pattern once actually tested). `warehouse.py` gained a general
+  fallback (`_load_races_index_from_weekend_feed`) so `bronze.races_index`/
+  `bronze.coverage` now carry 2017 like every other year — no separate
+  code path, no special-casing needed downstream. Verified clean: full-archive
+  `--verify` hash-checks pass (4,432/4,432), and all 97 recovered races were
+  spot-checked structurally (non-empty results, parseable dates, exactly one
+  finishing_position==1, no duplicate driver_ids) — 0 issues. The 41/33/23
+  recovered races per series match the real 2017 schedule exactly (Clash,
+  both Duels, All-Star Open + Race, Coca-Cola 600, etc., verified by name and
+  date). **Owner decision (2026-07-19): 2017 is treated like any other bronze
+  year going forward** — no exclusion, no special scope carve-out. `silver_build.py`
+  (C1) needs no year-specific logic to pick this up: it already builds
+  generically over `bronze.races_index`, which now includes 2017 natively.
+  DATA_DICTIONARY §8b/8d/8e/8f, `plan/schedule.yml` updated.
 - **Next single step:** `C1` in the plan — silver driver-race parity (Sonnet
   build session; the frozen C-gate, gates D1/gold). Carries B3's condition-2
-  escalation forward — see C1's `status_note` in `plan/schedule.yml`. C2
+  escalation forward — see C1's `status_note` in `plan/schedule.yml`. 2017 is
+  in scope like every other year (see B4 above) and needs no special
+  handling — `silver_build.py` reads `bronze.races_index` generically. C2
   (silver breadth) is equally unblocked and not picked only because the plan
   format allows one `next` at a time and D1's gate chain runs through C1.
   Scoring/benchmark are re-homed as Gold consumers in D2; prediction #1 is

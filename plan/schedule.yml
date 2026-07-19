@@ -17,17 +17,16 @@ meta:
   bottom_line: >-
     Bronze is built AND verified: B1-B3 all done as of 2026-07-19, with B3
     confirming zero failed fetches and hash-clean sampled files. B4 (optional)
-    found more than expected: a full 2017 season, all 3 series, recovered via
-    direct race_id probing and fully wired into the warehouse — but folding
-    it into silver/gold is a separate, still-open owner decision. Next in the
-    mainline is C1 —
-    silver driver-race parity (Sonnet) — which gates gold via the frozen
-    C-gate, carries one open item from B3 (no legacy-cache sha baseline for
-    the 163 anchor races), and should decide 2017's scope explicitly. The
-    perishable weekly predict+odds capture never pauses for the rebuild, and
-    it plus everything downstream is re-homed as a Gold consumer. Governance
-    and all three research spikes are complete; nothing they propose enters
-    the frozen model without a gated A/B.
+    found more than expected: a full 2017 season, all 3 series, recovered,
+    verified clean, and wired into the warehouse like any other year (owner
+    decision: no 2017 special-casing). Next in the mainline is C1 — silver
+    driver-race parity (Sonnet) — which gates gold via the frozen C-gate and
+    carries one open item from B3 (no legacy-cache sha baseline for the 163
+    anchor races); it needs no 2017-specific logic. The perishable weekly
+    predict+odds capture never pauses for the rebuild, and it plus everything
+    downstream is re-homed as a Gold consumer. Governance and all three
+    research spikes are complete; nothing they propose enters the frozen
+    model without a gated A/B.
   handoff_note: >-
     C1 is a Sonnet build session executing the spec's section-10 C1 checklist
     with zero design judgment calls (every choice is pre-resolved in the spec;
@@ -396,10 +395,10 @@ sessions:
       Expected a minor completeness nicety, found a whole recovered season instead:
       2017's real race results (2 of 6 feeds; the other 4 genuinely don't exist for
       2017) for all three series were sitting on the source site the entire time,
-      just never requested because of a broken index. Now fully wired into the
-      warehouse alongside every other season — 2017 is on par with 2018+ in bronze.
-      Whether to fold it into silver/gold modeling scope remains a separate,
-      unresolved decision.
+      just never requested because of a broken index. Verified clean (hash-checked,
+      structurally spot-checked, matches the real 2017 calendar) and fully wired
+      into the warehouse alongside every other season. Owner decision: 2017 is
+      treated like any other bronze year going forward, no special-casing.
     tech_summary: >-
       2017's race_list_basic.json is permanently aliased to 2018 (DATA_DICTIONARY
       §8d), so B2 never enumerated 2017 race_ids and never attempted 2017 detailed
@@ -418,9 +417,16 @@ sessions:
       synthesize races_index rows per-race from weekend-feed when a year has no
       usable race_list — bronze.races_index 1,069->1,166 rows, bronze.coverage
       4,222/1,964 -> 4,416/2,352 stored/absent (exactly the expected 2017 delta),
-      zero regression to 2015-2026 per bronze_report.py. DATA_DICTIONARY §8b/8d/8e/8f
-      updated. Folding 2017 into silver/gold scope (C1 onward) is a separate,
-      still-open decision — bronze/warehouse availability isn't the same question.
+      zero regression to 2015-2026 per bronze_report.py. Data-quality pass:
+      full-archive --verify hash-checks 4,432/4,432 clean; all 97 recovered
+      races structurally spot-checked (non-empty results, parseable dates,
+      exactly one finishing_position==1, no duplicate driver_ids) with 0
+      issues; the 41/33/23 recovered races per series match the real 2017
+      schedule by name and date (Clash, both Duels, All-Star Open + Race,
+      etc). DATA_DICTIONARY §8b/8d/8e/8f and HANDOFF.md updated. Owner
+      decision: 2017 is in scope like any other year -- C1 needs no
+      year-specific logic, since silver_build.py reads bronze.races_index
+      generically and 2017 is now a native part of it.
     deps: ["B2"]
     status_note: >-
       2026-07-19: done. Logged as optional/low-priority from a DATA_DICTIONARY
@@ -428,7 +434,9 @@ sessions:
       session's most consequential finding: the "immaterial to the frozen model"
       framing was wrong. Owner directed a follow-up ("make sure all data is
       available") to fetch the remaining 5 feeds and wire 2017 into the warehouse;
-      both done. Silver/gold scope for 2017 still not decided.
+      both done. Owner then confirmed (2026-07-19): "yes it should be treated like
+      all of the other bronze data unless there is something wrong with it" —
+      verification found nothing wrong, so 2017 is in scope, no carve-out.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then DATA_DICTIONARY.md §8 in full (especially §8d — the 2017
