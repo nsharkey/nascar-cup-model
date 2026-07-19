@@ -2,7 +2,7 @@
 
 *As of 2026-07-19 · format v1 · source `plan/schedule.yml`, rendered by `src/report_plan.py` — do not hand-edit.*
 
-The single living plan for the walk-forward Plackett-Luce Cup Series model, now on a foundation-first medallion (bronze/silver/gold) rebuild. Governance (audit, pre-registered specs, adversarial review) is complete and architecture-independent; the data foundation is being rebuilt clean, with the perishable weekly market capture running throughout. Rendered from data, kept here and nowhere else.
+The single living plan for a walk-forward Plackett-Luce model of Cup Series finishing order, run as a live forward test against the closing-line market. It spans governance (audit, specs, adversarial review), a bronze/silver/gold data foundation, and a gated backlog of feature, likelihood, causal, and Bayesian experiments — under two invariants: nothing changes the frozen model without a pre-registered, walk-forward-gated A/B, and the perishable weekly market capture never pauses. Rendered from data, kept here and nowhere else.
 
 ## Phase A — Foundation & pre-registration (governance)
 

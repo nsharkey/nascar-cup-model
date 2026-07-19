@@ -38,6 +38,14 @@ Editing a rendered file by hand is a gate failure, not a workflow. The schema:
 
 - `meta`: `plan_name`, `as_of` (absolute date, never "today"), `spec_version`,
   `standfirst`, `bottom_line`, optional `handoff_note`.
+  - **`standfirst` is evergreen** — the plan's durable identity: what the project
+    *is*, the arc it spans, and its standing invariants. Write it so it stays true
+    as phases complete and sessions are added; keep point-in-time status
+    ("bronze is done", "C1 is next") OUT of it. It should rarely change.
+  - **`bottom_line` is the current-status wrap-up** — the one field that *is*
+    meant to move each session (where we are now, what's next in 1–2 sentences).
+    Snapshot language lives here, not in the standfirst.
+  - **`handoff_note`** — the model/settings + doctrine cue for the `next` session.
 - `phases[]`: `key` (unique), `num` (roman numeral for display), `title`,
   `model` (nominal tier as `"Model · thinking on · effort"`), `note`.
 - `sessions[]`: `id` (unique, sorts within phase), `phase` (→ a phase key),
