@@ -87,14 +87,28 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   `planning/aws_solutions.md`: plan-only AWS/infra roadmap (odds capture,
   live-feed poller, mirroring, automation) — nothing implemented; each item
   needs its own go.
-- **Next single step:** after the North Wilkesboro race, score prediction #1
-  per `specs/scoring_methodology.md` (build `score_race.py` + its fixture
-  tests first — spec §10 checklist). Book prices for it: not yet recorded —
-  grab them if still possible, else note absent.
+- **2026-07-19 (direction set):** foundation-first **medallion rebuild**
+  (bronze/silver/gold) adopted — clean, local, embedded (DuckDB engine +
+  parquet + gzipped raw-JSON bronze; no Spark/Databricks). Governance layer
+  (audit + specs + review) is architecture-independent and preserved; the
+  data/feature plumbing is rebuilt clean. Doctrine: **preserve the validated
+  results and re-prove the model on the new foundation rather than re-choosing
+  it**, and **never pause the perishable weekly odds capture**. The live
+  sprint plan is `PLAN.md` (rendered from `plan/schedule.yml`) — it supersedes
+  the prose roadmap below.
+- **Next single step:** `B1` in the plan — design `specs/medallion_architecture.md`
+  (Fable, spec-only). Scoring/benchmark are re-homed as Gold consumers (the old
+  standalone-script sessions are retired); prediction #1 is scored there.
 - GitHub remote: not yet pushed (repo has local commits only). Pushing
   before green flag makes prediction #1 publicly timestamped.
 
 ## Roadmap (agreed order — do not skip ahead)
+
+> **Superseded 2026-07-19 by the medallion plan in `PLAN.md`.** The items below
+> are preserved as the original governance order; they now execute on the
+> bronze/silver/gold foundation (features/scoring/benchmark are Gold consumers).
+> Read `PLAN.md` (or run `python src/report_plan.py --open`) for the live schedule.
+
 
 1. **Market benchmark (RUNNING).** Accumulate weekly predictions + book
    prices + scores. This gates everything below.
