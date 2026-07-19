@@ -160,3 +160,82 @@ Separate commit, in this order:
   is a directional claim.
 - Evaluation on the full backtest, not forward races → power; the forward
   log's role is the market benchmark, not feature selection.
+
+---
+
+# Amendments — adversarial review, 2026-07-19 (pre-data; both A/Bs gated on
+# ≥8 scored forward races, none of which exist yet). Source:
+# review/findings_phase3.md (Opus reviewer), adjudicated per review/STATE.md.
+# Finding 2's fix was corrected by the adjudicator after empirical
+# verification (the reviewer's proposed numeric gate provably could not
+# distinguish the configs); all others applied verbatim.
+
+## AMENDMENT (2026-07-19) — margin justification corrected (Finding 1, §4)
+
+The frozen "paired SE ≈ 0.007 → significance needs mean(d) ≈ 0.015" reasoning
+is variant-specific and does NOT hold for low-variance variants. Measured on
+the frozen config (n=128 scored): a near-redundant added feature has paired
+SE ≈ 0.0008 and a moderate one ≈ 0.0023 — 3–9x below 0.007. A variant that
+merely re-reads existing histories (notably DNF-V2 / any censored-history or
+exclude-self re-encoding) can reach p ≤ 0.0167 at mean(d) ≈ 0.002–0.004, i.e.
+BELOW the +0.005 floor. Therefore +0.005 is NOT free: it is a deliberate
+PRACTICAL-significance floor that can, by design, reject a statistically
+significant but small improvement, and it binds hardest on the 0-feature
+variant the tie-break otherwise prefers. This is pre-registered as an
+intentional trade-off (do not adopt <+0.005 gains even if significant), NOT
+as a costless guard. The threshold value (+0.005) is unchanged; only the
+recorded rationale is corrected. No result exists yet, so this is in-window.
+
+## AMENDMENT (2026-07-19) — baseline gate hardened; adjudicator-corrected fix (Finding 2, §3)
+
+(a) **All three `run()` defaults are silent traps, not just `years`.**
+    `walkforward.run()` defaults `years=(2022..2025)`, `typology=THEIR_TYPE`,
+    AND `typed_mode='their_fallback'` — all three are audit-replication
+    values, wrong for the frozen production config. The `step7` copy of the
+    loop MUST set all three explicitly (`years` = every year present incl.
+    2026+; `typology=MY_TYPE`; `typed_mode='shrinkage'`, pseudo-count 3 per
+    §2) and MUST `assert` each of the three at runtime. This code assertion
+    is the PRIMARY defense — it is the only reliable guard against the
+    typology/typed_mode swap.
+(b) **The rho/count gate is COARSE and cannot catch the typology/typed_mode
+    error — do not rely on it for that.** Verified 2026-07-19 on the 163-race
+    pickle: frozen (MY_TYPE+shrinkage) year≤2025 = 0.4130, n=108; both-
+    defaults-wrong (THEIR_TYPE+their_fallback) = 0.4118, n=108. The scored
+    count is IDENTICAL (typology never affects eligibility) and the mean-rho
+    gap is only 0.0011, so no rho tolerance robust to reimplementation drift,
+    and no count check, can separate the two configs. The gate is therefore
+    retained ONLY as a coarse sanity check against gross misconfiguration
+    (wrong pace key, half-life, feature list, burn/min_hist), which move rho
+    far more than 0.001: base's year≤2025 scored mean rho must be within
+    ±0.003 of 0.4130 AND the year≤2025 scored-race count must equal 108
+    (both measured 2026-07-19; count is causal-stable as 2026+ races are
+    appended). Passing this gate does NOT certify the typology/typed_mode are
+    correct — only the part-(a) assertions do. A failure of either the gate
+    or the assertions => STOP.
+
+## AMENDMENT (2026-07-19) — RESULT must record absolute anchors (Finding 4, §6)
+
+The RESULT block additionally records, for base AND for every variant: mean
+rho over ALL scored races and over the year≤2025 scored subset (with that
+subset's race count). If a variant is adopted, its year≤2025 subset mean rho
+is the explicit reference number the pooling spec's §4 baseline gate compares
+against (±0.003).
+
+## AMENDMENT (2026-07-19) — V2 column namespacing (Finding 5, §2)
+
+Because base and V2 share the FEATS list `['fin','pace','typed','start']`, the
+step7 feature bank MUST hold SEPARATE columns for base (uncensored hf/ht) and
+V2 (censored hf_run/ht_run); V2's `fin`/`typed` are the censored columns,
+base's are the uncensored columns, built in the same replay. Verify V2 ≠ base
+by construction: at least one scored race must show `fin_run != fin` for some
+driver with a non-running finish.
+
+## AMENDMENT (2026-07-19) — clarifications (Findings 6–7)
+
+- Clarification (§5): the scored-race count is ≈130, not ~150 — 128 as of
+  2026-07-18 (108 year≤2025 + 20 for 2026), reaching the low 140s only by
+  2026 season end. The figure feeds only the (now-corrected) SE heuristic.
+- Clarification (§1): `mech-class` means "non-crash DNF," NOT strictly
+  mechanical failure — `fatigue` (2 rows) and `fire` (4 rows) land there.
+  The binary crash/mech taxonomy remains total and pre-registered as-is;
+  this is disclosure only (6/6083 rows).

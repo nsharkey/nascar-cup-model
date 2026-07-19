@@ -164,3 +164,53 @@ Additionally for W1/W3: `predict_next.py`'s live path uses entry
 - Whether `team_name` is populated pre-race in the weekend feed (§3) —
   verifiable only against a live upcoming race; the fallback is
   pre-registered either way, so this blocks nothing.
+
+---
+
+# Amendments — adversarial review, 2026-07-19 (pre-data; gated on ≥8 scored
+# forward races, none of which exist yet). Source: review/findings_phase3.md
+# (Opus reviewer), adjudicated per review/STATE.md. Finding 2's fix was
+# corrected by the adjudicator after empirical verification.
+
+## AMENDMENT (2026-07-19) — margin justification corrected (Finding 1, §5)
+
+The §5 kill/keep rule imports the DNF spec's "paired SE ≈ 0.007 → need
+mean(d) ≈ 0.015" rationale by reference; that rationale is variant-specific
+and false for low-variance variants (measured paired SE ≈ 0.0008–0.0023, not
+0.007). The exclude-self pooling features are moderate-variance and less
+exposed than a pure re-encoding, but the correction applies: +0.005 is a
+deliberate PRACTICAL-significance floor that can reject a statistically
+significant but small gain, NOT a costless guard. The +0.005 threshold value
+is unchanged; only the recorded rationale is corrected. See DNF spec's
+Finding-1 amendment for the measured figures.
+
+## AMENDMENT (2026-07-19) — baseline gate hardened; adjudicator-corrected fix (Finding 2, §4)
+
+Identical in force to the DNF spec's Finding-2 amendment: (a) the `step8`
+copy of `run()` MUST explicitly set and `assert` all three defaulted args
+(`years` incl. 2026+; `typology=MY_TYPE` — or the then-frozen typology;
+`typed_mode='shrinkage'`), which is the PRIMARY defense; (b) the rho/count
+gate is COARSE and provably cannot distinguish the frozen config from the
+run()-defaults config (verified 2026-07-19: 0.4130 vs 0.4118, both n=108 —
+gap 0.0011, identical count), so it is retained only against gross
+misconfiguration, and passing it does not certify typology/typed_mode. When
+this A/B's baseline is a DNF-adopted config, the reference number and count
+are the absolute anchors the DNF RESULT block now records (DNF Finding-4
+amendment), compared within ±0.003 / exact count.
+
+## AMENDMENT (2026-07-19) — program-wide multiplicity (Finding 3, §5)
+
+Roadmap #4 is one 6-variant program against one baseline. Resolve the
+multiplicity explicitly:
+- If the DNF A/B ADOPTED a variant: pooling's baseline is the new frozen
+  config (a genuinely different comparison) → pooling keeps 0.05/3 = 0.0167.
+- If the DNF A/B adopted NOTHING: pooling reuses the identical baseline and
+  data as three already-spent tests, so pooling's three variants are tests
+  4–6 of a six-test family → use 0.05/6 = 0.00833 per variant. The
+  mean(d) ≥ +0.005 AND-gate is unchanged.
+This is pre-registered before any pooling variant is run. (Adjudicator note,
+non-normative: this conditional scheme lowers program-wide FWER from ≈0.096
+to ≈0.073 rather than exactly 0.05, because the DNF spec's three tests are
+frozen at 0.0167; a symmetric 0.05/6 across all six variants would restore
+≈0.05 and is the defensible stricter alternative if the owner prefers it —
+choosable only now, pre-data.)
