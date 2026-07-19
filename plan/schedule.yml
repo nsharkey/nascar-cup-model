@@ -21,6 +21,9 @@ meta:
     versioned archive. The perishable weekly predict+odds capture (E1) never
     pauses for the rebuild; scoring and the market benchmark are re-homed as
     Gold consumers. Feature and causal-pace work run on Gold, still gated.
+    E2 landed early (2026-07-19): the repo is public at
+    nsharkey/nascar-cup-model and prediction #1's seal was pushed ~6 hours
+    before the North Wilkesboro green flag.
   handoff_note: >-
     B2 is a Sonnet build session executing the spec's section-10 B2 checklist
     with zero design judgment calls (every choice is pre-resolved in the spec;
@@ -385,18 +388,23 @@ sessions:
   - id: "E2"
     phase: "E"
     title: "Create GitHub remote + first push"
-    status: "pending"
-    model: "Sonnet 5 · thinking on · high"
-    settings: {thinking: true, effort: "high"}
-    wall_clock: "~30 min"
-    ref: null
+    status: "done"
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~10 min"
+    ref: "a50bc9c"
     exec_summary: >-
-      Publish the repo so the pre-race prediction timestamps are independently
-      verifiable.
+      Published the repo so the pre-race prediction timestamps are independently
+      verifiable — the first public push landed hours before the race it needed
+      to precede.
     tech_summary: >-
-      Create remote, push all local commits (publishes prediction #1's seal);
-      prerequisite for H automation. Architecture-independent.
+      Public repo nsharkey/nascar-cup-model created (owner-run gh one-liner
+      after the agent-side create was permission-blocked); all commits through
+      a50bc9c pushed ~16:45 UTC on 2026-07-19, ~6h15m before race 5618's
+      23:00 UTC green flag — prediction #1's sealed files are publicly
+      timestamped pre-race. Unblocks H automation. Architecture-independent.
     deps: []
+    status_note: "2026-07-19: done ahead of schedule (opportunistically, same session as the track-audit vendoring) — the push had to beat the North Wilkesboro green flag."
 
   - id: "F1"
     phase: "F"
@@ -497,7 +505,7 @@ sessions:
   - id: "H3"
     phase: "H"
     title: "S4 weekly automation"
-    status: "blocked"
+    status: "pending"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-4 hr"
@@ -509,7 +517,7 @@ sessions:
       Qualifying-detection off the weekend feed -> predict -> commit/push; NOT
       GitHub Actions (quota trap).
     deps: ["E2"]
-    status_note: "needs the GitHub remote (E2) first"
+    status_note: "unblocked 2026-07-19 (E2 done — remote exists); runs when phase H is reached"
 
   - id: "R1"
     phase: "R"

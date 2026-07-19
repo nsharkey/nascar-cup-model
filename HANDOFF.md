@@ -119,8 +119,11 @@ is needed. `update_data.py` appends any newly completed races in seconds.
 - **Next single step:** `B2` in the plan — bronze ingestion (Sonnet build
   session; kickoff prompt in `plan/schedule.yml`). Scoring/benchmark are
   re-homed as Gold consumers in D2; prediction #1 is scored there.
-- GitHub remote: not yet pushed (repo has local commits only). Pushing
-  before green flag makes prediction #1 publicly timestamped.
+- **2026-07-19 (E2 done):** GitHub remote created and first push made —
+  public repo `https://github.com/nsharkey/nascar-cup-model`. All commits
+  through a50bc9c published ~16:45 UTC, ~6h15m before race 5618's 23:00 UTC
+  green flag, so prediction #1's seal is publicly timestamped pre-race.
+  H3 (weekly automation) is no longer remote-blocked.
 
 ## Roadmap (agreed order — do not skip ahead)
 

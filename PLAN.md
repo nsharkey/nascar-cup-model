@@ -51,7 +51,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | E1 | Weekly pre-race: predict + commit + push + record odds | pending | Sonnet 5 · thinking on · high | ~15-30 min (recurring) | Every race weekend, log the public prediction and record closing prices BEFORE the green flag — the one thing that can never be recovered later, so it runs no matter what else is in progress. | predict_next -> commit -> push -> record ALL primary-book matchups per the market-spec full-board amendment. Perishable; never paused for the rebuild. |
-| E2 | Create GitHub remote + first push | pending | Sonnet 5 · thinking on · high | ~30 min | Publish the repo so the pre-race prediction timestamps are independently verifiable. | Create remote, push all local commits (publishes prediction #1's seal); prerequisite for H automation. Architecture-independent. |
+| E2 | Create GitHub remote + first push | ✅ done | Fable 5 · thinking on · xhigh | ~10 min | Published the repo so the pre-race prediction timestamps are independently verifiable — the first public push landed hours before the race it needed to precede. | Public repo nsharkey/nascar-cup-model created (owner-run gh one-liner after the agent-side create was permission-blocked); all commits through a50bc9c pushed ~16:45 UTC on 2026-07-19, ~6h15m before race 5618's 23:00 UTC green flag — prediction #1's sealed files are publicly timestamped pre-race. Unblocks H automation. Architecture-independent. |
 
 ## Phase F — Feature experiments (gated: >=8 scored, on gold)
 
@@ -79,7 +79,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | H1 | S1 closing-odds capture | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Automate recording the closing prices the benchmark depends on, so a busy weekend cannot lose them. | EventBridge -> Lambda -> licensed odds API -> S3; emits book_prices.entries per scoring spec 5.1. planning/aws_solutions.md S1. |
 | H2 | S2 live-feed poller + S3 bronze mirror | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Record the one race-day stream that is otherwise lost, and back up the permanent archive off-machine. | Race-window Lambda polling live-feed.json; S3 mirror of data/bronze/. planning/aws_solutions.md S2/S3. |
-| H3 | S4 weekly automation | ⛔ blocked | Sonnet 5 · thinking on · high | ~2-4 hr | Make the weekly public prediction post automatic so a busy Saturday cannot break the experiment. | Qualifying-detection off the weekend feed -> predict -> commit/push; NOT GitHub Actions (quota trap). |
+| H3 | S4 weekly automation | pending | Sonnet 5 · thinking on · high | ~2-4 hr | Make the weekly public prediction post automatic so a busy Saturday cannot break the experiment. | Qualifying-detection off the weekend feed -> predict -> commit/push; NOT GitHub Actions (quota trap). |
 
 ## Phase R — Retired — superseded by the medallion rebuild
 
@@ -124,4 +124,4 @@ duties (prediction + odds capture) come first. Commit code + interim
 coverage summary; leave the tree clean.
 ```
 
-**Bottom line:** B1 is done (2026-07-19): specs/medallion_architecture.md is committed (4d3a415) — the execution contract for the whole rebuild, with the silver regression gate (C) and the 0.413/0.476/0.449 re-prove gate (D) frozen. Next is **B2 — bronze ingestion** (Sonnet): the full historical pull of all 6 feeds x 3 series from the 2015 index floor into an immutable, hashed, versioned archive. The perishable weekly predict+odds capture (E1) never pauses for the rebuild; scoring and the market benchmark are re-homed as Gold consumers. Feature and causal-pace work run on Gold, still gated.
+**Bottom line:** B1 is done (2026-07-19): specs/medallion_architecture.md is committed (4d3a415) — the execution contract for the whole rebuild, with the silver regression gate (C) and the 0.413/0.476/0.449 re-prove gate (D) frozen. Next is **B2 — bronze ingestion** (Sonnet): the full historical pull of all 6 feeds x 3 series from the 2015 index floor into an immutable, hashed, versioned archive. The perishable weekly predict+odds capture (E1) never pauses for the rebuild; scoring and the market benchmark are re-homed as Gold consumers. Feature and causal-pace work run on Gold, still gated. E2 landed early (2026-07-19): the repo is public at nsharkey/nascar-cup-model and prediction #1's seal was pushed ~6 hours before the North Wilkesboro green flag.
