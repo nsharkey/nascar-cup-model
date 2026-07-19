@@ -120,6 +120,8 @@ planning/           living plan docs (aws_solutions.md — plan-only infra
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate
+DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
+                    JSON, CSV contracts, raw cf.nascar.com feeds)
 src/                pipeline: download.py, parse_lib.py, parse.py,
                     update_data.py, predict_next.py, walkforward.py (engine),
                     report_plan.py (plan renderer), step2/3/4/6 (audit analyses)
