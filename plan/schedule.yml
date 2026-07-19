@@ -23,7 +23,10 @@ meta:
     Gold consumers. Feature and causal-pace work run on Gold, still gated.
     E2 landed early (2026-07-19): the repo is public at
     nsharkey/nascar-cup-model and prediction #1's seal was pushed ~6 hours
-    before the North Wilkesboro green flag.
+    before the North Wilkesboro green flag. G1 is also banked (2026-07-19,
+    0c8e9fa): the clean-air causal-pace design is pre-registered with frozen
+    gates; its execution (G2) still waits on the market benchmark returning
+    EDGE.
   handoff_note: >-
     B2 is a Sonnet build session executing the spec's section-10 B2 checklist
     with zero design judgment calls (every choice is pre-resolved in the spec;
@@ -496,20 +499,30 @@ sessions:
   - id: "G1"
     phase: "G"
     title: "Pre-register the roadmap-#5 design spec"
-    status: "pending"
+    status: "done"
     model: "Fable 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
-    wall_clock: "~2-4 hr"
-    ref: null
+    wall_clock: "~1 hr"
+    ref: "0c8e9fa"
     exec_summary: >-
-      Bank the design for the hardest feature (clean-air pace) while execution
-      stays gated on a proven market edge.
+      Banked the full pre-registered design for the hardest feature — clean-air
+      pace — before any of its data exists: two natural experiments, validity
+      checks, and an adopt/kill rule all locked in advance. Building it still
+      waits for a proven market edge; if that edge never appears, the banked
+      design was still the right work.
     tech_summary: >-
-      Pre-register specs/clean_air_causal_pace.md: restart/pit-cycle natural
-      experiments sourced from the new silver pit/flag tables; kill/keep gate.
-      Fixed-effects is a dead end (report section 7).
+      specs/clean_air_causal_pace.md committed: S1 restart-reshuffle IV
+      (pit-box-time shocks within race x caution x tire-count cells, incident
+      screen via lap_notes, outcome window laps 3-15) + S2 pit-cycle offset
+      windows (event-driven gap transitions only). FROZEN: EDGE-only execution
+      gate, fixed-effects prohibition list, Stage-A identification gate
+      (F>=10, sign/magnitude bounds, magnitude-bounded placebos, sample
+      floors), Stage-B walk-forward A/B (V1 replace / V2 add / V3 selection;
+      Wilcoxon p<=0.0167, active-race mean(d)>=+0.005, >=50 active). Designed
+      against medallion section-3.4 silver schemas (C2 unbuilt); Phase-0
+      field-semantics pins; walk-forward as-of-completion pi-hat.
     deps: ["A5"]
-    status_note: "design writable anytime; execution gated on market benchmark = EDGE"
+    status_note: "2026-07-19: banked (0c8e9fa). Execution (G2) stays doubly gated: market benchmark = EDGE, plus C2/D1/D2 pipeline."
   - id: "G2"
     phase: "G"
     title: "Implement roadmap #5"
@@ -520,7 +533,9 @@ sessions:
     ref: null
     exec_summary: "Build clean-air pace only if the market says it is worth it."
     tech_summary: >-
-      Per G1's pre-registered gate; consumes silver pit/flag tables + gold features.
+      Execute specs/clean_air_causal_pace.md in its mandatory order: Phase-0
+      field-semantics pins -> Stage-A identification gate -> Stage-B
+      walk-forward A/B; consumes silver lap/pit/flag tables + gold features.
     deps: ["G1", "C2", "D1", "D2"]
     status_note: "gated on the market benchmark returning EDGE; also needs the data pipeline — bronze pit/flag download (B2) -> silver pit/flag tables (C2) -> gold features (D1)"
 

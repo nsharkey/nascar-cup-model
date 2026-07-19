@@ -119,6 +119,17 @@ is needed. `update_data.py` appends any newly completed races in seconds.
 - **Next single step:** `B2` in the plan — bronze ingestion (Sonnet build
   session; kickoff prompt in `plan/schedule.yml`). Scoring/benchmark are
   re-homed as Gold consumers in D2; prediction #1 is scored there.
+- **2026-07-19 (G1 done):** `specs/clean_air_causal_pace.md` pre-registered
+  (0c8e9fa) — the roadmap-#5 design, banked before any of its data exists.
+  Two natural experiments (restart-reshuffle pit-box IV; pit-cycle offset
+  windows) with FROZEN identification + feature-A/B gates and a
+  fixed-effects prohibition list (report §7 stands). Execution (G2) remains
+  doubly gated: market benchmark = EDGE, plus the C2/D1/D2 pipeline; if the
+  benchmark never returns EDGE the spec is banked-never-executed, which is a
+  valid outcome. Note: at the time of this session the working tree carried
+  uncommitted mid-B2 work (bronze_fetch/warehouse/bronze_report + a dated
+  mid-B2 fetch-protocol amendment in the medallion spec) from a separate B2
+  session — left untouched and uncommitted by G1.
 - **2026-07-19 (E2 done):** GitHub remote created and first push made —
   public repo `https://github.com/nsharkey/nascar-cup-model`. All commits
   through a50bc9c published ~16:45 UTC, ~6h15m before race 5618's 23:00 UTC
