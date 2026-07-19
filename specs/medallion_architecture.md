@@ -373,9 +373,50 @@ B3 passes when ALL of:
    duckdb/pyarrow versions, and the sha256 of `manifest.jsonl` at report
    time.
 
-## RESULT — B3 (to be filled by the B3 session)
+## RESULT — B3 (2026-07-19)
 
-*(pending)*
+**4/5 conditions PASS outright; condition 2 is PASS-with-documented-gap.**
+Full detail in `report/BRONZE_COVERAGE.md` (committed this session).
+
+1. **Terminal coverage: PASS.** `stored`=4,222, `absent`=1,964, `failed`=0
+   across the full 2015→present × 3-series × 6-feed grid (1,031 completed
+   races × 6). Re-ran `--update` at session start; no drift since B2.
+2. **Superset check: PASS (stored) / GAP-DOCUMENTED (sha comparison).** All
+   163 `races_parsed.pkl` races have `lap-times`+`weekend-feed` stored. The
+   sha-comparison half **cannot be computed**: the legacy per-race cache
+   (`src/data/races/`) is empty in this checkout (only `race_list_2026.json`
+   was ever legacy-imported — 1 file, not 326) — this was already discovered
+   and documented in B2 (7de2738) and is not a new finding. §4.3's
+   mismatch-attribution mechanism has no legacy-import sha baseline for any
+   of these 163 races. **Owner escalation needed before C1**: either recover
+   a legacy-cache export from wherever `races_parsed.pkl` was originally
+   built, or C1 adopts an owner-directed fallback attribution method in
+   place of the mechanical shas-differ check.
+3. **Index reconciliation: PASS, gap surfaced.** Bronze race index = 164
+   completed Cup points races 2022→present; `races_parsed.pkl` = 163;
+   vendored track-audit package implies 164 (independently agrees with
+   bronze). The one gap: race_id 5580 (2025-11-17, Talladega Superspeedway)
+   — present in bronze, absent from the pkl. New root-cause detail this
+   session: the stored `weekend-feed` payload's `weekend_race` field is
+   `null` for this one race (lap-times is present and non-empty) — confirmed
+   by directly reading the bronze payload, and confirmed to be the *only*
+   race among the 164 with this defect via an exhaustive scan. This matches
+   `report/NASCAR_AUDIT_REPORT.md`'s independent original observation of the
+   same race. No other gap found either direction.
+4. **Spot-parse: PASS.** 20 random stored files × 6 feeds = 120/120 parsed
+   as valid JSON with the expected top-level structure.
+5. **Hash verify: PASS.** `bronze_fetch.py --verify --sample 100` → 100 ok,
+   0 missing, 0 mismatched.
+
+**Verdict: B3 does not block C1/C2 from starting** (silver builds proceed on
+the terminal, hash-verified, structurally-sound bronze archive), **but C1
+cannot complete §4.3's mismatch attribution mechanically for the 163 legacy
+anchor races until the owner resolves item 2's escalation.** C1 should take
+the anchor (§4.1) and attempt the parity build; if the anchor's races come
+back bit-identical against freshly-built silver, item 2 is moot for those
+races (no mismatch to attribute). If any anchor race mismatches, C1 must
+stop at the attribution step for that race and escalate rather than guessing
+at a substitute baseline.
 
 ---
 
