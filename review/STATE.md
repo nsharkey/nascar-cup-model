@@ -35,10 +35,11 @@ REFUTE, not confirm. An empty findings report is a valid outcome.
 
 | Phase | Scope | Status | Findings file |
 |---|---|---|---|
-| 1 (URGENT — executes tomorrow) | specs/scoring_methodology.md | IN PROGRESS — agent hit session cap mid-run 2026-07-18 (~11:30pm ET reset), resumed via SendMessage to agent a3be6b9841f96565c. Partial result recovered before cutoff: **all §9 fixture arithmetic verified clean**; agent was mid-§1.2 (results-source implementability) when cut | review/findings_phase1.md |
-| 2 | specs/market_benchmark_decision_rule.md | pending | review/findings_phase2.md |
+| 1 (URGENT — executes tomorrow) | specs/scoring_methodology.md | **DONE** (agent survived a session-cap interruption via transcript resume). Verdict: 1 MAJOR(urgent) + 3 MINOR + 5 NIT; zero arithmetic errors; hash machinery verified sound | review/findings_phase1.md |
+| 1a | Adjudication of Phase 1 findings (run AHEAD of Phases 2–3: the scoring-spec amendment window closes at race 5618's green flag; Phases 2–3 specs have months of runway) | **DONE** — all 9 ACCEPT, amendments applied verbatim to specs/scoring_methodology.md as dated AMENDMENT blocks; no OWNER escalations needed | adjudication table in review/findings_phase1.md |
+| 2 | specs/market_benchmark_decision_rule.md (reviewer must read the AMENDED scoring spec — the provenance amendment interacts with benchmark admissibility) | pending | review/findings_phase2.md |
 | 3 | specs/dnf_status_feature.md + specs/team_mfr_pooling.md | pending | review/findings_phase3.md |
-| 4 | Adjudication + AMENDMENT application | pending | recorded in findings files + spec AMENDMENT blocks |
+| 4 | Adjudication of Phases 2–3 findings | pending | recorded in findings files + spec AMENDMENT blocks |
 
 ## How to resume in a NEW session
 

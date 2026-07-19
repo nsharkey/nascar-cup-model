@@ -354,3 +354,77 @@ every pair (e.g. the §5.3-F5 matrix below). Required fixtures:
 - Which sportsbook is the designated primary for the market benchmark
   depends on what the owner can actually access; §5.2's dedup makes
   multi-book recording safe meanwhile. See market-benchmark spec §2.
+
+---
+
+# Amendments — adversarial review, 2026-07-18 (pre-race; race 5618 has not
+# run, no adjudicated data exists). Source: review/findings_phase1.md,
+# adjudicated per review/STATE.md. Verbatim as proposed by the reviewer.
+
+## AMENDMENT (2026-07-18, pre-race — race 5618 has not run; no adjudicated data exists)
+
+**Results finality and snapshot freeze (binds §1.2, §2, §6).**
+
+1. **Completeness gate.** Before loading results, `score_race.py` must confirm the race
+   is complete: the race's entry in that year's `race_list_basic.json` (read from
+   `src/data/race_list_{year}.json` if present, else fetched with the §1.2 headers)
+   has a truthy `winner_driver_id` — the same completion gate `update_data.py` uses.
+   If not, exit with the §1.2 refusal error. This supplements, not replaces, the
+   "no truthy finishing_position" refusal.
+2. **Snapshot freeze.** On the first successful scoring of a race, `score_race.py`
+   writes an exact copy of the results JSON it used to
+   `src/data/races/{year}_{race_id}_wf_scored.json`. On every subsequent run for that
+   race this file, when present, takes precedence over both the `_wf.json` path and
+   the network (extending §1.2's read order to: `_wf_scored.json` → `_wf.json` →
+   fetch). It is never overwritten or deleted.
+3. **Consequence, recorded:** official revisions published after a race is first
+   scored (late penalties, DQ reversals) do NOT restate the row; the frozen snapshot
+   governs permanently. §6's byte-identical re-run guarantee is defined against the
+   frozen snapshot.
+
+## AMENDMENT (2026-07-18, pre-race): §5 pipeline order and void note
+
+Fixed order of operations for §5.2–§5.3: (1) drop malformed entries per §5.1
+(note `malformed book entries: {k}`); (2) dedup the survivors per §5.2, comparing
+`recorded_utc` as ISO-8601 instants (note `book entries deduped: {k}`); (3) drop
+selected entries with `void == true` (note `book entries void: {k}`); (4) apply
+§5.3's remaining filters (common set, strict favorite, model pick). A pair whose
+*selected* entry is void or malformed is excluded even if a discarded duplicate
+was clean: the preferred entry's settlement is the pair's settlement.
+
+## AMENDMENT (2026-07-18, pre-race): book-entry provenance
+
+`recorded_utc` is the time the price was observed at the book, never the
+transcription time. Entries whose first appearance in a git commit postdates the
+race's green flag must add the note clause `post-race price entry` to that race's
+scores row; admissibility for the market benchmark is governed by that spec's §2
+(record before the race, never after). The git history is the integrity mechanism
+for `book_prices`, exactly as the commit timestamp is for the prediction itself.
+
+## AMENDMENT (2026-07-18, pre-race): n < 3 rows
+
+For n < 3 (cannot occur in practice, defined for completeness): no pairs are
+graded at all — `h2h_n = 0`, `h2h_acc` blank, `book_n = book_agree_n =
+model_beats_book_n = 0`, `rho` blank, note `small common set`. This reconciles
+§2 with §6.
+
+## AMENDMENT (2026-07-18, pre-race): clarifications from adversarial review
+
+- Clarification (2026-07-18): the operative input is pred_rank; the "-utility"
+  equivalence in §3 is illustrative and does not hold under 4-dp utility ties in
+  the JSON. pred_rank governs.
+- Clarification (2026-07-18): §8 step 2 "earliest" = minimum (race_date,
+  race_id), reading predictions_log.csv with the csv module.
+- Clarification (2026-07-18): note clauses appear in this order: SS STAND-DOWN —
+  not actionable; small common set; unscored (not in results): {ids};
+  unpredicted (in results only): {ids}; DQ: {names}; finish tie anomaly;
+  h2h pairs skipped: {k}; malformed book entries: {k}; book entries deduped:
+  {k}; book entries void: {k}; pickem excluded: {k}; post-race price entry;
+  no book prices. Id lists sorted ascending; names comma-joined in ascending
+  driver_id order.
+- Clarification (2026-07-18): the §3 comparability caveat (full published field
+  vs eligibility-filtered backtest) applies equally to h2h_acc vs the backtest's
+  0.652/0.676 pairwise numbers.
+- Clarification (2026-07-18): a missing or empty weekend_race or results is
+  treated as "no entry has a truthy finishing_position" → the §1.2 refusal exit
+  (mirror predict_next.py's guard).
