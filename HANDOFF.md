@@ -116,9 +116,30 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   schedule audit exposes that `races_parsed.pkl` is missing the fall-2025
   Talladega playoff race (163 races where 164 completed 2022→cutoff) — the
   B3 bronze coverage superset check should confirm and close this gap.
-- **Next single step:** `B2` in the plan — bronze ingestion (Sonnet build
-  session; kickoff prompt in `plan/schedule.yml`). Scoring/benchmark are
-  re-homed as Gold consumers in D2; prediction #1 is scored there.
+- **2026-07-19 (B2 done, 7de2738):** full historical bronze pull —
+  `src/bronze_fetch.py` / `src/warehouse.py` / `src/bronze_report.py`.
+  4,222 files stored, 1,964 confirmed genuinely absent, 0 failed
+  (~519 MB raw / ~63 MB gzipped). Detailed-feed floor discovered (later
+  than the 2015 index floor, and feed-dependent): weekend-feed/live-feed
+  2018, live-flag-data 2019, lap-times/live-pit-data/lap-notes 2020,
+  uniform across all 3 series. Two live data-quality bugs found and fixed
+  (`DATA_DICTIONARY.md` §8c/8d): `winner_driver_id` is unset for every
+  2015–2019 race and 12/41 of 2022's (older index schema) —
+  `race_has_run()` falls back to `average_speed`/`total_race_time`; the
+  `year=2017` index URL 200s with 2018's season data instead of 403ing —
+  `index_year_matches()` detects and treats it as absent. Owner-directed
+  dated amendment to spec §2.4 mid-session (newest-year-first task order,
+  shortened post-trip retry ladder, circuit-breaker recovery — none raise
+  the request rate) cut the run from a projected 10–50+ hr to under 2 hr.
+  **Known gap for C1:** the legacy `src/data/races/` raw-JSON cache (163
+  races) that `races_parsed.pkl` was built from doesn't exist in this
+  checkout (gitignored, never persisted outside the environment that
+  built it) — only `race_list_2026.json` was importable via §2.6. §4.3's
+  mismatch attribution has no legacy-import sha baseline for those races
+  and needs owner escalation instead of the mechanical shas-differ check.
+- **Next single step:** `B3` in the plan — bronze verification (Sonnet
+  build session; gates C1/C2). Scoring/benchmark are re-homed as Gold
+  consumers in D2; prediction #1 is scored there.
 - **2026-07-19 (G1 done):** `specs/clean_air_causal_pace.md` pre-registered
   (0c8e9fa) — the roadmap-#5 design, banked before any of its data exists.
   Two natural experiments (restart-reshuffle pit-box IV; pit-cycle offset

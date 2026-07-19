@@ -16,11 +16,24 @@ meta:
     B1 is done (2026-07-19): specs/medallion_architecture.md is committed
     (4d3a415) — the execution contract for the whole rebuild, with the silver
     regression gate (C) and the 0.413/0.476/0.449 re-prove gate (D) frozen.
-    Next is **B2 — bronze ingestion** (Sonnet): the full historical pull of all
-    6 feeds x 3 series from the 2015 index floor into an immutable, hashed,
-    versioned archive. The perishable weekly predict+odds capture (E1) never
-    pauses for the rebuild; scoring and the market benchmark are re-homed as
-    Gold consumers. Feature and causal-pace work run on Gold, still gated.
+    B2 is also done (2026-07-19, 7de2738): the full historical bronze pull —
+    4,222 files stored, 1,964 confirmed genuinely absent, 0 failed, ~519 MB
+    raw / ~63 MB gzipped. Discovered detailed-feed floor (later than the 2015
+    index floor and feed-dependent): weekend-feed/live-feed 2018,
+    live-flag-data 2019, lap-times/live-pit-data/lap-notes 2020. Two live
+    data-quality fixes landed mid-session (race_has_run() fallback for years
+    where winner_driver_id is unset; index_year_matches() for the year=2017
+    content-aliasing quirk) plus an owner-directed dated speed amendment to
+    spec 2.4 (newest-year-first order, shortened tripped-ladder, breaker
+    recovery — none raising the request rate) that cut the run from a
+    projected 10-50+ hr to under 2 hr. Known gap for C1: the legacy
+    src/data/races/ raw-JSON cache doesn't exist in this checkout, so
+    section 4.3's mismatch attribution has no import-sha baseline and needs
+    owner escalation instead. **Next in the mainline rebuild is B3 —
+    bronze verification** (Sonnet), gating C1/C2. The perishable weekly
+    predict+odds capture (E1) never pauses for the rebuild; scoring and the
+    market benchmark are re-homed as Gold consumers. Feature and causal-pace
+    work run on Gold, still gated.
     E2 landed early (2026-07-19): the repo is public at
     nsharkey/nascar-cup-model and prediction #1's seal was pushed ~6 hours
     before the North Wilkesboro green flag. G1 is also banked (2026-07-19,
@@ -336,22 +349,38 @@ sessions:
   - id: "B2"
     phase: "B"
     title: "Bronze ingestion — full historical pull"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~1-2 hr (mostly polite fetching)"
-    ref: null
+    wall_clock: "~2 hr 40 min (incl. a live speedup mid-session + a resumable bug-fix restart)"
+    ref: "7de2738"
     exec_summary: >-
-      Download every available NASCAR feed — all series, back as far as the data
-      goes — into a permanent, unchanged local archive with a fingerprint per file.
+      Downloaded every available NASCAR feed — all series, back to the real
+      floor — into a permanent, unchanged local archive with a fingerprint per
+      file: 4,222 files stored, 1,964 confirmed genuinely absent, zero failed.
     tech_summary: >-
-      Execute spec section-10 B2 checklist: src/bronze_fetch.py per the frozen-ish
-      section-2 protocol (concurrency 4, 5 req/s cap, retry ladder, 403 two-pass
-      absent rule, atomic versioned json.gz, append-only manifest), warehouse
-      catalog views, legacy import, then the full 2015->present pull (6 feeds x
-      3 series, ~8k requests) + tentative-absent sweep + interim coverage report.
+      src/bronze_fetch.py (protocol per spec section 2) + src/warehouse.py
+      (bronze.* duckdb catalog) + src/bronze_report.py (coverage matrix).
+      Discovered detailed-feed floor (distinct from the 2015 index floor):
+      weekend-feed/live-feed 2018, live-flag-data 2019, lap-times/live-pit-data/
+      lap-notes 2020, uniform across all 3 series. Two live data-quality bugs
+      found and fixed: winner_driver_id unset for all 2015-2019 + 12/41 of 2022
+      (race_has_run() fallback on average_speed/total_race_time); URL year=2017
+      200s with 2018's data instead of 403ing (index_year_matches() majority-vote
+      detection). Owner-directed dated amendment (spec 2.4) after the literal
+      circuit-breaker/ladder constants projected 10-50+ hr: newest-year-first
+      task order + shortened tripped-ladder + breaker recovery, none of which
+      raise the request rate, cut the real run under 2 hr. ~519 MB raw / ~63 MB
+      gzipped. DATA_DICTIONARY.md section 8 documents the bronze schema + both findings.
     deps: ["B1"]
-    status_note: "2026-07-19: unblocked — the spec (4d3a415) resolves every design choice; URL patterns pre-verified."
+    status_note: >-
+      2026-07-19: done. Known gap for C1: src/data/races/ (the 163-race legacy
+      raw-JSON cache races_parsed.pkl was built from) doesn't exist in this
+      checkout — gitignored, never persisted outside the environment that
+      originally built it. Only race_list_2026.json was importable via
+      section 2.6. C1's section 4.3 mismatch-attribution has no legacy-import
+      sha baseline for those races and will need owner escalation instead of
+      the mechanical shas-differ check.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then specs/medallion_architecture.md IN FULL — it is the
@@ -380,7 +409,7 @@ sessions:
   - id: "B3"
     phase: "B"
     title: "Bronze verification & coverage"
-    status: "pending"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~30-60 min"
@@ -396,7 +425,53 @@ sessions:
       surface the known missing fall-2025 Talladega playoff race and any other
       gap; spot-parse sample files; hashes recorded.
     deps: ["B2"]
-    status_note: "known must-surface case: races_parsed.pkl lacks fall-2025 Talladega (163 where the schedule implies 164; HANDOFF 2026-07-19). The superset check alone is keyed to the 163 existing races and CANNOT catch it — the index-vs-pkl reconciliation exists for exactly this."
+    status_note: >-
+      known must-surface case: races_parsed.pkl lacks fall-2025 Talladega (163
+      where the schedule implies 164; HANDOFF 2026-07-19). The superset check
+      alone is keyed to the 163 existing races and CANNOT catch it — the
+      index-vs-pkl reconciliation exists for exactly this. B2 finding
+      (2026-07-19): the legacy src/data/races/ raw-JSON cache races_parsed.pkl
+      was built from doesn't exist in this checkout — only race_list_2026.json
+      was importable via section 2.6. The superset check's sha comparison
+      against the legacy import (spec 2.9 condition 2) therefore has no
+      baseline for those 163 races; report this as a documented gap rather
+      than silently skipping the check, and flag it to the owner rather than
+      choosing how to proceed.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, then specs/medallion_architecture.md section 2.9 IN FULL —
+      it is the execution contract for this session (the B3 gate conditions).
+
+      BUILD session B3 — bronze verification, per the spec's section-10 B3
+      checklist. Drive section 2.9's five conditions to terminal:
+      1. Terminal coverage: every (index race 2015->present x 3 series x 6
+         feeds) is stored or absent; failed count = 0. Re-run
+         `bronze_fetch.py --update` if anything has drifted since B2.
+      2. Superset check: for every race in races_parsed.pkl, lap-times and
+         weekend-feed are stored, and the latest bronze payload sha equals the
+         legacy import's sha. KNOWN GAP (B2 finding, 2026-07-19): the legacy
+         src/data/races/ raw-JSON cache doesn't exist in this checkout, so
+         there is no legacy-import sha to compare against for those 163
+         races. Do not silently skip this condition or invent a workaround —
+         document the gap explicitly in the report and flag it to the owner.
+      3. Reconcile the bronze race index (points races 2022->present) against
+         races_parsed.pkl AND the vendored track-audit schedule counts
+         (research/track_audit/) — must surface the known missing fall-2025
+         Talladega playoff race (163 where 164 completed) and any other gap.
+      4. Spot-parse: 20 random stored files per feed type parse as JSON with
+         the expected top-level structure.
+      5. Hash verify: 100 random stored files re-hash to their recorded
+         sha256 (gunzip -> sha256 -> compare). `bronze_fetch.py --verify`
+         already implements this generically -- reuse it, don't reinvent it.
+      Commit report/BRONZE_COVERAGE.md (per-feed x per-series first-year-with-
+      data table, counts by terminal state, total bytes, the mismatch list,
+      installed duckdb/pyarrow versions, manifest.jsonl sha256). Fill in
+      `## RESULT — B3` in specs/medallion_architecture.md (dated). Zero
+      design judgment calls: if the spec is genuinely ambiguous anywhere,
+      STOP and flag it rather than choosing. If today is a race weekend, E1
+      duties (prediction + odds capture) come first. Update plan/schedule.yml
+      (B3 -> done, C1/C2 -> next candidates) and re-render via
+      `python src/report_plan.py`; commit; leave the tree clean.
 
   - id: "C1"
     phase: "C"
