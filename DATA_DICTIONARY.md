@@ -294,14 +294,15 @@ treats a mismatch as `absent`. The aliased file is a redundant copy of 2018
 (which is itself fetched correctly under its own URL), so **no 2018 data is
 affected** — but 2017's **own** races are consequently absent from bronze:
 with no valid 2017 index there are no 2017 race_ids to enumerate. This is
-neither disk loss (our copy is intact and quarantined) nor necessarily
-permanent at the source — 2017's race_ids occupy the observed gap between
-2016 (Cup ends 4518) and 2018 (Cup starts 4673), a 154-id block that could
-be recovered by probing that range directly, bypassing the broken index.
-But 2017 is below the detailed-feed floor (§8e) — 2015-2016 likewise store
-no detailed feeds — so the only unique gap is 2017's **index metadata**
-(schedule/results), which the frozen model never consumes. It costs the
-model nothing that the index-only years 2015-2016 don't already.
+neither disk loss (our copy is intact and quarantined) nor permanent at the
+source — see §8f: a direct race_id probe recovered essentially the entire
+2017 season across all three series, including full `weekend-feed` results,
+not just index metadata. The B2-era assumption that 2017 was additionally
+below the detailed-feed floor (superseded text: "2017 is below the
+detailed-feed floor (§8e)... so the only unique gap is 2017's index
+metadata") was wrong — it generalized from 2015-2016's genuinely-tried,
+genuinely-403'd absence without ever actually testing 2017, which turned out
+to behave completely differently once probed directly.
 
 ### 8e. Detailed-feed floor discovered by the B2 pull (2026-07-19)
 
@@ -312,6 +313,47 @@ are **not the same** — `weekend-feed`/`live-feed` start 2018, `live-flag-data`
 2019, `lap-times`/`live-pit-data`/`lap-notes` 2020, uniformly across all
 three series. 2015-2016 detailed feeds are archived-absent, not missing —
 the pull attempted them and got a two-pass-confirmed 403. 2017 detailed
-feeds were **not attempted at all** (no valid 2017 index ⇒ no 2017
-race_ids to request; §8d) — the manifest holds zero 2017 detailed-feed
-rows, distinct from 2015-2016's confirmed-`absent` rows.
+feeds were **not attempted at all** at B2 time (no valid 2017 index ⇒ no
+2017 race_ids to request; §8d) — the manifest held zero 2017 detailed-feed
+rows, distinct from 2015-2016's confirmed-`absent` rows. §8f found that,
+unlike 2015-2016, 2017 was never actually below this floor — it just had
+never been asked.
+
+### 8f. B4 — 2017 recovered via direct race_id probe (2026-07-19)
+
+`src/bronze_probe_2017.py` (one-off, not part of `--full`/`--update`) bypassed
+the broken 2017 index entirely: it derived each series' race_id gap between
+its last 2016 race and its first 2018 race directly from `bronze.races_index`
+(series 1: 4519-4672, series 2: 4552-4713, series 3: 4575-4746 — 488
+candidates total) and probed `weekend-feed` for every candidate id in
+year=2017, using the exact same fetch/retry/circuit-breaker/manifest
+machinery as `bronze_fetch.py`.
+
+Result: **97 stored, 391 confirmed-`absent` (two-pass), 0 failed** — series 1
+(Cup): 41 stored/154 candidates, series 2 (Xfinity): 33/162, series 3
+(Truck): 23/172. These recovered counts match the real 2017 schedules almost
+exactly (2017 Cup ran 36 points races + Clash/Duels/All-Star; Xfinity 33
+races; Trucks 23 races), and the recovered payloads carry full results (e.g.
+race_id 4579 = the 2017 Daytona 500, 42 results rows; race_id 4576 = the
+Advance Auto Parts Clash, `race_type_id=2`), `race_date` spanning
+2017-02-19 through 2017-11-19 across all three series, and every other
+`weekend-feed` field (`average_speed`, `total_race_time`, etc.) populated —
+not partial or index-only data.
+
+The bulk of the 391 `absent` results is not evidence of missing Cup/Xfinity/
+Truck data — `race_id` is a single global counter shared across all three
+series (and non-points events), so most of a series' full candidate range
+was never that series' race_id to begin with; probing series 1 against an id
+that was actually an Xfinity race legitimately 404s. The stored counts
+landing right at each series' real season length confirms this rather than
+suggesting further gaps.
+
+**Consequence:** the §8d/§8e conclusion that 2017 contributes nothing beyond
+index metadata was wrong. Full 2017 `weekend-feed` data (schedule, results,
+stats) now exists in bronze for all three series, on par with 2018+. Only
+`lap-times`/`live-pit-data`/`lap-notes`/`live-flag-data`/`live-feed` were not
+probed for 2017 (out of B4's scope; those feeds already floor at 2018-2020
+uniformly per §8e and were not expected to differ). **Whether 2017 should be
+pulled into silver/gold scope (C1 onward) is an open owner decision, not
+resolved by this session** — the medallion rebuild's existing checklists
+were written assuming 2017 was unrecoverable.
