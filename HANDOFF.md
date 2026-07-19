@@ -54,9 +54,10 @@ is needed. `update_data.py` appends any newly completed races in seconds.
 4. After the race: run `update_data.py` again, then score — Spearman of
    predicted vs. actual order; H2H pick accuracy from the JSON's `h2h_prob`
    matrix; vs. book picks where prices were recorded. Append results to
-   `predictions/scores_log.csv` (create on first scoring; columns:
-   race_id, date, track, ttype, n, rho, h2h_acc, h2h_n, book_agree_n,
-   model_beats_book_n, notes). Commit.
+   `predictions/scores_log.csv`. **The scoring procedure, edge cases, and
+   the exact CSV contract are frozen in `specs/scoring_methodology.md` —
+   follow it exactly** (it adds a `book_n` column to the list originally
+   sketched here). Commit.
 
 ## Doctrine (non-negotiable)
 
@@ -79,9 +80,14 @@ is needed. `update_data.py` appends any newly completed races in seconds.
 - **2026-07-18:** Forward test LIVE. Prediction #1 committed pre-race:
   race 5618, North Wilkesboro (SHORT), 2026-07-19. Top-5 picked: Blaney,
   Bell, Hamlin, Gibbs, Reddick. Trained on 148 races through Atlanta 7/12.
+- **2026-07-18 (planning session):** `specs/` pre-registered before any race
+  was scored: scoring methodology, market-benchmark decision rule (gates
+  roadmap #5), and the two roadmap-#4 A/B protocols (DNF/status, pooling).
+  Frozen sections are immutable per `specs/README.md`.
 - **Next single step:** after the North Wilkesboro race, score prediction #1
-  (protocol step 4). Book prices for it: not yet recorded — grab them if
-  still possible, else note absent.
+  per `specs/scoring_methodology.md` (build `score_race.py` + its fixture
+  tests first — spec §10 checklist). Book prices for it: not yet recorded —
+  grab them if still possible, else note absent.
 - GitHub remote: not yet pushed (repo has local commits only). Pushing
   before green flag makes prediction #1 publicly timestamped.
 
@@ -104,6 +110,8 @@ is needed. `update_data.py` appends any newly completed races in seconds.
 HANDOFF.md          this file — the one-stop briefing
 README.md           public-facing description
 report/             full audit report
+specs/              pre-registered, frozen design docs (scoring, market
+                    gate, feature A/Bs) — read specs/README.md first
 src/                pipeline: download.py, parse_lib.py, parse.py,
                     update_data.py, predict_next.py, walkforward.py (engine),
                     step2/3/4/6 (audit analyses)
