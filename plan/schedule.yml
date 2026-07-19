@@ -30,19 +30,23 @@ meta:
     indefinitely (2026-07-19) and its sessions are frozen as the eventual cloud
     fallback; the local versions L1-L4 are the active path, with L1 (local
     archive mirror) the next actionable local item behind the mainline rebuild.
-    Three ungated, runnable-now research spikes, independent of the rebuild and
-    of each other: F5 (done 26dff0c) inventoried what's derivable from the
-    vendored track audit — all its proposals are now folded in: C3 (Phase C), the
-    F3/F4 tightenings, and net-new candidates F8 (config-novelty) + F9 (era-reset);
-    only a post-F3 simulator spike is held as premature. F6 (running) scans the
-    external NASCAR knowledge landscape.
-    F7 is also done (2026-07-19, b4c00d7): assessed three Bayesian formulations
-    against the current walk-forward Plackett-Luce — B (dynamic-skill recency
-    via exact Kalman filtering) is recommended with a pre-registered A/B banked
-    as new session F10 (gated the same as F1/F2/F8/F9); A (hierarchical
-    Bayesian PL) is conditional, banked as a design outline as new session F11
-    (blocked on F10 + F2's decisions); C (generative outcome model) is decided
-    null for now, recorded with three revisit triggers in the Phase F note. All
+    All three research spikes are done and folded in. F5 (26dff0c): track-audit
+    derivations — C3 (Phase C), the F3/F4 tightenings, and candidates F8
+    (config-novelty) + F9 (era-reset); only a post-F3 simulator spike is held
+    as premature. F7 (b4c00d7): Bayesian assessment — B (dynamic-skill recency
+    via exact Kalman filtering) recommended with a pre-registered A/B banked as
+    F10 (gated the same as F1/F2/F8/F9); A (hierarchical Bayesian PL)
+    conditional, banked as F11 (blocked on F10 + F2's decisions); C (generative
+    outcome model) decided null with three revisit triggers in the Phase F
+    note. F6 (2026-07-19, 6d5e18e): the external knowledge scan, every claim
+    adversarially verified — its distillates are F12 (attrition/reverse-PL
+    rank-likelihood A/B, the strongest externally-validated idea, gated after
+    F1/F2/F10), F13 (in-house loop-metric histories, on C2), F14
+    (equipment-share decomposition analytics, F11 trigger evidence, on D1),
+    F15 (nascaR.data vendoring, blocked on an owner licensing decision), F16
+    (domain-knowledge scan — crew chiefs, playoff incentives, tires; ungated,
+    runnable now), and A6 (owner review of NASCAR's July-2025 ToS clauses —
+    verified verbatim, with cf.nascar.com coverage textually unsupported). All
     propose only; nothing enters the frozen model without a gated A/B.
   handoff_note: >-
     B2 is a Sonnet build session executing the spec's section-10 B2 checklist
@@ -110,18 +114,16 @@ phases:
       and F2 is serial after F1's decision. F3/F4 are follow-ups from the
       vendored track-audit package (research/track_audit/) — analytics and
       reference outputs gated on the medallion build rather than on scored
-      races; neither touches the frozen model. F5/F6/F7 are ungated,
-      RUNNABLE-NOW research spikes independent of and parallelizable with the
-      rebuild (and with each other): F5 (done, 26dff0c) inventoried everything
-      derivable from the vendored track audit and scoped F3/F4 + a candidate C3
-      dimension table; F6 (running) scans the external NASCAR knowledge landscape
-      (academic, betting/DFS/fantasy, open-source) for transferable ideas; F7
-      assesses whether a Bayesian approach is appropriate/better than the current
-      L2-penalized walk-forward Plackett-Luce. All propose only — nothing enters
-      the frozen model without its own gated A/B. F8/F9 are net-new track-audit
-      feature A/Bs surfaced by F5 (config-novelty; era-reset — whose 2026 hp750
-      break is live in the current forward test), gated on C3 + scored races.
-      F7 is done (b4c00d7): of its three Bayesian formulations, B (dynamic
+      races; neither touches the frozen model. The three research spikes are
+      all done and folded in: F5 (26dff0c) inventoried everything derivable
+      from the vendored track audit and scoped F3/F4 + the C3 dimension table;
+      F6 (6d5e18e) scanned the external NASCAR knowledge landscape with
+      adversarial verification — its distillates are F12-F15, A6, the F3/F4
+      tightenings, and the F16 follow-up; F7 (b4c00d7) assessed Bayesian
+      formulations. All propose only — nothing enters the frozen model without
+      its own gated A/B. F8/F9 are net-new track-audit feature A/Bs surfaced
+      by F5 (config-novelty; era-reset — whose 2026 hp750 break is live in the
+      current forward test), gated on C3 + scored races. From F7: B (dynamic
       state-space skill recency) is recommended with a pre-registered A/B
       banked, now F10, gated the same as F1/F2/F8/F9; A (hierarchical Bayesian
       PL) is conditional, banked as a design outline only, now F11, blocked on
@@ -131,7 +133,17 @@ phases:
       with its own pre-registered scoring rule is adopted into the plan, T2 the
       market benchmark returns EDGE and the project extends to win/futures
       markets where tail calibration is priced, or T3 F1 adopts a DNF variant
-      whose per-type splits attribute the gain to attrition ordering.
+      whose per-type splits attribute the gain to attrition ordering. From F6:
+      F12 (attrition/reverse-PL likelihood A/B — the strongest
+      externally-validated idea, gated after F1/F2/F10), F13 (in-house
+      loop-metric histories from silver.laps, on C2), F14 (equipment-share
+      decomposition, analytics, F11 trigger evidence, on D1), F15 (nascaR.data
+      vendoring, blocked on an owner licensing decision), and F16 — the
+      domain-knowledge complement to F6 (crew chiefs, playoff incentives,
+      tires, draft alliances; hypothesis generation against in-feed proxies),
+      ungated and runnable now. F6 also verified F7's four prior-art anchors
+      with exact citations (scan §3.11) and put NASCAR's July-2025 ToS
+      question to the owner as A6.
   - key: "G"
     num: "VII"
     title: "Causal clean-air pace (gated: market EDGE)"
@@ -241,6 +253,36 @@ sessions:
       26 findings (1 CRITICAL, 6 MAJOR), all accepted; amendments applied
       pre-data; review/ ledger + 3 findings files.
     deps: ["A4"]
+  - id: "A6"
+    phase: "A"
+    title: "Owner ToS review — NASCAR NDM terms posture"
+    status: "pending"
+    model: "owner-led (any model as reader)"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1 hr (owner)"
+    ref: null
+    exec_summary: >-
+      Read the July-2025 NASCAR terms clauses that touch scraping and
+      model-building, decide the project's posture, and record it. Governance,
+      not code — surfaced by the F6 scan with a balanced verdict: the clauses
+      are real, but coverage of the JSON feeds we use is textually unsupported.
+    tech_summary: >-
+      Review external_knowledge_scan.md §6.5 — verbatim July-2025 NDM Terms
+      clauses (scraping/data-mining and model/algorithm-development prohibitions,
+      both consent-conditioned) plus the verified coverage facts: the embedded
+      covered-services list omits cf.nascar.com; the ToS binds services "that
+      link to these Terms of Use"; the feed endpoint carries no ToS link and no
+      bot-block (plain S3/CloudFront), unlike www.nascar.com and
+      racing-reference.info (both 403 non-browser clients). Decide: keep the
+      current non-commercial research posture / seek written consent / adjust
+      capture plans; record the decision in HANDOFF. No code, no model change;
+      the existing posture (code-only redistribution, raw data uncommitted,
+      polite fetch protocol) already matches the conservative reading.
+    deps: []
+    status_note: >-
+      Proposed by F6 (6d5e18e, scan §8.5/§9.2). Runnable now, owner-led;
+      blocks nothing mechanically but is the right hygiene before any
+      betting-adjacent or commercial framing hardens.
 
   - id: "B1"
     phase: "B"
@@ -544,8 +586,11 @@ sessions:
       build-graph-isolated from wf_features) + gold.track_profiles_asof
       (walk-forward, feature-eligible only via a gated A/B); FVS/residual metrics
       pinned to the frozen engine; explicit TPP clean-air exclusion deferring
-      anything causal to specs/clean_air_causal_pace.md. Vendored priors untouched
-      (source vs derived); reference output — no model change without a gated A/B.
+      anything causal to specs/clean_air_causal_pace.md. Loop-metric-adjacent
+      definitions (passes, green-flag restrictions, ARP variants) pinned per
+      external_knowledge_scan.md §7.3 and shared with F13 rather than
+      re-chosen. Vendored priors untouched (source vs derived); reference
+      output — no model change without a gated A/B.
     deps: ["C2", "D1"]
     status_note: "audit follow-up (research/track_audit/INTEGRATION.md); needs silver lap/pit/flag (C2) + gold (D1)"
   - id: "F4"
@@ -568,8 +613,12 @@ sessions:
       hierarchical pooling with a pre-registered n-floor. Comparison protocol =
       edge-restricted Spearman + top-3 Jaccard + a named disagreement list vs
       nascar_track_similarity_edges.csv; structural edges retained as the SOLE
-      donor structure for zero-history configs. MY_TYPE untouched — any pooling
-      refinement exits F4 as an A/B candidate, not an adoption.
+      donor structure for zero-history configs. Plus a pltree cross-validation
+      (external_knowledge_scan.md §3.9): does model-based recursive
+      partitioning on silver.track_dim physical covariates recover MY_TYPE?
+      Agreement = independent evidence for the frozen pooling key;
+      disagreement feeds the named disagreement list. MY_TYPE untouched — any
+      pooling refinement exits F4 as an A/B candidate, not an adoption.
     deps: ["D1"]
     status_note: "audit follow-up; needs gold residual history (D1); informs but never directly changes the frozen model"
   - id: "F5"
@@ -647,49 +696,55 @@ sessions:
   - id: "F6"
     phase: "F"
     title: "External NASCAR knowledge scan (web research spike)"
-    status: "pending"
+    status: "done"
     model: "Fable 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
-    wall_clock: "~4-6 hr"
-    ref: null
+    wall_clock: "~2.5 hr"
+    ref: "6d5e18e"
     exec_summary: >-
-      Search the web for how everyone else models NASCAR — academic papers,
-      betting and DFS/fantasy analytics, and open-source projects — and distill
-      the credible, transferable ideas (features, methods, data sources) into
-      candidate additions to this project, each mapped to our architecture and
-      governance. Produces a cited research report that proposes; it builds
-      nothing and changes no frozen spec.
+      Searched how everyone else models NASCAR — academic papers, betting/DFS
+      analytics, open-source projects, and data sources — with every claim
+      adversarially verified against fetched primary sources. Headline: the
+      strongest transferable idea is changing the model's likelihood (the
+      attrition model, originally proposed for NASCAR, beat standard
+      Plackett-Luce in a walk-forward F1 study), the loop-data metrics everyone
+      uses are derivable from our own archive, and NASCAR's 2025 terms of use
+      got a careful read with a balanced verdict. Proposed five new candidate
+      sessions; built nothing.
     tech_summary: >-
-      Deliverable research/external_knowledge_scan.md via fan-out web search +
-      source fetch + adversarial verification (deep-research style, every claim
-      cited). Sweeps: (1) ACADEMIC — motorsport/NASCAR finishing-position and
-      ranking models (Plackett-Luce and alternatives), DNF/attrition, caution and
-      pit-strategy modeling, driver-skill estimation, transferable methods from F1
-      and other ranking sports; (2) BETTING/DFS/FANTASY — public methodologies and
-      the signals they use (practice/qualifying speed, loop data, track history,
-      equipment/manufacturer, weather), plus H2H-matchup market structure relevant
-      to the market benchmark; (3) OPEN-SOURCE/ANALYTICAL — GitHub repos, nascaR.data
-      (already source S005), public dashboards and blogs, for data sources and
-      modeling approaches; (4) DATA SOURCES beyond cf.nascar.com (loop data, weather,
-      practice) — what is public/licensable. For each idea: credibility (validated
-      vs hype, common leakage traps flagged), fit to our walk-forward PL + medallion
-      architecture, governance tier, overlap vs what we already do/plan (MY_TYPE,
-      pace_med85, DNF/pooling A/Bs, clean-air, track-audit F3/F4/F5) so nothing is
-      duplicated, and a candidate plan session (payoff band then effort). Doctrine:
-      proposes only; any model feature needs its own pre-registered, gated A/B;
-      licensed/ToS-clean sources only.
+      Deliverable research/external_knowledge_scan.md (6d5e18e): 103-agent
+      deep-research workflow (21 sources, 99 claims, 25 triple-verified: 23
+      confirmed 3-0, 2 refuted 0-3) + 7 targeted single-verifier agents on the
+      betting/DFS + data-source claims the budget cut. Verified core: Hunter
+      2004 estimability trap binds only worth-parameterized extensions (frozen
+      engine is covariate-PL — recorded as a standing spec requirement);
+      attrition/reverse-PL likelihood (Graves 2003 JASA -> Henderson & Kirrane
+      2018) -> F12; likelihood-level geometric time-weighting folded into F12
+      conditional on F10; truncated-PL rejected (loses to attrition, misaligned
+      with full-order rho); hierarchical decomposition (van Kesteren & Bergkamp
+      JQAS 2023, constructor 64-88% in F1) -> descriptive F14 as F11 trigger
+      evidence; PL-trees -> F4 addendum; weather null verified (every ELPD
+      delta < SE). Loop-data family (ARP/passes/fastest-laps/closers, 2005+)
+      shown derivable in-house from silver.laps -> F13; same-race Driver Rating
+      circular by construction (finish is a formula input). nascaR.data: Rating
+      column + parquet URLs live-verified, licensing UNRESOLVED (no upstream
+      terms exist) -> F15 owner-gated. NASCAR July-2025 NDM ToS verified via
+      Wayback: scraping + model-development clauses confirmed verbatim, but
+      cf.nascar.com absent from the covered-services list, no ToS link on the
+      feed endpoint, no bot-block -> A6 owner review. F7's four prior-art
+      anchors verified with exact citations (TrueSkill method/domain corrected;
+      reverse-PL predates Graves via Marden 1995). Betting/DFS: H2H market
+      structure + practitioner signals verified as credentialed assertion
+      (zero public backtests anywhere); public DFS baseline confirmed below
+      our 2022 starting point.
     deps: []
     status_note: >-
-      IN PROGRESS — kicked off 2026-07-19. Pure web research + distillation; no
-      data dependency, independent of the rebuild and of F5/F7 (separate report
-      files). Mainline next stays B2. F7 cross-link (b4c00d7, §9 item 5): verify
-      and enrich the §5 prior-art anchors it cited from model knowledge —
-      Glickman 1999 (Glicko/ADF), Herbrich/Minka/Graepel 2006 (TrueSkill/EP),
-      Glickman & Hennessy 2015 JQAS (dynamic state-space rank-order-logit for
-      multi-competitor sports — the direct ancestor of F10's Kalman-filter
-      approach), and Graves-Reese-Fitzgerald 2003 JASA (NASCAR
-      hierarchical-permutations, the F11/hierarchical-PL ancestor) — with real
-      citations in the academic sweep.
+      DONE 2026-07-19 (6d5e18e). All proposals folded in: F12 (rank-likelihood
+      A/B), F13 (in-house loop-metric histories), F14 (equipment-share
+      decomposition), F15 (nascaR.data vendoring, owner-gated), F16 (domain
+      knowledge scan — follow-up spike for the domain gap F6's
+      verification-heavy design left open), A6 (owner ToS review), F3/F4
+      tightenings. The F7 prior-art cross-link was executed (scan §3.11).
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       First read README.md, PLAN.md (esp. Phase F), specs/ (scoring, market benchmark,
@@ -928,6 +983,198 @@ sessions:
       tech_summary). Proposed by F7 (b4c00d7); named 'F9' there before the
       F8/F9 IDs were confirmed taken (F5's config-novelty/era-reset) —
       renumbered F11.
+  - id: "F12"
+    phase: "F"
+    title: "Rank-likelihood A/B — attrition (reverse-PL) ± time-weighting"
+    status: "blocked"
+    model: "Fable 5 (spec) / Sonnet 5 (run) · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~1-2 hr spec + ~3-6 hr run"
+    ref: null
+    exec_summary: >-
+      Test whether flipping the model's likelihood — scoring races from last
+      place upward, the way attrition actually works — beats the current
+      model. The strongest externally-validated idea from the F6 scan:
+      proposed for NASCAR in 2003, and it clearly beat standard Plackett-Luce
+      in a walk-forward F1 forecasting study.
+    tech_summary: >-
+      Pre-register a spec per research/external_knowledge_scan.md §3.3-§3.5
+      (Graves-Reese-Fitzgerald 2003 JASA -> Henderson & Kirrane 2018 Bayesian
+      Analysis citation chain, scan §3.11 anchor 4). Variants: attrition
+      (reverse-PL over the same feature utilities — reversed sequential
+      likelihood in a step-script copy of pl_fit); attrition + likelihood-level
+      geometric time-weighting (conditional on F10's outcome per scan §3.4 —
+      drop on an F10 adopt unless a distinct mechanism argument is recorded
+      pre-data); truncated-PL considered-and-rejected in-spec with citation
+      (loses to attrition; misaligned with the frozen full-order-rho primary).
+      Baseline = then-frozen config, reproduced exactly (baseline-replication
+      asserts per the DNF-spec amendment pattern). Adopt iff one-sided Wilcoxon
+      p <= alpha_adj (multiplicity extending the roadmap-#4 family convention)
+      AND mean(d) >= +0.005. Honest tension recorded pre-data: the external
+      wins are top-of-order probabilities; our primary is full-order rho — a
+      null on rho with improved top-order calibration is a plausible,
+      reportable outcome.
+    deps: ["D1", "F2", "F10"]
+    status_note: >-
+      Proposed by F6 (6d5e18e, scan §8.1/§9.1). Gated: >=8 scored races AND
+      gold (D1) AND F1->F2->F10 decisions recorded (baseline known; the
+      time-weighting variant's fate depends on F10). Likelihood lever —
+      disjoint from the DNF/pooling feature levers and from F10's
+      feature-history gain lever.
+  - id: "F13"
+    phase: "F"
+    title: "Driver loop-metric histories (in-house loop data)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~3-5 hr"
+    ref: null
+    exec_summary: >-
+      Build the loop-data signals everyone in public NASCAR analytics uses —
+      average running position, passes, fastest laps, closers — from our own
+      archived lap data, with no new source and no licensing exposure.
+    tech_summary: >-
+      From silver.laps/flag_events (C2): as-of driver histories for ARP,
+      green-flag pass differential, quality passes, fastest-lap share,
+      laps-in-top-15, closers (final-10% positions gained). Definitions pinned
+      in a pre-registered doc per external_knowledge_scan.md §7.3 — three ARP
+      variants circulate publicly (all-laps / green-flag-only / lead-lap-only)
+      and no official glossary is accessible, so the choice is ours and frozen;
+      import F3's definitions where shared (passes, green-flag restrictions)
+      rather than re-choosing. Same-race loop metrics are outcomes, not
+      pre-race signals (scan §7.2) — histories only, exactly like fin/pace.
+      Analytics tables (Tier A); any model-feature use requires its own later
+      gated A/B. NASCAR's official Driver Rating is NOT imported: finish is a
+      direct formula input (scan §6.1) — a self-built composite from these
+      components supersedes it.
+    deps: ["C2"]
+    status_note: >-
+      Proposed by F6 (6d5e18e, scan §8.2/§9.1). Needs silver lap/flag tables
+      (C2). Driver-history grain — complementary to F3's track-grain profiles.
+  - id: "F14"
+    phase: "F"
+    title: "Next Gen equipment-share decomposition"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-5 hr"
+    ref: null
+    exec_summary: >-
+      Measure how much of a Cup result is the team/manufacturer vs the driver
+      under Next Gen parity — the NASCAR version of a famous F1 result (~64-88%
+      constructor there), as a descriptive analytics deliverable that doubles
+      as trigger evidence for the banked hierarchical-model lane.
+    tech_summary: >-
+      Hierarchical driver/team/make variance decomposition on gold walk-forward
+      data per external_knowledge_scan.md §3.6 (van Kesteren & Bergkamp JQAS
+      2023 template; their DNF-exclusion sensitivity and
+      descriptive-not-forecasting warnings imported). Requires the scan §3.2
+      standing requirement: per-window strong-connectivity diagnostic +
+      explicit regularization (worth-parameterized estimation). Descriptive
+      only (Tier A) — never joins feature banks; its result is direct trigger
+      evidence for/against F11 (hierarchical Bayesian PL). Runs after D1,
+      independent of F2's feature-pooling A/B, which runs first regardless.
+    deps: ["D1"]
+    status_note: >-
+      Proposed by F6 (6d5e18e, scan §8.3/§9.1). Analytics-only; informs F11's
+      trigger and quantifies the parity premise behind Next Gen-era modeling.
+  - id: "F15"
+    phase: "F"
+    title: "nascaR.data vendored ingestion (1949+, owner-licensing-gated)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~2-3 hr"
+    ref: null
+    exec_summary: >-
+      Vendor 77 seasons of historical results (plus 2005+ loop ratings) as a
+      hashed reference source — pending the owner's call on its unresolved
+      data licensing.
+    tech_summary: >-
+      Owner licensing decision FIRST: the package is GPL-3 (code only — no
+      data license exists anywhere), DriverAverages.com publishes no terms of
+      use at all, and the "scraped with permission" statement is a private,
+      unscoped grant (external_knowledge_scan.md §5; two claims about it were
+      refuted 0-3 in verification). If cleared: ingest the three parquet files
+      (cup/nxs/truck — public R2 URLs live-verified 2026-07-19, ~1 MB each,
+      21-column schema incl. the loop-derived Rating column, status-with-cause,
+      stage points) as an immutable, hashed, versioned reference source in the
+      track_audit pattern; reconcile vs bronze results as a QA cross-check.
+      Analytics tier only — never frozen-model training data (the 2022+ Next
+      Gen window is a deliberate era choice, not a data shortage).
+    deps: []
+    status_note: >-
+      Proposed by F6 (6d5e18e, scan §8.4/§9.1). BLOCKED on an owner risk
+      decision, not on data or code — the parquet endpoints work today.
+  - id: "F16"
+    phase: "F"
+    title: "NASCAR domain-knowledge scan (hypothesis-generation spike)"
+    status: "pending"
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-5 hr"
+    ref: null
+    exec_summary: >-
+      The complement to F6: not "how does everyone model NASCAR" but "what
+      does the sport itself know that our feature set ignores" — crew chief
+      changes, playoff desperation, tire allocations, draft alliances — each
+      idea kept only if a measurable, leakage-safe proxy exists in data we
+      already hold. F6's strict verification standard structurally filtered
+      domain lore out; this spike admits it as hypotheses with explicit
+      credibility discounting.
+    tech_summary: >-
+      Deliverable research/domain_knowledge_scan.md in F6's format (credibility,
+      mechanism, proxy fields, leakage + event-frequency power check, governance
+      tier, overlap, candidate session). Sweeps: (1) people/org changes — crew
+      chief tenure/swaps and ride changes from the weekend feed's
+      crew_chief_id/team transitions (new ground vs F2's org-form pooling);
+      (2) incentive states — playoff bubble math from points_position /
+      playoff_points_earned / playoff_round (the measurable version of the
+      "motivation" signal F6 marked unmeasured; sharpens track-audit H5);
+      (3) equipment/tires — Goodyear per-race compound/allocation advances
+      (verify archival depth), pit_box (partially answers track-audit H7
+      in-feed), manufacturer draft-alliance correlation at SS from our lap
+      data; (4) rules/format eras — inventory only, defer to F9; (5) race-craft
+      meta — inventory and defer to F3/G1 owners, add nothing. Includes the
+      in-feed inventory of ~30 unconsumed weekend-feed result-row/race-level
+      fields (verified present in bronze 2026-07-19: crew_chief_fullname/id,
+      owner_id, sponsor, pit_box, points_position, points_delta,
+      playoff_points_earned, playoff_round, infractions, inspection_complete,
+      pit_reports, race_purse). Proposes only; expected payoff MED for model
+      features (low-frequency events rarely clear +0.005), HIGH for
+      analytics/DFS and for replacing pundit lore with measured answers.
+    deps: []
+    status_note: >-
+      Proposed 2026-07-19 in the F6 close-out discussion (owner-accepted).
+      Ungated, runnable now, independent of the rebuild; sources admitted as
+      hypothesis generators with credibility discounting — the A/B gate, not
+      source verification, is where rigor lands.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read README.md, PLAN.md (Phase F), research/external_knowledge_scan.md (esp. §4.2
+      practitioner signals and §10 open questions), research/track_audit_derivation.md,
+      and research/track_audit/INTEGRATION.md so nothing duplicates existing plans.
+
+      RESEARCH SPIKE F16 — NASCAR domain-knowledge scan (hypothesis generation).
+      Complement F6: not "how does everyone model NASCAR" but "what does the sport
+      know that our feature set ignores." Evidence posture: practitioner/journalistic
+      sources admitted as hypothesis generators with explicit credibility discounting;
+      an idea qualifies via mechanism + measurable walk-forward-safe proxy in data we
+      hold + non-duplication (F2 pooling, F3 track profiles, F9 era work, G1 clean-air,
+      track-audit H1-H8). Sweep: (1) people/org changes — crew_chief_id tenure/swaps,
+      ride changes; (2) incentive states — points_position/playoff_points/playoff_round
+      bubble math (sharpens track-audit H5); (3) equipment/tires — Goodyear race
+      advances, pit_box (H7), manufacturer draft alliances; (4) rules/format eras —
+      inventory only; (5) race-craft meta — inventory and defer to owning sessions.
+      Include the in-feed inventory: all unconsumed weekend-feed fields (verified
+      present: crew_chief_fullname/id, owner_id, sponsor, pit_box, points_position,
+      points_delta, playoff_points_earned, playoff_round, infractions,
+      inspection_complete, pit_reports, race_purse) mapped to candidate uses.
+      Produce research/domain_knowledge_scan.md in F6's format: per idea credibility,
+      mechanism, proxy fields, leakage + event-frequency power check, governance tier,
+      overlap, candidate session (payoff band then effort). Proposes only; nothing
+      enters the frozen model without its own pre-registered gated A/B. Commit the
+      report; leave the tree clean.
 
   - id: "G1"
     phase: "G"
