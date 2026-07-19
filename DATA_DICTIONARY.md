@@ -373,11 +373,12 @@ series, matching every other year's pattern — 2017 just needed asking).
 exclusively from `race_list` snapshots, so the recovered 2017 rows were
 invisible to `bronze.races_index`/`bronze.coverage` (and therefore to any
 silver/gold consumer) despite being on disk. Added
-`_load_races_index_from_weekend_feed()`: for any year with no usable
-`race_list` index but with stored `weekend-feed` files (currently just 2017),
-it synthesizes the same row shape per-race directly from each race's own
-`weekend-feed` payload instead of a year-level index snapshot. General on
-purpose, not hardcoded to 2017. `bronze.races_index` now carries 1,166 rows
+`_load_races_index_from_weekend_feed()` (renamed/generalized to
+`_load_race_records_from_weekend_feed()` at C1 -- §9b): for any year with no
+usable `race_list` index but with stored `weekend-feed` files (currently
+just 2017), it synthesizes the same row shape per-race directly from each
+race's own `weekend-feed` payload instead of a year-level index snapshot.
+General on purpose, not hardcoded to 2017. `bronze.races_index` now carries 1,166 rows
 (was 1,069), `bronze.coverage`'s totals moved from 4,222/1,964 to 4,416/2,352
 (+194 stored = 97 `weekend-feed` + 97 `live-feed`; +388 absent = 4 feeds ×
 97 races) — exactly the expected 2017 addition, verified via `bronze_report.py`
@@ -387,3 +388,92 @@ with zero regression to 2015-2026.
 respect. Whether to pull 2017 into silver/gold scope (C1 onward) remains a
 separate decision for whoever scopes those sessions — bronze/warehouse
 availability and silver/gold inclusion are not the same question.
+
+---
+
+## 9. Silver layer — `data/silver/` (medallion rebuild, C1)
+
+Cleaned/conformed tables built by `src/silver_build.py` from bronze. Design:
+`specs/medallion_architecture.md` section 3. `silver.driver_race` is the
+FROZEN parity table (section 3.3) — reproduces `races_parsed.pkl`
+field-for-field via the C-gate (section 4); see `## RESULT — C-gate` in the
+spec and `report/SILVER_REGRESSION.md` for the full C1 outcome.
+
+### 9a. `silver.races` — `data/silver/races.parquet`
+
+One row per `(series_id, race_id)`, every year/series/`race_type_id` present
+in bronze (1,166 races as of C1: 601 Cup/Xfinity/Truck `race_type_id=1`
+points races, plus exhibitions and other race types). Source: the latest
+`race_list_basic` index entry for that race (or, for years with no usable
+index — 2017 — the race's own `weekend-feed` `weekend_race[0]` object,
+which carries the identical field vocabulary; `DATA_DICTIONARY` §8f).
+
+| field | type | meaning |
+|-------|------|---------|
+| `series_id` | int | 1 Cup / 2 Xfinity / 3 Trucks. |
+| `race_id` | int | NASCAR `race_id`. |
+| `year` | int | Season year (index snapshot directory year). |
+| `race_type_id` | int | 1 = points race; other values = exhibitions etc. |
+| `race_date` | str | Verbatim ISO race datetime from the index entry. |
+| `race_name` | str | Verbatim race name. |
+| `track_id` | int | NASCAR track id. |
+| `track_name` | str | Stripped track name. |
+| `scheduled_laps` / `actual_laps` | int | Race distance. |
+| `stage_1_laps` / `stage_2_laps` / `stage_3_laps` | int | Stage lengths (0 if unstaged). |
+| `winner_driver_id` | int \| null | Unset for pre-2020-ish index rows (§8c) and some exhibitions. |
+| `green_flag_utc` | str \| null | `schedule[]` entry with `event_name=='Race'` → `start_time_utc`; `null` if no such entry. |
+| `number_of_cautions` / `number_of_caution_laps` / `number_of_lead_changes` | int | Race summary stats. |
+| `parse_status` | str | `ok` \| `skipped: <reason>` (verbatim `parse_race` skip string) \| `not_attempted` (missing lap-times/weekend-feed, or non-points race type). |
+| `n_green` / `n_fe` / `n_prac` | int \| null | Parse diagnostics from `parse_race`; `null` unless `parse_status='ok'`. |
+
+### 9b. `silver.driver_race` — `data/silver/driver_race.parquet` (FROZEN parity contract)
+
+One row per `(series_id, race_id, driver_id)` for every race with
+`parse_status='ok'` (22,463 rows as of C1, 6,083 of them the 163-race Cup
+2022–2026 anchor subset). Produced by feeding each race's latest bronze
+`lap-times` + `weekend-feed` through `parse_lib.parse_race()` **unmodified**
+— same code path, same bytes, so parity with `races_parsed.pkl` (§1) is
+mechanical rather than re-derived. Columns: `series_id, race_id, year,
+race_date, track, driver_id`, then the 15 driver fields of §1b verbatim
+(`finish, start, qspeed, status, team, make, laps_led, laps_completed,
+pace_med85, pace_mean70, pace_p20, pace_best, nlaps, fepace, practice`) —
+same types and null semantics as §1b (a plain `dict.get()` on the same
+`parse_race()` output dict reproduces the pkl's absent-key-vs-`None`
+distinction automatically).
+
+Attempted for **any series**, not just Cup — the spec's frozen behavior
+(field-size gates etc.) applies unchanged to Xfinity/Trucks; a race that
+fails them is `skipped`, correctly. This means `silver.driver_race` has
+substantially more races than the 163-race Cup anchor (2020–2026 Cup, plus
+Xfinity/Trucks) — additive, not a parity violation (section 4.1: "the
+universe grows with it").
+
+### 9c. `src/warehouse.py` extension (C1)
+
+`load_race_records()` (public): full raw per-race record (every
+`race_list_basic`/`weekend_race` field, not the 7-column trim) per
+`(series_id, race_id)`, used by `silver_build.py` to populate `silver.races`.
+`_load_races_index()` (bronze layer) is now a thin trim of
+`load_race_records()`'s output — same `bronze.races_index` columns/behavior
+as before, zero regression. `build_warehouse()` additionally registers
+`silver.races` / `silver.driver_race` as DuckDB views over the parquet files
+in `data/silver/` when present (same rebuildable-from-disk pattern as the
+bronze views — deleting `nascar.duckdb` never loses information).
+
+### 9d. C1 finding — `fepace` cross-environment BLAS/LAPACK non-reproducibility (2026-07-19)
+
+The C-gate (section 4) as originally FROZEN demands bit-identical floats,
+"no epsilon granted," on the theory that the same code on the same bytes is
+deterministic. For 162/163 anchor races this held for every field **except**
+`fepace` — the one §1b/§3.3 column computed via `np.linalg.lstsq` (an SVD
+solve). Diffs were ULP-scale (~1e-15 relative) and stable across repeated
+runs in this session, the signature of a numpy/BLAS/LAPACK implementation
+difference between this environment (numpy 2.1.3, OpenBLAS 0.3.21, macOS
+arm64) and whatever built `races_parsed.pkl`, not a code or data
+difference. Owner-authorized dated amendment (spec section 4, `## AMENDMENT
+(2026-07-19...)`) relaxed `fepace`'s equality check to
+`math.isclose(rel_tol=1e-9, abs_tol=1e-12)`; every other column is
+unaffected and still compares by exact `==`. `fepace` is not used by the
+production model (`walkforward.py`'s frozen feature set is `[fin, pace,
+typed, start]`, `pace=pace_med85`) — see report §7's "proven dead end."
+Full per-race, per-driver diff detail: `report/SILVER_REGRESSION.md`.

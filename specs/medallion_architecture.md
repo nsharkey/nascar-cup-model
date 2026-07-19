@@ -592,9 +592,79 @@ count, rows compared, field-comparison counts, every PASS-with-note in
 full, and the environment (python/numpy/duckdb/pyarrow versions). The
 PASS-with-note list feeds §6's R1 expectations verbatim.
 
-## RESULT — C-gate (to be filled by C1)
+## AMENDMENT (2026-07-19, mid-C1, made *after* the gate had already run against the
+original §4.2 rule — a protocol violation per `specs/README.md`'s own pre-registration
+discipline, disclosed here in bold as that discipline requires, with both the
+pre-amendment and post-amendment verdicts reported below)
 
-*(pending)*
+**C1 ran `gate_silver.py` against the FROZEN §4.2 exact-equality rule as originally
+written, before this amendment existed. Pre-amendment verdict: FAIL.** 162/163 anchor
+races failed, every one of them on exactly one field: `fepace` (5,851 field-level diffs
+total, all `fepace`, zero on any other §3.3 column). The one race that passed outright
+had `n_fe=0` — no fixed-effects estimate computed for any driver in that race, so both
+sides were trivially `None`.
+
+**Root cause (confirmed, not assumed).** `fepace` is the only §3.3 column computed via
+`np.linalg.lstsq` (`parse_lib.py`'s fixed-effects SVD solve — report §7's documented
+dead end). Calling `parse_lib.parse_race` unmodified, twice in-process on the same
+bytes, reproduces bit-identical output (rules out within-run nondeterminism); three
+separate process invocations in this session were also mutually stable. The diffs are
+ULP-scale (~1e-15 relative — e.g. anchor `-0.0051694084139229735` vs silver
+`-0.005169408413922949`), the signature of a numpy/BLAS/LAPACK implementation
+difference between whatever environment originally built `races_parsed.pkl` and this
+session's environment (numpy 2.1.3, OpenBLAS 0.3.21, macOS arm64) — not a code
+difference, not a data difference. §4.3's two anticipated attribution categories
+(parser/plumbing regression vs. NASCAR data revision) don't cover this third cause, and
+no legacy per-race cache exists to even attempt §4.3's mechanical sha comparison (the
+already-known B3/C1 blocker) — so this could not have been resolved by the frozen
+procedure as written, regardless of the missing baseline.
+
+**Amendment (owner-authorized 2026-07-19, mid-C1):** §4.2 point 4's exact-`==`
+requirement is relaxed for the single `fepace` column only. `fepace` now compares equal
+iff both sides are `None`/`NULL`, or `math.isclose(anchor, silver, rel_tol=1e-9,
+abs_tol=1e-12)`. Every other §3.3 column keeps exact `==` — no epsilon, unchanged.
+Races where `fepace` differs only within this tolerance are recorded as PASS-with-note
+(§4.3's disclosure standard), reason `fepace: environment (BLAS/LAPACK) floating-point
+non-reproducibility, not a parser or data difference`, full per-driver diffs logged in
+`report/SILVER_REGRESSION.md`. A `fepace` diff that exceeds this tolerance, or any
+other column mismatch on the same race, is unaffected by this amendment and still
+routes through §4.3 normally (escalate, in this checkout, for the same missing-baseline
+reason as any other field).
+
+**Rationale:** `fepace` is provably unused in production (the frozen config trains on
+`pace_med85` only — see HANDOFF's frozen-config block; report §7 calls fixed-effects
+pace a dead end); the diffs are environment floating-point noise at 1e-15 relative
+magnitude with a confirmed mechanism, not a signal; and withholding C1 indefinitely on
+an unfixable cross-machine BLAS/LAPACK discrepancy in an already-dead feature serves no
+one. This does not reopen the frozen parity contract for any other column.
+
+**Post-amendment verdict: see `## RESULT — C-gate` below.**
+
+## RESULT — C-gate (2026-07-19, C1)
+
+**PASS** (post-amendment; pre-amendment was FAIL — see the AMENDMENT block above).
+
+- Anchor: `data/anchors/races_parsed_anchor_20260719.pkl`, sha256
+  `b41e697d2c0fdfdae45fc5e3e15e24b3e1a1b85eb3f227fd1ce9a3cd208ed0bd`, 163 races
+  (matches the sha256 recorded in §3.3 when this spec was written).
+- 6,083 driver-race rows compared, 92,386 field comparisons.
+- 1 clean PASS, 162 PASS-with-note (all `fepace_environment_tolerance`, per the
+  amendment), 0 FAIL.
+- Every other §3.3 column (finish, start, qspeed, status, team, make, laps_led,
+  laps_completed, pace_med85, pace_mean70, pace_p20, pace_best, nlaps, practice) was
+  bit-identical across all 163 anchor races — the parser is proven equivalent on this
+  environment for everything except the one BLAS/LAPACK-sensitive derived field.
+  §4.2 point 5's in-range check found no unexpected `ok` Cup/points races inside the
+  anchor's date span.
+- The B3/C1-carried escalation (§4.3 step 1 has no legacy-import per-race sha
+  baseline) never had to be exercised in isolation: every anchor race's *only*
+  deviation was `fepace`, which the amendment resolves directly. Still genuinely
+  open for any *future* mismatch on a non-`fepace` field — no legacy per-race cache
+  exists in this checkout to run §4.3's mechanical comparison against.
+- Full per-race, per-driver detail: `report/SILVER_REGRESSION.md` (committed).
+- Environment: python 3.13.5, numpy 2.1.3, duckdb 1.4.0, pyarrow 19.0.0.
+
+Silver is unblocked for D1 (gold build, §5–§6).
 
 ---
 

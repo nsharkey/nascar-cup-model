@@ -21,11 +21,16 @@ MANIFEST_PATH = os.path.join(BRONZE_DIR, 'manifest.jsonl')
 DB_PATH = os.path.join(REPO_ROOT, 'data', 'nascar.duckdb')
 
 
-def _load_races_index():
-    """One row per (series_id, year, race_id) from the latest on-disk race_list snapshot per year.
-    Python, not SQL: the index JSON nests races under series_1/2/3 keys, and only the *latest*
-    version per year is wanted (disk-latest = lexicographic max filename, per section 1.1)."""
-    rows = []
+def load_race_records():
+    """Full raw record per (series_id, race_id) -- every field of the race_list_basic index
+    entry, unstrimmed. Same disk-latest-snapshot-per-year and 2017-weekend-feed-fallback
+    logic as _load_races_index() below, but keeping the whole dict instead of trimming to
+    bronze.races_index's 7 columns: silver.races (section 3.2 of the medallion spec) needs
+    scheduled_laps/stage_*_laps/winner_driver_id/schedule[]/cautions/lead-changes, all of
+    which are already present verbatim on each index entry (and, for fallback years, on the
+    equivalent weekend_race[0] object -- verified same field vocabulary, section 8f).
+    Returns {(series_id, race_id): {'series_id', 'year', 'record': <raw dict>}}."""
+    records = {}
     covered_years = set()
     race_list_root = os.path.join(BRONZE_DIR, 'race_list')
     if os.path.isdir(race_list_root):
@@ -50,27 +55,23 @@ def _load_races_index():
             covered_years.add(year)
             for sid in (1, 2, 3):
                 for r in (idx.get(f'series_{sid}') or []):
-                    rows.append({
-                        'series_id': sid,
-                        'year': year,
-                        'race_id': r.get('race_id'),
-                        'race_type_id': r.get('race_type_id'),
-                        'race_date': r.get('race_date'),
-                        'track_name': (r.get('track_name') or '').strip() or None,
-                        'has_winner': race_has_run(r),
-                    })
-    rows.extend(_load_races_index_from_weekend_feed(covered_years))
-    return rows
+                    rid = r.get('race_id')
+                    if rid is None:
+                        continue
+                    records[(sid, rid)] = {'series_id': sid, 'year': year, 'record': r}
+    for key, rec in _load_race_records_from_weekend_feed(covered_years).items():
+        records.setdefault(key, rec)
+    return records
 
 
-def _load_races_index_from_weekend_feed(covered_years):
+def _load_race_records_from_weekend_feed(covered_years):
     """Fallback for years with no usable race_list index (2017 -- DATA_DICTIONARY section
     8d/8f: the URL is permanently aliased to another year) but with real weekend-feed data
-    recovered by direct race_id probing. Synthesizes the same row shape per (series_id,
+    recovered by direct race_id probing. Synthesizes the same record shape per (series_id,
     race_id) directly from each race's own weekend-feed payload instead of a year-level
     index snapshot. General on purpose: applies to any year missing race_list coverage,
     not hardcoded to 2017."""
-    rows = []
+    records = {}
     series_root_names = sorted(
         n for n in os.listdir(BRONZE_DIR) if n.startswith('series_') and os.path.isdir(os.path.join(BRONZE_DIR, n))
     ) if os.path.isdir(BRONZE_DIR) else []
@@ -91,31 +92,41 @@ def _load_races_index_from_weekend_feed(covered_years):
             if year in covered_years:
                 continue
             for race_id_name in sorted(os.listdir(year_dir)):
-                race_dir = os.path.join(year_dir, race_id_name)
-                if not os.path.isdir(race_dir):
+                race_dir_path = os.path.join(year_dir, race_id_name)
+                if not os.path.isdir(race_dir_path):
                     continue
                 try:
                     race_id = int(race_id_name)
                 except ValueError:
                     continue
                 snapshots = sorted(
-                    f for f in os.listdir(race_dir) if f.startswith('weekend-feed.') and f.endswith('.json.gz')
+                    f for f in os.listdir(race_dir_path) if f.startswith('weekend-feed.') and f.endswith('.json.gz')
                 )
                 if not snapshots:
                     continue
-                latest = os.path.join(race_dir, snapshots[-1])
+                latest = os.path.join(race_dir_path, snapshots[-1])
                 with gzip.open(latest, 'rb') as f:
                     payload = json.loads(f.read())
                 wr = (payload.get('weekend_race') or [{}])[0]
-                rows.append({
-                    'series_id': sid,
-                    'year': year,
-                    'race_id': race_id,
-                    'race_type_id': wr.get('race_type_id'),
-                    'race_date': wr.get('race_date'),
-                    'track_name': (wr.get('track_name') or '').strip() or None,
-                    'has_winner': race_has_run(wr),
-                })
+                records[(sid, race_id)] = {'series_id': sid, 'year': year, 'record': wr}
+    return records
+
+
+def _load_races_index():
+    """One row per (series_id, year, race_id), trimmed to bronze.races_index's columns
+    from load_race_records()'s full per-race records."""
+    rows = []
+    for (sid, rid), info in load_race_records().items():
+        r = info['record']
+        rows.append({
+            'series_id': sid,
+            'year': info['year'],
+            'race_id': rid,
+            'race_type_id': r.get('race_type_id'),
+            'race_date': r.get('race_date'),
+            'track_name': (r.get('track_name') or '').strip() or None,
+            'has_winner': race_has_run(r),
+        })
     return rows
 
 
@@ -245,6 +256,16 @@ def build_warehouse():
             ON ml.feed = f.feed AND ml.series_id = ri.series_id
            AND ml.year = ri.year AND ml.race_id = ri.race_id
     """)
+
+    silver_dir = os.path.join(REPO_ROOT, 'data', 'silver')
+    silver_races_path = os.path.join(silver_dir, 'races.parquet').replace('\\', '/')
+    if os.path.exists(silver_races_path):
+        con.execute(f"CREATE OR REPLACE VIEW silver.races AS SELECT * FROM read_parquet('{silver_races_path}')")
+    silver_driver_race_path = os.path.join(silver_dir, 'driver_race.parquet').replace('\\', '/')
+    if os.path.exists(silver_driver_race_path):
+        con.execute(
+            f"CREATE OR REPLACE VIEW silver.driver_race AS SELECT * FROM read_parquet('{silver_driver_race_path}')"
+        )
 
     con.close()
 

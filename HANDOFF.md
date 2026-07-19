@@ -176,8 +176,9 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   (C1) needs no year-specific logic to pick this up: it already builds
   generically over `bronze.races_index`, which now includes 2017 natively.
   DATA_DICTIONARY §8b/8d/8e/8f, `plan/schedule.yml` updated.
-- **Next single step:** `C1` in the plan — silver driver-race parity (Sonnet
-  build session; the frozen C-gate, gates D1/gold). Carries B3's condition-2
+- **(superseded below — see the later "Next single step") `C1` was next:**
+  silver driver-race parity (Sonnet build session; the frozen C-gate, gates
+  D1/gold). Carries B3's condition-2
   escalation forward — see C1's `status_note` in `plan/schedule.yml`. 2017 is
   in scope like every other year (see B4 above) and needs no special
   handling — `silver_build.py` reads `bronze.races_index` generically. C2
@@ -201,6 +202,32 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   through a50bc9c published ~16:45 UTC, ~6h15m before race 5618's 23:00 UTC
   green flag, so prediction #1's seal is publicly timestamped pre-race.
   H3 (weekly automation) is no longer remote-blocked.
+- **2026-07-19 (C1 done, PASS):** `silver_build.py` + `gate_silver.py` built;
+  `warehouse.py` extended (`load_race_records()`, silver DuckDB views). Full
+  build: 601 Cup/Xfinity/Truck races parsed `ok`, 22,463 driver_race rows.
+  Gate vs. the 163-race anchor (`data/anchors/races_parsed_anchor_20260719.pkl`,
+  sha `b41e697d2c0f…`): every field bit-identical except `fepace` (the sole
+  `np.linalg.lstsq`-derived column), which differed at ULP scale on 162/163
+  races — confirmed reproducible, confirmed isolated to `fepace`, confirmed a
+  cross-environment numpy/BLAS/LAPACK artifact (not a parser bug, not a
+  NASCAR data revision). Escalated mid-session; owner authorized a dated §4
+  amendment exempting `fepace` via a documented tolerance (unused-in-
+  production field; every other column unaffected). Gate: PASS (1 clean, 162
+  PASS-with-note, 0 fail). `report/SILVER_REGRESSION.md` committed (full
+  detail); `## RESULT — C-gate` + the AMENDMENT filled in the spec;
+  `DATA_DICTIONARY.md` §9 added. Odds capture for race 5618 deferred to the
+  owner (paste-when-ready, per HANDOFF's weekly protocol step 3) — prediction
+  #1 itself was already sealed/pushed pre-race (E2).
+- **Next single step:** `D1` in the plan — gold features + re-point engine +
+  re-prove 0.413/0.476/0.449 (Sonnet, xhigh; the frozen D-gate, §6). C2
+  (silver breadth) remains equally unblocked and startable, just not on the
+  gate-critical path to gold — see D1's `status_note` in `plan/schedule.yml`
+  for why it's the pick. Heads-up carried from C1: D1's R1 step already
+  anticipates PASS-with-note races (per-race rho deltas reported
+  individually) — C1's 162 are all the fepace-only environment exception,
+  and fepace isn't a production feature, so R1 should reproduce R0 exactly
+  for all of them; a nonzero delta there would be new information, not an
+  expected pass-through.
 
 ## Roadmap (agreed order — do not skip ahead)
 
