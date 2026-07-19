@@ -26,37 +26,95 @@ def _load_races_index():
     Python, not SQL: the index JSON nests races under series_1/2/3 keys, and only the *latest*
     version per year is wanted (disk-latest = lexicographic max filename, per section 1.1)."""
     rows = []
+    covered_years = set()
     race_list_root = os.path.join(BRONZE_DIR, 'race_list')
-    if not os.path.isdir(race_list_root):
-        return rows
-    for year_name in sorted(os.listdir(race_list_root)):
-        year_dir = os.path.join(race_list_root, year_name)
-        if not os.path.isdir(year_dir):
-            continue
+    if os.path.isdir(race_list_root):
+        for year_name in sorted(os.listdir(race_list_root)):
+            year_dir = os.path.join(race_list_root, year_name)
+            if not os.path.isdir(year_dir):
+                continue
+            try:
+                year = int(year_name)
+            except ValueError:
+                continue
+            snapshots = sorted(f for f in os.listdir(year_dir) if f.endswith('.json.gz'))
+            if not snapshots:
+                continue
+            latest = os.path.join(year_dir, snapshots[-1])
+            with gzip.open(latest, 'rb') as f:
+                idx = json.loads(f.read())
+            if not index_year_matches(idx, year):
+                # bronze immutability (section 2.5) forbids deleting a mistakenly-stored file
+                # (e.g. the 2017 URL's known year-aliasing quirk); skip it here instead.
+                continue
+            covered_years.add(year)
+            for sid in (1, 2, 3):
+                for r in (idx.get(f'series_{sid}') or []):
+                    rows.append({
+                        'series_id': sid,
+                        'year': year,
+                        'race_id': r.get('race_id'),
+                        'race_type_id': r.get('race_type_id'),
+                        'race_date': r.get('race_date'),
+                        'track_name': (r.get('track_name') or '').strip() or None,
+                        'has_winner': race_has_run(r),
+                    })
+    rows.extend(_load_races_index_from_weekend_feed(covered_years))
+    return rows
+
+
+def _load_races_index_from_weekend_feed(covered_years):
+    """Fallback for years with no usable race_list index (2017 -- DATA_DICTIONARY section
+    8d/8f: the URL is permanently aliased to another year) but with real weekend-feed data
+    recovered by direct race_id probing. Synthesizes the same row shape per (series_id,
+    race_id) directly from each race's own weekend-feed payload instead of a year-level
+    index snapshot. General on purpose: applies to any year missing race_list coverage,
+    not hardcoded to 2017."""
+    rows = []
+    series_root_names = sorted(
+        n for n in os.listdir(BRONZE_DIR) if n.startswith('series_') and os.path.isdir(os.path.join(BRONZE_DIR, n))
+    ) if os.path.isdir(BRONZE_DIR) else []
+    for series_name in series_root_names:
         try:
-            year = int(year_name)
+            sid = int(series_name.split('_', 1)[1])
         except ValueError:
             continue
-        snapshots = sorted(f for f in os.listdir(year_dir) if f.endswith('.json.gz'))
-        if not snapshots:
-            continue
-        latest = os.path.join(year_dir, snapshots[-1])
-        with gzip.open(latest, 'rb') as f:
-            idx = json.loads(f.read())
-        if not index_year_matches(idx, year):
-            # bronze immutability (section 2.5) forbids deleting a mistakenly-stored file
-            # (e.g. the 2017 URL's known year-aliasing quirk); skip it here instead.
-            continue
-        for sid in (1, 2, 3):
-            for r in (idx.get(f'series_{sid}') or []):
+        series_dir = os.path.join(BRONZE_DIR, series_name)
+        for year_name in sorted(os.listdir(series_dir)):
+            year_dir = os.path.join(series_dir, year_name)
+            if not os.path.isdir(year_dir):
+                continue
+            try:
+                year = int(year_name)
+            except ValueError:
+                continue
+            if year in covered_years:
+                continue
+            for race_id_name in sorted(os.listdir(year_dir)):
+                race_dir = os.path.join(year_dir, race_id_name)
+                if not os.path.isdir(race_dir):
+                    continue
+                try:
+                    race_id = int(race_id_name)
+                except ValueError:
+                    continue
+                snapshots = sorted(
+                    f for f in os.listdir(race_dir) if f.startswith('weekend-feed.') and f.endswith('.json.gz')
+                )
+                if not snapshots:
+                    continue
+                latest = os.path.join(race_dir, snapshots[-1])
+                with gzip.open(latest, 'rb') as f:
+                    payload = json.loads(f.read())
+                wr = (payload.get('weekend_race') or [{}])[0]
                 rows.append({
                     'series_id': sid,
                     'year': year,
-                    'race_id': r.get('race_id'),
-                    'race_type_id': r.get('race_type_id'),
-                    'race_date': r.get('race_date'),
-                    'track_name': (r.get('track_name') or '').strip() or None,
-                    'has_winner': race_has_run(r),
+                    'race_id': race_id,
+                    'race_type_id': wr.get('race_type_id'),
+                    'race_date': wr.get('race_date'),
+                    'track_name': (wr.get('track_name') or '').strip() or None,
+                    'has_winner': race_has_run(wr),
                 })
     return rows
 

@@ -268,7 +268,7 @@ One JSON object per terminal fetch outcome (not one per file — `unchanged`/
 | `bronze.files` | table | One row per file actually on disk (from a `glob()`, path/series_id/year/race_id/feed/fetch_ts parsed from the filename), left-joined to its latest manifest record for `sha256`/`bytes_raw`/`bytes_gz`. |
 | `bronze.files_latest` | view | `bronze.files` deduped to the latest `fetch_ts` per `(feed, series_id, year, race_id)` — the version silver must read. |
 | `bronze.manifest_latest` | view | `bronze.manifest` deduped to the latest `fetch_utc` per `(feed, series_id, year, race_id)` — used to resolve `absent`/`failed` when no file exists. |
-| `bronze.races_index` | table | One row per `(series_id, year, race_id)` from the latest on-disk `race_list` snapshot per year: `race_type_id`, `race_date`, `track_name`, `has_winner` (see §8c). A year whose index content doesn't match its own URL year (the 2017 aliasing quirk, §8d) is skipped entirely — never loaded into this table even though the misfetched file stays on disk (bronze immutability forbids deleting it). |
+| `bronze.races_index` | table | One row per `(series_id, year, race_id)`: `race_type_id`, `race_date`, `track_name`, `has_winner` (see §8c). Primarily from the latest on-disk `race_list` snapshot per year; a year whose index content doesn't match its own URL year (the 2017 aliasing quirk, §8d) is skipped there — never loaded from `race_list` even though the misfetched file stays on disk (bronze immutability forbids deleting it). For any such year that also has recovered `weekend-feed` files (2017, §8f), rows are synthesized per-race directly from those payloads instead. |
 | `bronze.coverage` | view | Cross join of `bronze.races_index` × the 6 feeds, terminal state `stored \| absent \| failed \| pending` per the same precedence as `manifest_latest`. |
 
 ### 8c. `race_has_run(r)` — completion signal (2026-07-19 finding)
@@ -307,17 +307,19 @@ to behave completely differently once probed directly.
 ### 8e. Detailed-feed floor discovered by the B2 pull (2026-07-19)
 
 Per §8c/8d fixes, all three series, all six feeds, 2015-2026 (minus the
-aliased 2017) were attempted. Result: 4,222 stored, 1,964 confirmed
-`absent`, 0 `failed`. The index floor (2015) and the detailed-feed floor
-are **not the same** — `weekend-feed`/`live-feed` start 2018, `live-flag-data`
-2019, `lap-times`/`live-pit-data`/`lap-notes` 2020, uniformly across all
-three series. 2015-2016 detailed feeds are archived-absent, not missing —
-the pull attempted them and got a two-pass-confirmed 403. 2017 detailed
-feeds were **not attempted at all** at B2 time (no valid 2017 index ⇒ no
-2017 race_ids to request; §8d) — the manifest held zero 2017 detailed-feed
-rows, distinct from 2015-2016's confirmed-`absent` rows. §8f found that,
-unlike 2015-2016, 2017 was never actually below this floor — it just had
-never been asked.
+aliased 2017) were attempted at B2 time. Result: 4,222 stored, 1,964
+confirmed `absent`, 0 `failed`. The index floor (2015) and the detailed-feed
+floor are **not the same** — at B2 time this looked like `weekend-feed`/
+`live-feed` starting 2018, `live-flag-data` 2019, `lap-times`/`live-pit-data`/
+`lap-notes` 2020, uniformly across all three series. 2015-2016 detailed feeds
+are archived-absent, not missing — the pull attempted them and got a
+two-pass-confirmed 403. 2017 detailed feeds were **not attempted at all** at
+B2 time (no valid 2017 index ⇒ no 2017 race_ids to request; §8d) — the
+manifest held zero 2017 detailed-feed rows, distinct from 2015-2016's
+confirmed-`absent` rows. §8f's direct probe found the true 2017 floor differs
+from what B2 assumed: `weekend-feed`/`live-feed` actually start **2017**, not
+2018 — only `live-flag-data` (2019) and `lap-times`/`live-pit-data`/
+`lap-notes` (2020) matched the B2-era assumption once actually tested.
 
 ### 8f. B4 — 2017 recovered via direct race_id probe (2026-07-19)
 
@@ -350,10 +352,38 @@ suggesting further gaps.
 
 **Consequence:** the §8d/§8e conclusion that 2017 contributes nothing beyond
 index metadata was wrong. Full 2017 `weekend-feed` data (schedule, results,
-stats) now exists in bronze for all three series, on par with 2018+. Only
-`lap-times`/`live-pit-data`/`lap-notes`/`live-flag-data`/`live-feed` were not
-probed for 2017 (out of B4's scope; those feeds already floor at 2018-2020
-uniformly per §8e and were not expected to differ). **Whether 2017 should be
-pulled into silver/gold scope (C1 onward) is an open owner decision, not
-resolved by this session** — the medallion rebuild's existing checklists
-were written assuming 2017 was unrecoverable.
+stats) now exists in bronze for all three series, on par with 2018+.
+
+**Follow-up (same day, owner-directed): the remaining 5 feeds.** Since the
+2015-2016 floor generalization had just been shown wrong for `weekend-feed`,
+the same untested-assumption risk applied to the other 5 feeds for 2017 —
+they'd never actually been asked either. `src/bronze_probe_2017_remaining.py`
+targeted the exact 97 `(series_id, race_id)` pairs `weekend-feed` had already
+confirmed real (no need to re-probe the wide id range) against `lap-times`,
+`live-pit-data`, `lap-notes`, `live-flag-data`, `live-feed`. Result: **`live-feed`
+also exists for 2017 (97/97 stored)**; `lap-times`/`live-pit-data`/`lap-notes`/
+`live-flag-data` are genuinely absent for 2017 (97/97 confirmed two-pass `absent`
+each, 0 failed) — so the original floor generalization was right for those
+four feeds specifically, just wrong for `weekend-feed` and `live-feed`. The
+true per-feed 2017 floor: `weekend-feed`/`live-feed` = 2017, `live-flag-data`
+= 2019, `lap-times`/`live-pit-data`/`lap-notes` = 2020 (all uniform across
+series, matching every other year's pattern — 2017 just needed asking).
+
+**Warehouse wiring:** `warehouse._load_races_index()` built `bronze.races_index`
+exclusively from `race_list` snapshots, so the recovered 2017 rows were
+invisible to `bronze.races_index`/`bronze.coverage` (and therefore to any
+silver/gold consumer) despite being on disk. Added
+`_load_races_index_from_weekend_feed()`: for any year with no usable
+`race_list` index but with stored `weekend-feed` files (currently just 2017),
+it synthesizes the same row shape per-race directly from each race's own
+`weekend-feed` payload instead of a year-level index snapshot. General on
+purpose, not hardcoded to 2017. `bronze.races_index` now carries 1,166 rows
+(was 1,069), `bronze.coverage`'s totals moved from 4,222/1,964 to 4,416/2,352
+(+194 stored = 97 `weekend-feed` + 97 `live-feed`; +388 absent = 4 feeds ×
+97 races) — exactly the expected 2017 addition, verified via `bronze_report.py`
+with zero regression to 2015-2026.
+
+2017 Cup/Xfinity/Truck data is now on par with 2018+ in every bronze/warehouse
+respect. Whether to pull 2017 into silver/gold scope (C1 onward) remains a
+separate decision for whoever scopes those sessions — bronze/warehouse
+availability and silver/gold inclusion are not the same question.
