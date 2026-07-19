@@ -83,7 +83,10 @@ is needed. `update_data.py` appends any newly completed races in seconds.
 - **2026-07-18 (planning session):** `specs/` pre-registered before any race
   was scored: scoring methodology, market-benchmark decision rule (gates
   roadmap #5), and the two roadmap-#4 A/B protocols (DNF/status, pooling).
-  Frozen sections are immutable per `specs/README.md`.
+  Frozen sections are immutable per `specs/README.md`. Also
+  `planning/aws_solutions.md`: plan-only AWS/infra roadmap (odds capture,
+  live-feed poller, mirroring, automation) — nothing implemented; each item
+  needs its own go.
 - **Next single step:** after the North Wilkesboro race, score prediction #1
   per `specs/scoring_methodology.md` (build `score_race.py` + its fixture
   tests first — spec §10 checklist). Book prices for it: not yet recorded —
@@ -112,6 +115,8 @@ README.md           public-facing description
 report/             full audit report
 specs/              pre-registered, frozen design docs (scoring, market
                     gate, feature A/Bs) — read specs/README.md first
+planning/           living plan docs (aws_solutions.md — plan-only infra
+                    roadmap, nothing implemented)
 src/                pipeline: download.py, parse_lib.py, parse.py,
                     update_data.py, predict_next.py, walkforward.py (engine),
                     step2/3/4/6 (audit analyses)

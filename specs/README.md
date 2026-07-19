@@ -30,12 +30,13 @@ session (any model tier) makes zero judgment calls.
 
 ## Explicitly out of scope (recorded decisions, not oversights)
 
-- **Live-race / in-race data acquisition (incl. any AWS-hosted telemetry
-  feeds):** not planned here. Nothing in the repo touches AWS; the audit
-  marked in-race/telemetry claims unaudited and out of scope; and by
-  roadmap order anything live-race-shaped sits behind the market-benchmark
-  gate (#5 territory at the earliest). If the gate reads EDGE, plan it
-  then, in its own pre-registered spec.
+- **Live-race / in-race MODELING:** still gated — by roadmap order it sits
+  behind the market-benchmark gate (#5 territory at the earliest), and the
+  audit marked in-race/telemetry claims unaudited. Infrastructure-side
+  planning (data capture, odds recording, automation) now exists as a
+  plan-only living document at `planning/aws_solutions.md` (2026-07-18,
+  owner-authorized); nothing there is implemented, and none of it changes
+  any frozen spec or the model.
 - Clean-air causal pace (roadmap #5): gated on the market benchmark;
   §7 of the audit stands — the fixed-effects approach is a dead end, do
   not retry it.
