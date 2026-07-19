@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-19"
   spec_version: 1
-  shape_sig: "ddbbdeb3cae17eab"
+  shape_sig: "f6c061250e4340f2"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order, run as a live forward test against the closing-line market.
@@ -16,15 +16,17 @@ meta:
     market capture never pauses. Rendered from data, kept here and nowhere else.
   bottom_line: >-
     Bronze is built AND verified: B1-B3 all done as of 2026-07-19, with B3
-    confirming zero failed fetches and hash-clean sampled files. Next in the
-    mainline is C1 — silver driver-race parity (Sonnet) — which gates gold
-    via the frozen C-gate; C1 carries one open item from B3 (no legacy-cache
-    sha baseline for the 163 anchor races) that only bites if a race
-    mismatches. The perishable weekly predict+odds capture never pauses for
-    the rebuild, and it plus everything downstream is re-homed as a Gold
-    consumer. Governance and all three research spikes are complete and
-    folded into the phase tables below; nothing they propose enters the
-    frozen model without a gated A/B.
+    confirming zero failed fetches and hash-clean sampled files. B4 (optional)
+    found more than expected: a full 2017 season, all 3 series, recoverable
+    via direct race_id probing — bronze holds it now, but folding it into
+    silver/gold is an open owner decision. Next in the mainline is C1 —
+    silver driver-race parity (Sonnet) — which gates gold via the frozen
+    C-gate, carries one open item from B3 (no legacy-cache sha baseline for
+    the 163 anchor races), and should decide 2017's scope explicitly. The
+    perishable weekly predict+odds capture never pauses for the rebuild, and
+    it plus everything downstream is re-homed as a Gold consumer. Governance
+    and all three research spikes are complete; nothing they propose enters
+    the frozen model without a gated A/B.
   handoff_note: >-
     C1 is a Sonnet build session executing the spec's section-10 C1 checklist
     with zero design judgment calls (every choice is pre-resolved in the spec;
@@ -383,35 +385,92 @@ sessions:
 
   - id: "B4"
     phase: "B"
-    title: "Recover 2017 index metadata via race_id probe (optional)"
-    status: "pending"
+    title: "Recover 2017 season via direct race_id probe"
+    status: "done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~20-40 min"
-    ref: null
+    wall_clock: "~24 min"
+    ref: "ba4a9f3"
     exec_summary: >-
-      Optional completeness nicety: recover 2017's race schedule/results, the one
-      season missing from the archive. Adds nothing to the model — it only fills a
-      historical-metadata gap.
+      Expected a minor completeness nicety, found a whole recovered season instead:
+      2017's full race results for all three series were sitting on the source
+      site the entire time, just never requested because of a broken index.
+      Whether to fold 2017 into the modeling data is now an open decision, not
+      resolved here.
     tech_summary: >-
-      The cf.nascar.com 2017 index URL is permanently aliased to 2018 (serves
-      2018's races verbatim; DATA_DICTIONARY §8d), so 2017 has no enumerable
-      race list and is absent from bronze.races_index. 2017's race_ids occupy
-      the observed gap between 2016 (Cup ends 4518) and 2018 (Cup starts 4673) —
-      a ~154-id block — and are recoverable by probing that range directly,
-      bypassing the broken index. NOTE: 2017 is below the detailed-feed floor
-      (weekend-feed/lap-times start 2018; 2015-2016 also store no detailed
-      feeds), so this yields index/schedule metadata only, no modeling rows —
-      strictly a completeness item, immaterial to the frozen model. Preserve
-      bronze immutability and the manifest/aliasing guards when adding the
-      probe path.
+      2017's race_list_basic.json is permanently aliased to 2018 (DATA_DICTIONARY
+      §8d), so B2 never enumerated 2017 race_ids and never attempted 2017 detailed
+      feeds — the prior "2017 is below the detailed-feed floor" note (§8e) was an
+      untested assumption, not a finding. src/bronze_probe_2017.py bypassed the
+      broken index, deriving each series' race_id gap from bronze.races_index
+      (series 1: 4519-4672, series 2: 4552-4713, series 3: 4575-4746 — 488
+      candidates) and probing weekend-feed directly via the existing fetch/retry/
+      circuit-breaker/manifest machinery. Result: 97 stored, 391 confirmed-absent
+      (two-pass), 0 failed — 41/154 Cup, 33/162 Xfinity, 23/172 Truck, matching
+      each series' real 2017 season length almost exactly, with full results
+      payloads (e.g. race_id 4579 = 2017 Daytona 500, 42 results rows). DATA_DICTIONARY
+      §8d/§8e/§8f updated with the corrected finding. Existing 2015-2026 coverage
+      (4,222/1,964) unaffected — verified via bronze_report.py. These 2017 rows are
+      NOT yet visible in bronze.races_index/coverage (both keyed off race_list,
+      which excludes 2017 by design, §8b) — surfacing them into silver/gold is an
+      open scope decision for the owner, not decided by this session.
     deps: ["B2"]
     status_note: >-
-      Logged 2026-07-19 from a DATA_DICTIONARY audit that also corrected two
-      2017 framing errors in §8d/§8e (the aliased file is a redundant 2018 copy,
-      not 2017 coverage; 2017 detailed feeds were never attempted — zero
-      manifest rows — distinct from 2015-2016's confirmed-absent). Low priority:
-      nothing downstream needs 2017.
+      2026-07-19: done. Logged as optional/low-priority from a DATA_DICTIONARY
+      audit, then run same-day once a kickoff_prompt was drafted — turned into the
+      session's most consequential finding: the "immaterial to the frozen model"
+      framing was wrong. Flagged to the owner, not auto-folded into C1's scope.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, then DATA_DICTIONARY.md §8 in full (especially §8d — the 2017
+      index-aliasing quirk — and §8e — the detailed-feed floor). Skim
+      specs/medallion_architecture.md sections 1.1/2 for the fetch/manifest protocol
+      and src/bronze_fetch.py for index_url(), feed_url(), index_year_matches(),
+      and the two-pass tentative-absent sweep (fetch_index/process_task/sweep_tentative).
+
+      RUN session B4 (plan/schedule.yml, optional/low-priority) — recover 2017 index
+      metadata via a direct race_id probe:
+
+      1. Per §8d, 2017's race_list_basic.json is permanently aliased to 2018, so
+         bronze has no 2017 race_ids and never attempted 2017 detailed feeds at all
+         (distinct from 2015-2016's confirmed-absent — §8e). 2017's race_ids sit in
+         the observed Cup gap between 2016 (ends 4518) and 2018 (starts 4673) — a
+         ~154-id block. Derive the analogous gap boundaries for series_id 2
+         (Xfinity) and 3 (Trucks) the same way, by querying bronze.races_index (or
+         manifest) for each series' max 2016 race_id and min 2018 race_id.
+      2. For each series' gap range, probe weekend-feed (feed_url('weekend-feed',
+         sid, 2017, race_id)) for every candidate race_id, using the existing
+         fetch_with_ladder/throttle/manifest-recording machinery so results land in
+         manifest.jsonl exactly like any other fetch (respect the retry ladder,
+         circuit breaker, and rate limit — this is genuinely untested territory,
+         not a known-403 replay). This is the actual unknown: nobody has confirmed
+         whether weekend-feed 403s for 2017 race_ids the way it does for the
+         confirmed-absent 2015-2016 case, or returns real payloads.
+      3. If any race_id 200s: extract race_name, track_name, race_type_id, and the
+         schedule[] race date from the weekend-feed payload (per spec §2's
+         weekend-feed field list) as recovered 2017 schedule metadata. Store it
+         through the normal bronze path — do not bypass manifest immutability or
+         hand-edit races_index.
+      4. If none 200 (this is a fully valid outcome, not a failure — it converts
+         "never attempted" into a confirmed, permanent absence, which has real
+         documentation value on its own): record the two-pass-confirmed absent
+         outcomes to the manifest as usual.
+      5. Preserve bronze immutability and the existing aliasing/two-pass guards
+         throughout — do not delete or rewrite any existing file, and do not touch
+         index_year_matches() or races_index-loading logic.
+      6. Update DATA_DICTIONARY.md §8d/§8e with whatever was actually found
+         (recovered metadata, or confirmed-permanent-absence) — this closes an
+         open question either way.
+      7. Re-run src/bronze_report.py to confirm no regression in the existing
+         coverage matrix.
+
+      Zero design judgment calls: if something here is genuinely ambiguous (e.g.
+      whether to probe series 2/3 at all, or how to handle a partial-200 payload),
+      STOP and flag it rather than choosing. This is explicitly optional and
+      low-priority (nothing downstream needs 2017) — if it's a quick null, report
+      it plainly as a completed, documented null, not a failure. If today is a race
+      weekend, E1 duties (prediction + odds capture) come first. Commit code +
+      manifest + DATA_DICTIONARY updates; leave the tree clean.
 
   - id: "C1"
     phase: "C"
