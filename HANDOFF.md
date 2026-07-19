@@ -117,9 +117,21 @@ specs/              pre-registered, frozen design docs (scoring, market
                     gate, feature A/Bs) — read specs/README.md first
 planning/           living plan docs (aws_solutions.md — plan-only infra
                     roadmap, nothing implemented)
+plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
+PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
+PLAN_FORMAT.md      the plan mechanism + anti-drift gate
 src/                pipeline: download.py, parse_lib.py, parse.py,
                     update_data.py, predict_next.py, walkforward.py (engine),
-                    step2/3/4/6 (audit analyses)
+                    report_plan.py (plan renderer), step2/3/4/6 (audit analyses)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 ```
+
+## Sprint-plan display (read before touching the plan)
+
+The sprint plan is **structured data + a deterministic renderer + a drift
+gate**, not a hand-maintained doc. Edit `plan/schedule.yml` and run
+`python src/report_plan.py` to regenerate `PLAN.md` and `plan/PLAN.html` —
+**never hand-edit a rendered file** (`src/test_report_plan.py` fails CI if a
+render diverges from the YAML). "Show me the plan" = run the renderer. Full
+spec: `PLAN_FORMAT.md`.

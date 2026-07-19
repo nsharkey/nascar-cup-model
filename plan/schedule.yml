@@ -1,0 +1,354 @@
+# Sprint-plan SOURCE OF TRUTH. Edit THIS file, then run `python src/report_plan.py`
+# to regenerate PLAN.md and plan/PLAN.html. NEVER hand-edit a rendered file — the
+# drift gate (src/test_report_plan.py) fails CI if you do. Format: PLAN_FORMAT.md.
+meta:
+  plan_name: "NASCAR Cup Model"
+  as_of: "2026-07-19"
+  spec_version: 1
+  standfirst: >-
+    The single living plan for the walk-forward Plackett-Luce Cup Series model:
+    a completed foundation (audit, frozen config, pre-registered and
+    adversarially reviewed specs) now feeding the weekly forward test, with the
+    feature and causal-pace tracks gated behind it. Rendered from data, kept
+    here and nowhere else.
+  bottom_line: >-
+    Foundation and pre-registration are complete and adversarially reviewed
+    (26 findings, all fixed pre-data). The project is now in weekly accrual
+    (Phase B), whose only near-term build is **B0 — build `score_race.py` and
+    score prediction #1**. Phases C and D stay behind their gates; the two
+    items you can independently pull forward are the Fable-written roadmap-#5
+    design spec (D0) and AWS closing-odds capture (E1).
+  handoff_note: >-
+    B0 is a Sonnet 5 build against a zero-judgment spec — run it fresh on
+    Sonnet 5, thinking on, effort high (this Fable session exceeds that tier).
+    It is gated only on the North Wilkesboro race actually running; the
+    prediction refuses to be scored before results exist.
+
+phases:
+  - key: "A"
+    num: "I"
+    title: "Foundation & pre-registration"
+    model: "Fable 5 · thinking on"
+    note: >-
+      Judgment-shaped work: audit, frozen config, and immutable rulebooks
+      written before any result exists. Complete. Model attribution on these
+      rows reflects the judgment tier; detail lives in the technical column.
+  - key: "B"
+    num: "II"
+    title: "Market-benchmark accrual (RUNNING)"
+    model: "Sonnet 5 · thinking on · high"
+    note: >-
+      The running spine: the weekly predict-then-score loop that accumulates
+      scored races and closing prices to answer the project's central question
+      (is there a live edge over the closing line?). Gates Phases C and D.
+  - key: "C"
+    num: "III"
+    title: "Feature experiments (gated: >=8 scored races)"
+    model: "Sonnet 5 · thinking on · xhigh"
+    note: >-
+      Walk-forward A/B tests that adopt a feature only if it beats the frozen
+      config by a pre-registered margin. Hard-gated on >=8 scored forward
+      races; C2 is serial after C1's decision.
+  - key: "D"
+    num: "IV"
+    title: "Causal clean-air pace (gated: market EDGE)"
+    model: "Fable 5 · thinking on"
+    note: >-
+      The hardest feature, attempted only if the market benchmark returns
+      EDGE. The design spec can be written now; execution stays gated. The
+      fixed-effects approach is a proven dead end (audit report section 7).
+  - key: "E"
+    num: "V"
+    title: "AWS / infra (optional, per-item go)"
+    model: "Sonnet 5 · thinking on · high"
+    note: >-
+      Independent of C and D. Capture-side infrastructure to protect the
+      benchmark's sample size and preserve irreplaceable race-day data at a
+      few dollars a month. Plan-only today; each item needs its own go.
+
+sessions:
+  - id: "A1"
+    phase: "A"
+    title: "Zero-trust audit"
+    status: "done"
+    model: "Fable 5 · thinking on"
+    settings: {thinking: true, effort: null}
+    wall_clock: "—"
+    ref: "472d43c"
+    exec_summary: >-
+      Re-checked the previous modeling effort's claims from scratch — most
+      held, two were overstated, and the supposed accuracy ceiling was beaten.
+    tech_summary: >-
+      163 races parsed from cf.nascar.com; walk-forward Spearman. C2/C3
+      confirmed and strengthened, C1/C4 shown noise-level, C5 broken at 0.413
+      with a fitted Plackett-Luce model. report/NASCAR_AUDIT_REPORT.md.
+    deps: []
+  - id: "A2"
+    phase: "A"
+    title: "Frozen config + walk-forward engine"
+    status: "done"
+    model: "Fable 5 · thinking on"
+    settings: {thinking: true, effort: null}
+    wall_clock: "—"
+    ref: null
+    exec_summary: >-
+      Locked the production model settings so nothing changes without
+      walk-forward validation evidence.
+    tech_summary: >-
+      PL features [fin, pace, typed, start], pace_med85, half-life 8, ridge
+      lambda 0.5, MY_TYPE typology, burn 15, min_hist 5, min_drv 20;
+      src/walkforward.py is the frozen engine.
+    deps: ["A1"]
+  - id: "A3"
+    phase: "A"
+    title: "Forward-test harness + prediction #1"
+    status: "done"
+    model: "Fable 5 · thinking on"
+    settings: {thinking: true, effort: null}
+    wall_clock: "—"
+    ref: "bdd6984"
+    exec_summary: >-
+      Built the weekly prediction tool and logged the first public pre-race
+      pick.
+    tech_summary: >-
+      predict_next.py refuses post-hoc runs; race 5618 (North Wilkesboro)
+      prediction sealed with a sha256 payload hash.
+    deps: ["A2"]
+  - id: "A4"
+    phase: "A"
+    title: "Pre-registration specs"
+    status: "done"
+    model: "Fable 5 · thinking on"
+    settings: {thinking: true, effort: null}
+    wall_clock: "—"
+    ref: "7b9a526"
+    exec_summary: >-
+      Wrote the rulebooks for how everything is judged — before any result
+      exists — so outcomes cannot be cherry-picked later.
+    tech_summary: >-
+      specs/: scoring methodology, market-benchmark decision rule (gates
+      roadmap #5), DNF and pooling A/B protocols. Frozen per specs/README.md.
+    deps: ["A1"]
+  - id: "A5"
+    phase: "A"
+    title: "Adversarial review + amendments"
+    status: "done"
+    model: "Fable 5 / Opus 4.8 · thinking on"
+    settings: {thinking: true, effort: null}
+    wall_clock: "~1 day"
+    ref: "e0c07c5"
+    exec_summary: >-
+      Had fresh reviewers attack all four rulebooks and fixed every hole before
+      it mattered, including one serious statistical flaw.
+    tech_summary: >-
+      26 findings (1 CRITICAL, 6 MAJOR), all accepted; amendments applied
+      pre-data; review/ ledger + 3 findings files. CRITICAL: interim bootstrap
+      edge boundary was uncalibrated at small race counts.
+    deps: ["A4"]
+
+  - id: "B0"
+    phase: "B"
+    title: "Build score_race.py + score prediction #1"
+    status: "next"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~2-4 hr (first build; then a few min/week)"
+    ref: null
+    exec_summary: >-
+      Turn the first race into the first scored data point — the tool that
+      grades every weekly prediction from here on.
+    tech_summary: >-
+      Implement to the AMENDED scoring spec (section 10 checklist + all
+      AMENDMENT blocks: completeness gate, frozen results snapshot, pipeline
+      order, provenance); pass the section 9 fixtures before touching real data.
+    deps: ["A4", "A5"]
+    status_note: "2026-07-19: gated only on the North Wilkesboro race running; predict/score is refused pre-results."
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md first. Today's task: score prediction #1 (race 5618, North
+      Wilkesboro, 2026-07-19) per protocol step 4.
+
+      Follow specs/scoring_methodology.md EXACTLY — INCLUDING every dated AMENDMENT
+      block at the bottom of the file (a red-team pass amended it pre-race: results
+      completeness gate on winner_driver_id, frozen _wf_scored.json snapshot with
+      defined read precedence, section 5 book-pipeline order, recorded_utc
+      provenance, n<3 handling, note-clause ordering). In order:
+      1. Implement src/score_race.py + src/test_score_race.py per spec section 10 and
+         all amendments; the section 9 fixtures plus amendment rules must all pass
+         before real data.
+      2. If closing book prices for 5618 were captured, record them per section 5.1
+         BEFORE scoring; else proceed and let the scorer note their absence.
+      3. Run update_data.py, then score_race.py 5618. Hash verification must pass;
+         the first scoring writes the frozen results snapshot.
+      4. Update HANDOFF status; commit per the spec's message format; tree clean.
+      Doctrine: frozen config, no post-hoc anything, one step at a time.
+  - id: "B1"
+    phase: "B"
+    title: "Weekly pre-race: predict + commit + push + record odds"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~15-30 min + human odds step (recurring)"
+    ref: null
+    exec_summary: >-
+      Log each pick publicly before the green flag, and record the closing
+      betting prices the whole benchmark depends on.
+    tech_summary: >-
+      update_data.py then predict_next.py; commit + push before green flag;
+      record ALL primary-book matchups per the market-spec full-board amendment.
+    deps: ["A3"]
+  - id: "B2"
+    phase: "B"
+    title: "Weekly post-race: score"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~10-20 min (recurring, once B0 exists)"
+    ref: null
+    exec_summary: "Add each completed race to the scored log."
+    tech_summary: >-
+      score_race.py writes the frozen results snapshot and appends
+      scores_log.csv; commit per the spec message format.
+    deps: ["B0"]
+  - id: "B3"
+    phase: "B"
+    title: "Create GitHub remote + first push"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~30 min"
+    ref: null
+    exec_summary: >-
+      Make the pre-race timestamps publicly verifiable and unblock later
+      automation.
+    tech_summary: >-
+      Create remote, push all local commits (publishes prediction #1's seal);
+      prerequisite for E3.
+    deps: []
+  - id: "B4"
+    phase: "B"
+    title: "Build market_benchmark.py + first look"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~2-3 hr (first meaningful look needs enough priced races)"
+    ref: null
+    exec_summary: "Compute the running edge verdict from the sealed inputs."
+    tech_summary: >-
+      Amended section 6: race-clustered bootstrap with K>=20 floor and pinned
+      mechanics; sequential Haybittle-Peto looks; reads sealed JSONs + frozen
+      snapshots only.
+    deps: ["B0"]
+
+  - id: "C1"
+    phase: "C"
+    title: "DNF/status A/B (roadmap #4a)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-6 hr incl. discards"
+    ref: null
+    exec_summary: >-
+      Test whether accounting for HOW a driver dropped out improves
+      predictions; adopt only if it clears a pre-set bar.
+    tech_summary: >-
+      3 variants; adopt iff one-sided Wilcoxon p<=0.0167 AND mean delta-rho
+      >=+0.005; per amended spec (V2 column namespacing, hardened baseline gate
+      via explicit run() arg assertions).
+    deps: ["B2"]
+    status_note: "gated: needs >=8 scored races in scores_log.csv"
+  - id: "C2"
+    phase: "C"
+    title: "Team/manufacturer pooling A/B (roadmap #4b)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "reparse ~10 min + ~3-6 hr"
+    ref: null
+    exec_summary: >-
+      Test whether teammate and manufacturer form add signal, after the DNF
+      decision is settled.
+    tech_summary: >-
+      Reparse for the team_name org key (regression-gated) then 3 exclude-self
+      pooled variants; multiplicity 0.05/6 if C1 adopted nothing.
+    deps: ["C1"]
+    status_note: "gated on C1 decision + the reparse prerequisite"
+
+  - id: "D0"
+    phase: "D"
+    title: "Pre-register the roadmap-#5 design spec"
+    status: "pending"
+    model: "Fable 5 · thinking on"
+    settings: {thinking: true, effort: null}
+    wall_clock: "~2-4 hr"
+    ref: null
+    exec_summary: >-
+      Bank the research design for the highest-leverage feature now, while
+      execution stays gated on a proven edge.
+    tech_summary: >-
+      Causal identification via restart reshuffles and pit-cycle natural
+      experiments; pre-registered kill/keep gate. Fixed-effects is a dead end
+      (report section 7).
+    deps: ["A5"]
+    status_note: "design writable now; execution gated on market benchmark = EDGE"
+  - id: "D1"
+    phase: "D"
+    title: "Implement roadmap #5"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "TBD"
+    ref: null
+    exec_summary: "Build the causal-pace feature only if the market says it is worth it."
+    tech_summary: "Per the D0 spec's pre-registered kill/keep gate."
+    deps: ["D0", "B4"]
+    status_note: "gated on the market benchmark returning EDGE"
+
+  - id: "E1"
+    phase: "E"
+    title: "S1 closing-odds capture"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Stop losing the closing betting prices the whole benchmark depends on;
+      a scheduled job records them every race morning.
+    tech_summary: >-
+      EventBridge -> Lambda -> licensed odds API -> S3; formatter emits
+      book_prices.entries per scoring spec section 5.1; human still commits.
+      See planning/aws_solutions.md.
+    deps: []
+    status_note: "owner go; the priority infra item"
+  - id: "E2"
+    phase: "E"
+    title: "S2 live-feed poller + S3 archive mirror"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Record the one race-day data stream that is otherwise lost forever, and
+      back up all source feeds for pennies.
+    tech_summary: >-
+      Race-window Lambda polling live-feed.json; one-time backfill of all
+      consumed cf.nascar.com endpoints + weekly increment.
+    deps: []
+  - id: "E3"
+    phase: "E"
+    title: "S4 weekly automation"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~2-4 hr"
+    ref: null
+    exec_summary: >-
+      Make the weekly public prediction post automatic so a busy Saturday
+      cannot break the experiment.
+    tech_summary: >-
+      Qualifying-detection off the weekend feed -> predict -> commit/push with
+      cloud-held credentials; NOT GitHub Actions (quota trap).
+    deps: ["B3"]
+    status_note: "needs the GitHub remote (B3) first"
