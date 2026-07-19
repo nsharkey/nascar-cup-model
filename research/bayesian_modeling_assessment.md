@@ -556,6 +556,12 @@ freezing its details now would just be renegotiated later.
 
 ## 9. Proposed plan edits (owner fold-in; `plan/schedule.yml` not touched)
 
+> **Renumbering note (2026-07-19, post-fold-in):** the fold-in session (commit
+> 0b84dcc) found the "F8"/"F9" IDs proposed below already taken in
+> `plan/schedule.yml` by F5's config-novelty and era-reset A/Bs. The dynamic-
+> skill recency A/B landed as **F10** and the conditional hierarchical PL as
+> **F11**. IDs below are left as written for the record; the schedule governs.
+
 1. **F7 → ✅ done**, deliverable `research/bayesian_modeling_assessment.md`
    (this file's commit). Executive summary: assessed three Bayesian
    formulations against four payoffs with compute first-class; verdicts
