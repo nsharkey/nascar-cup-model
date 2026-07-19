@@ -433,8 +433,8 @@ sessions:
     exec_summary: "Build clean-air pace only if the market says it is worth it."
     tech_summary: >-
       Per G1's pre-registered gate; consumes silver pit/flag tables + gold features.
-    deps: ["G1", "D2"]
-    status_note: "gated on the market benchmark returning EDGE"
+    deps: ["G1", "C2", "D1", "D2"]
+    status_note: "gated on the market benchmark returning EDGE; also needs the data pipeline — bronze pit/flag download (B2) -> silver pit/flag tables (C2) -> gold features (D1)"
 
   - id: "H1"
     phase: "H"
