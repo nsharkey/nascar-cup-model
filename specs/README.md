@@ -27,6 +27,7 @@ session (any model tier) makes zero judgment calls.
 | `market_benchmark_decision_rule.md` | Pre-registered "live edge over the closing line?" statistic, sequential test, power, stopping rule (gates roadmap #5) | Accumulates from first priced race; looks per its §4 |
 | `dnf_status_feature.md` | Roadmap #4a: 3 DNF/status variants, walk-forward A/B vs frozen config, kill/keep rule | scores_log ≥ 8 races |
 | `team_mfr_pooling.md` | Roadmap #4b: org/manufacturer pooling variants (incl. the `team_name` data-layer prerequisite), same gate form | After #4a's decision is recorded |
+| `medallion_architecture.md` | Bronze/silver/gold rebuild design (added 2026-07-19, plan session B1): C-gate silver regression + D-gate re-prove rules frozen; layouts/protocols stable-amendable per its freeze map | Governs build sessions B2–D2 (plan phases B–D) |
 
 ## Explicitly out of scope (recorded decisions, not oversights)
 
