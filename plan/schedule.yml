@@ -17,9 +17,10 @@ meta:
   bottom_line: >-
     Bronze is built AND verified: B1-B3 all done as of 2026-07-19, with B3
     confirming zero failed fetches and hash-clean sampled files. B4 (optional)
-    found more than expected: a full 2017 season, all 3 series, recoverable
-    via direct race_id probing — bronze holds it now, but folding it into
-    silver/gold is an open owner decision. Next in the mainline is C1 —
+    found more than expected: a full 2017 season, all 3 series, recovered via
+    direct race_id probing and fully wired into the warehouse — but folding
+    it into silver/gold is a separate, still-open owner decision. Next in the
+    mainline is C1 —
     silver driver-race parity (Sonnet) — which gates gold via the frozen
     C-gate, carries one open item from B3 (no legacy-cache sha baseline for
     the 163 anchor races), and should decide 2017's scope explicitly. The
@@ -389,14 +390,16 @@ sessions:
     status: "done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~24 min"
-    ref: "ba4a9f3"
+    wall_clock: "~55 min"
+    ref: "a588563"
     exec_summary: >-
       Expected a minor completeness nicety, found a whole recovered season instead:
-      2017's full race results for all three series were sitting on the source
-      site the entire time, just never requested because of a broken index.
-      Whether to fold 2017 into the modeling data is now an open decision, not
-      resolved here.
+      2017's real race results (2 of 6 feeds; the other 4 genuinely don't exist for
+      2017) for all three series were sitting on the source site the entire time,
+      just never requested because of a broken index. Now fully wired into the
+      warehouse alongside every other season — 2017 is on par with 2018+ in bronze.
+      Whether to fold it into silver/gold modeling scope remains a separate,
+      unresolved decision.
     tech_summary: >-
       2017's race_list_basic.json is permanently aliased to 2018 (DATA_DICTIONARY
       §8d), so B2 never enumerated 2017 race_ids and never attempted 2017 detailed
@@ -404,22 +407,28 @@ sessions:
       untested assumption, not a finding. src/bronze_probe_2017.py bypassed the
       broken index, deriving each series' race_id gap from bronze.races_index
       (series 1: 4519-4672, series 2: 4552-4713, series 3: 4575-4746 — 488
-      candidates) and probing weekend-feed directly via the existing fetch/retry/
-      circuit-breaker/manifest machinery. Result: 97 stored, 391 confirmed-absent
-      (two-pass), 0 failed — 41/154 Cup, 33/162 Xfinity, 23/172 Truck, matching
-      each series' real 2017 season length almost exactly, with full results
-      payloads (e.g. race_id 4579 = 2017 Daytona 500, 42 results rows). DATA_DICTIONARY
-      §8d/§8e/§8f updated with the corrected finding. Existing 2015-2026 coverage
-      (4,222/1,964) unaffected — verified via bronze_report.py. These 2017 rows are
-      NOT yet visible in bronze.races_index/coverage (both keyed off race_list,
-      which excludes 2017 by design, §8b) — surfacing them into silver/gold is an
-      open scope decision for the owner, not decided by this session.
+      candidates) and probed weekend-feed directly: 97 stored, 391 confirmed-absent
+      (two-pass), 0 failed — 41/154 Cup, 33/162 Xfinity, 23/172 Truck, matching each
+      series' real 2017 season length. src/bronze_probe_2017_remaining.py then
+      targeted those exact 97 races against the other 5 feeds: live-feed also
+      exists (97/97 stored); lap-times/live-pit-data/lap-notes/live-flag-data are
+      genuinely absent (97/97 each, 0 failed) — true 2017 floor is weekend-feed/
+      live-feed=2017, live-flag-data=2019, the rest=2020. warehouse.py gained
+      _load_races_index_from_weekend_feed() (general, not 2017-hardcoded) to
+      synthesize races_index rows per-race from weekend-feed when a year has no
+      usable race_list — bronze.races_index 1,069->1,166 rows, bronze.coverage
+      4,222/1,964 -> 4,416/2,352 stored/absent (exactly the expected 2017 delta),
+      zero regression to 2015-2026 per bronze_report.py. DATA_DICTIONARY §8b/8d/8e/8f
+      updated. Folding 2017 into silver/gold scope (C1 onward) is a separate,
+      still-open decision — bronze/warehouse availability isn't the same question.
     deps: ["B2"]
     status_note: >-
       2026-07-19: done. Logged as optional/low-priority from a DATA_DICTIONARY
       audit, then run same-day once a kickoff_prompt was drafted — turned into the
       session's most consequential finding: the "immaterial to the frozen model"
-      framing was wrong. Flagged to the owner, not auto-folded into C1's scope.
+      framing was wrong. Owner directed a follow-up ("make sure all data is
+      available") to fetch the remaining 5 feeds and wire 2017 into the warehouse;
+      both done. Silver/gold scope for 2017 still not decided.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then DATA_DICTIONARY.md §8 in full (especially §8d — the 2017
