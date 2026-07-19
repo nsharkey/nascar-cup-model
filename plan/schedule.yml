@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-19"
   spec_version: 1
-  shape_sig: "f6c061250e4340f2"
+  shape_sig: "87c3ffa3d4369494"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order, run as a live forward test against the closing-line market.
@@ -1438,11 +1438,12 @@ sessions:
     exec_summary: >-
       Automatically record betting prices every race morning from this machine.
     tech_summary: >-
-      launchd job ~1 h pre-green -> licensed odds API -> raw JSON + paste-ready
-      book_prices.entries (scoring spec 5.1); human still pastes+commits. Soft-fails
-      if the Mac is off Saturday. planning/aws_solutions.md L2.
-    deps: []
-    status_note: "gated on confirming a licensed odds API lists NASCAR H2H matchups; the picks-feeding link"
+      launchd job ~1 h pre-green -> odds source chosen in L5 (no licensed API
+      covers NASCAR H2H) -> raw JSON + paste-ready book_prices.entries (scoring
+      spec 5.1); human still pastes+commits. Soft-fails if the Mac is off
+      Saturday. planning/aws_solutions.md L2.
+    deps: ["L5"]
+    status_note: "gated on L5's source + primary-book decision (no licensed API covers NASCAR H2H); the picks-feeding link"
   - id: "L3"
     phase: "H"
     title: "Local weekly pipeline (launchd)"
@@ -1476,6 +1477,30 @@ sessions:
       asleep/off race days; no roadmap item consumes it yet. planning/aws_solutions.md L4.
     deps: []
     status_note: "opportunistic — irreversibility argues for starting some snapshot log, but no consumer exists and awake-Mac fragility makes it better-than-nothing, not dependable"
+  - id: "L5"
+    phase: "H"
+    title: "Odds-source research + book decision (feeds L2)"
+    status: "pending"
+    model: "Opus 4.8 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~2-3 hr"
+    ref: null
+    exec_summary: >-
+      Decide where betting odds come from programmatically, and which book to
+      standardize on, instead of reading a phone screen against the green-flag
+      deadline every week.
+    tech_summary: >-
+      Research spike. 2026-07-19 finding: The Odds API does NOT cover NASCAR;
+      paid feeds (SportsDataIO/OddsMatrix/OpticOdds) carry H2H matchups but cost;
+      DK's own unofficial JSON (sportsbook.draftkings.com/sites/US-SB/api/v5/
+      eventgroups/{id}, no auth) is free+exact but ToS-gated. Order, STOP after 2:
+      (1) resolve the scrape ToS posture like A6, hit no endpoint until decided;
+      (2) compare DK-unofficial vs scraper (Apify) vs paid feed, and recommend the
+      primary book to standardize on; stop for GO; (3) on GO, build a fetcher
+      emitting book_prices.entries per scoring spec 5.1. Fixes L2's dead 'licensed
+      odds API' assumption. See memory nascar-odds-source-options.
+    deps: []
+    status_note: "no licensed API covers NASCAR H2H, so L2's source is undecided; primary-book choice is OPEN (owner did NOT designate DK — tonight's manual capture just used it); manual DK capture continues as anecdotal interim"
   - id: "H1"
     phase: "H"
     title: "S1 closing-odds capture (AWS — FROZEN)"
