@@ -85,7 +85,10 @@ phases:
     note: >-
       The pre-registered roadmap-#4 A/Bs, now executed against the gold feature
       layer. Specs are frozen and carry over; hard-gated on >=8 scored races,
-      and F2 is serial after F1's decision.
+      and F2 is serial after F1's decision. F3/F4 are follow-ups from the
+      vendored track-audit package (research/track_audit/) — analytics and
+      reference outputs gated on the medallion build rather than on scored
+      races; neither touches the frozen model.
   - key: "G"
     num: "VII"
     title: "Causal clean-air pace (gated: market EDGE)"
@@ -297,9 +300,13 @@ sessions:
       built on it.
     tech_summary: >-
       Coverage manifest terminal (ok/absent/failed=0); superset check that the
-      existing 163 races' consumed feeds are present; spot-parse sample files;
-      hashes recorded.
+      existing 163 races' consumed feeds are present; reconcile the bronze race
+      index (points races 2022->present) against races_parsed.pkl AND the
+      vendored track-audit schedule counts (research/track_audit/) — must
+      surface the known missing fall-2025 Talladega playoff race and any other
+      gap; spot-parse sample files; hashes recorded.
     deps: ["B2"]
+    status_note: "known must-surface case: races_parsed.pkl lacks fall-2025 Talladega (163 where the schedule implies 164; HANDOFF 2026-07-19). The superset check alone is keyed to the 163 existing races and CANNOT catch it — the index-vs-pkl reconciliation exists for exactly this."
 
   - id: "C1"
     phase: "C"
@@ -317,6 +324,7 @@ sessions:
       regression vs races_parsed.pkl (163/163) covering
       finish/start/status/pace_med85/etc.; dedupe + type conform.
     deps: ["B2"]
+    status_note: "heads-up (B3 finding): bronze will contain the fall-2025 Talladega race that races_parsed.pkl lacks. The frozen C-gate judges parity field-for-field on the anchored 163 races; the rebuilt silver should ADD the recovered race — never drop it to force a row-count match."
   - id: "C2"
     phase: "C"
     title: "Silver lap / pit / flag tables"
@@ -439,6 +447,51 @@ sessions:
       clean in silver (no reparse needed); 0.05/6 multiplicity if F1 adopted nothing.
     deps: ["F1"]
     status_note: "gated on F1's decision"
+  - id: "F3"
+    phase: "F"
+    title: "Track-audit prior calibration (empirical track profiles on gold)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~4-6 hr"
+    ref: null
+    exec_summary: >-
+      Replace the vendored track audit's 1-10 analyst guesses with real
+      measurements from our own lap, pit, and caution data — turning reference
+      priors into calibrated per-track profiles for DFS and betting work.
+    tech_summary: >-
+      Pre-register a spec first (specs/README.md discipline), then compute the
+      audit's metric specs (tire-deg slope TDS, restart volatility RVS,
+      pit-share PIS, qualifying importance QIS, laps-led Herfindahl DCI, ...)
+      per crosswalk track_id x era from silver laps/pit_stops/flag_events +
+      gold results, with hierarchical shrinkage toward the package's 12
+      families; write a gold track_profiles table. The vendored priors in
+      research/track_audit/ stay untouched (source vs derived separation);
+      analytics/reference output only — no model change.
+    deps: ["C2", "D1"]
+    status_note: "audit follow-up (research/track_audit/INTEGRATION.md); needs silver lap/pit/flag (C2) + gold (D1)"
+  - id: "F4"
+    phase: "F"
+    title: "Empirical track similarity vs structural edges (DST)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-5 hr"
+    ref: null
+    exec_summary: >-
+      Test whether tracks that look similar on paper actually behave similarly
+      for drivers — replacing the audit's structural guesses with measured
+      skill transfer between tracks.
+    tech_summary: >-
+      Pre-register a spec, then compute Driver Skill Transferability per the
+      audit's metric spec: cross-validated driver-residual correlation between
+      track_id/era pairs from gold walk-forward residuals; compare against
+      nascar_track_similarity_edges.csv (structural priors). Where they
+      disagree, empirical wins for analytics; the structural file stays as
+      vendored reference. Candidate input to a future typed-history refinement
+      — any MODEL change still requires its own gated A/B.
+    deps: ["D1"]
+    status_note: "audit follow-up; needs gold residual history (D1); informs but never directly changes the frozen model"
 
   - id: "G1"
     phase: "G"
