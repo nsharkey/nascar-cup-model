@@ -111,14 +111,12 @@ phases:
     title: "Capture infra — local-first (AWS deferred indefinitely)"
     model: "Sonnet 5 · thinking on · high"
     note: >-
-      Capture-side infrastructure that protects the forward test's sample size
-      and preserves irreplaceable data. DECISION 2026-07-19: AWS build-out is
-      deferred INDEFINITELY — the local versions (L1-L4) are the active path and
-      run first; the AWS sessions (H1-H3) are frozen as the eventual cloud
-      fallback and run only if the owner lifts the deferral. All fetching is
-      already local (src/update_data.py is a 4-line urllib loop); only the
-      live-feed poller is new engineering. No GitHub Actions (quota trap).
-      Plan-only; each item needs its own owner go. See planning/aws_solutions.md.
+      Capture-side infrastructure protecting the forward test's sample size and
+      its irreplaceable data. DECISION 2026-07-19: AWS is deferred INDEFINITELY
+      — the local jobs (L1-L4) are the active path; the AWS sessions (H1-H3) are
+      frozen as a cloud fallback, unfrozen only if the owner lifts the deferral.
+      No GitHub Actions (quota trap). Plan-only — each item needs its own owner
+      go; see planning/aws_solutions.md.
   - key: "R"
     num: "R"
     title: "Retired — superseded by the medallion rebuild"

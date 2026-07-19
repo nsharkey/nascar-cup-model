@@ -40,6 +40,24 @@ STATUS_MARKER = {           # enum -> Markdown marker (authors write the enum, n
 STATUS_ENUM = set(STATUS_MARKER)
 EFFORT_ENUM = {"low", "medium", "high", "xhigh", "max", "ultra", None}
 
+# Verbosity caps (words) per free-text field — the display is structured data, not an
+# essay: detail belongs in the session rows and linked reports, not in a wall-of-text
+# summary. Set comfortably above legitimate content, low enough to catch ~2x bloat.
+# kickoff_prompt is deliberately uncapped (a verbatim paste-ready prompt). See PLAN_FORMAT.md §4.
+MAX_WORDS = {
+    "meta.standfirst":       80,
+    "meta.bottom_line":      140,
+    "meta.handoff_note":     100,
+    "phase.note":            160,
+    "session.exec_summary":  110,
+    "session.tech_summary":  280,
+    "session.status_note":   190,
+}
+
+
+def _word_count(text):
+    return len(str(text or "").split())
+
 
 # ------------------------------------------------------------------ load + validate
 def read_plan(path=SCHEDULE):
@@ -97,6 +115,25 @@ def validate(plan):
             errs.append(f"session {sid!r}: status 'next' requires a non-empty kickoff_prompt")
     if next_count > 1:
         errs.append(f"{next_count} sessions marked 'next' — at most one allowed")
+
+    # verbosity caps — a bloated free-text field fails the gate, so wall-of-text
+    # summaries cannot creep back in as sessions are added (any phase, any field).
+    def _cap(label, text, key):
+        n = _word_count(text)
+        if n > MAX_WORDS[key]:
+            errs.append(f"{label}: {n} words exceeds the {MAX_WORDS[key]}-word cap — trim it "
+                        f"(detail belongs in the session rows / linked reports, not the summary)")
+
+    _cap("meta.standfirst", meta.get("standfirst"), "meta.standfirst")
+    _cap("meta.bottom_line", meta.get("bottom_line"), "meta.bottom_line")
+    if meta.get("handoff_note"):
+        _cap("meta.handoff_note", meta.get("handoff_note"), "meta.handoff_note")
+    for p in phases:
+        _cap(f"phase {p.get('key')!r} note", p.get("note"), "phase.note")
+    for s in sessions:
+        for fld in ("exec_summary", "tech_summary", "status_note"):
+            if s.get(fld):
+                _cap(f"session {s.get('id')!r} {fld}", s.get(fld), f"session.{fld}")
     return errs
 
 

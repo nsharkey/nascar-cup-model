@@ -83,9 +83,35 @@ one `next` while work is open, zero when complete; (3) **completeness** —
 `exec_summary`/`tech_summary`/`model`/`wall_clock` present on every row, the
 `next` session has a `kickoff_prompt`; (4) **referential** — every `phase` and
 every `dep` resolves; (5) **drift** — committed `PLAN.md` *and* `plan/PLAN.html`
-equal the render. This is what makes the display model-independent: any session,
+equal the render; (6) **verbosity** — each free-text field within its per-field
+word cap (below). This is what makes the display model-independent: any session,
 on any model, either regenerates from the YAML (identical output by construction)
 or fails the gate. A model cannot restyle the plan and still pass.
+
+### Verbosity caps
+
+The display is structured data, not an essay: a summary that grows into a
+wall of text (Phase F's `note` once hit ~350 words re-encoding every session)
+fails the gate. Detail belongs in the per-session rows and in linked reports —
+**not** in a phase note or a `bottom_line`. Caps live in `report_plan.py`'s
+`MAX_WORDS` and are enforced by `validate()`, so they apply to every phase and
+every field as sessions are added — not just where the bloat was first noticed.
+
+| field | word cap |
+|-------|----------|
+| `meta.standfirst` | 80 |
+| `meta.bottom_line` | 140 |
+| `meta.handoff_note` | 100 |
+| `phase.note` | 160 |
+| `session.exec_summary` | 110 |
+| `session.tech_summary` | 280 |
+| `session.status_note` | 190 |
+
+`kickoff_prompt` is deliberately **uncapped** — it is a verbatim, paste-ready
+prompt, not a summary. Caps are set above legitimate content and low enough to
+catch ~2× bloat; if a field genuinely needs more room, raise its cap in
+`MAX_WORDS` in the same commit and say why — don't work around it by splitting
+one bloated thought across two fields.
 
 ## 5. The HTML display look — The Economist house style
 
