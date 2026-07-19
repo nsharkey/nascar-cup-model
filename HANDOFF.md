@@ -96,9 +96,18 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   it**, and **never pause the perishable weekly odds capture**. The live
   sprint plan is `PLAN.md` (rendered from `plan/schedule.yml`) — it supersedes
   the prose roadmap below.
-- **Next single step:** `B1` in the plan — design `specs/medallion_architecture.md`
-  (Fable, spec-only). Scoring/benchmark are re-homed as Gold consumers (the old
-  standalone-script sessions are retired); prediction #1 is scored there.
+- **2026-07-19 (B1 done):** `specs/medallion_architecture.md` committed
+  (4d3a415) — the execution contract for the whole rebuild. C-gate (silver
+  field-for-field vs anchored pkl) and D-gate (reproduce 0.413/0.476/0.449
+  via R0–R3 before gold replaces the pkl path) are FROZEN sections. Live
+  probes verified all six feed URL patterns (3 series), confirmed the index
+  floor is 2015, and found that missing objects 403 (not 404) — the spec's
+  fetch protocol disambiguates absent-vs-throttled. Frozen scoring/market
+  spec file paths are honored via a bronze-fed compatibility shim (no
+  amendments needed).
+- **Next single step:** `B2` in the plan — bronze ingestion (Sonnet build
+  session; kickoff prompt in `plan/schedule.yml`). Scoring/benchmark are
+  re-homed as Gold consumers in D2; prediction #1 is scored there.
 - GitHub remote: not yet pushed (repo has local commits only). Pushing
   before green flag makes prediction #1 publicly timestamped.
 

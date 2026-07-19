@@ -22,8 +22,8 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| B1 | Design the medallion architecture (spec) | ⬅ next | Fable 5 · thinking on · xhigh | ~2-4 hr | Design the clean bronze/silver/gold rebuild on paper before building any of it — schemas, storage choice, and the rule that the model's proven accuracy must be reproduced, not re-chosen. | Produce specs/medallion_architecture.md: DuckDB engine + parquet + JSON.gz bronze; bronze catalog w/ per-file sha256; silver reproduces races_parsed.pkl fields (regression-gated); gold re-proves 0.413 before replacing the pkl path; migration/continuity + retirement list. |
-| B2 | Bronze ingestion — full historical pull | pending | Sonnet 5 · thinking on · high | ~1-2 hr (mostly polite fetching) | Download every available NASCAR feed — all series, back as far as the data goes — into a permanent, unchanged local archive with a fingerprint per file. | Discovery pass finds the detailed-feed floor (index reaches 2015), then a resumable, capped-concurrency (<=6), retry/backoff pull of 6 feeds x Cup/Xfinity/Trucks into data/bronze/*.json.gz + a DuckDB catalog (url, fetched_at, sha256, bytes). Feeds 403 under load. |
+| B1 | Design the medallion architecture (spec) | ✅ done | Fable 5 · thinking on · xhigh | ~2 hr | Designed the clean bronze/silver/gold rebuild on paper before building any of it — schemas, storage, fetch protocol, and the frozen rule that the model's proven accuracy must be reproduced, not re-chosen. | specs/medallion_architecture.md committed: DuckDB + parquet + versioned json.gz bronze w/ sha256 manifest; silver parity via parse_lib reuse (C-gate frozen, field-for-field vs anchored pkl w/ upstream-revision attribution); gold features in SQL (D-gate frozen, R0-R3 reproduce 0.413/0.476/0.449); frozen-spec paths honored via bronze-fed shim. URL patterns + 403-absent semantics live-verified; index floor = 2015. |
+| B2 | Bronze ingestion — full historical pull | ⬅ next | Sonnet 5 · thinking on · high | ~1-2 hr (mostly polite fetching) | Download every available NASCAR feed — all series, back as far as the data goes — into a permanent, unchanged local archive with a fingerprint per file. | Execute spec section-10 B2 checklist: src/bronze_fetch.py per the frozen-ish section-2 protocol (concurrency 4, 5 req/s cap, retry ladder, 403 two-pass absent rule, atomic versioned json.gz, append-only manifest), warehouse catalog views, legacy import, then the full 2015->present pull (6 feeds x 3 series, ~8k requests) + tentative-absent sweep + interim coverage report. |
 | B3 | Bronze verification & coverage | pending | Sonnet 5 · thinking on · high | ~30-60 min | Confirm the archive is complete and every file is intact before anything is built on it. | Coverage manifest terminal (ok/absent/failed=0); superset check that the existing 163 races' consumed feeds are present; spot-parse sample files; hashes recorded. |
 
 ## Phase C — Silver — cleaned & conformed
@@ -91,40 +91,37 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (B1)
+## Handoff — next session (B2)
 
-**Model & settings:** Fable 5, thinking on, effort xhigh.
+**Model & settings:** Sonnet 5, thinking on, effort high.
 
-B1 is a Fable design session that produces specs/medallion_architecture.md (no production code) — a running Fable session already qualifies to do it. Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
+B2 is a Sonnet build session executing the spec's section-10 B2 checklist with zero design judgment calls (every choice is pre-resolved in the spec; genuine ambiguity means stop and flag, not choose). Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, specs/README.md, and DATA_DICTIONARY.md first.
+Read HANDOFF.md, then specs/medallion_architecture.md IN FULL — it is the
+execution contract for this session and pre-resolves every design choice.
 
-PLANNING/DESIGN session. Produce specs/medallion_architecture.md — the
-pre-registered design for a clean bronze/silver/gold rebuild (local, embedded:
-DuckDB engine + parquet storage + gzipped raw-JSON bronze; no Spark/Databricks).
-Write NO production code. It must be execution-ready for a Sonnet build session
-with zero judgment calls, and must cover:
-- Bronze: immutable raw JSON.gz of ALL cf.nascar.com feeds (lap-times, weekend,
-  pit, flag, lap-notes, live-feed final frame), ALL series (Cup/Xfinity/Trucks),
-  back to the real detailed-feed floor (a discovery pass finds it; the index
-  reaches 2015). Directory layout + a DuckDB catalog with a sha256 + provenance
-  per file. Polite capped-concurrency, resumable, retry/backoff (feeds 403 under
-  load).
-- Silver: cleaned/deduped/conformed DuckDB/parquet tables — a driver-race table
-  that reproduces today's races_parsed.pkl fields EXACTLY (regression-gated
-  field-for-field, 163/163), plus lap/pit/flag-level tables the new feeds unlock.
-- Gold: model-ready feature tables (the frozen walk-forward features in SQL) +
-  scoring and market-benchmark as consumers. Frozen config VALUES carry over;
-  re-point the engine to gold and RE-PROVE 0.413 / 0.476 non-SS as a hard gate
-  before gold replaces the pkl path.
-- Migration & continuity: sealed predictions and specs are architecture-
-  independent and preserved; the perishable weekly odds capture never pauses;
-  the pkl+walkforward path stays live until gold is proven equivalent.
-- A retirement list (which old standalone sessions the rebuild supersedes).
-Honor doctrine: preserve validated results, re-prove don't re-choose. Flag
-genuine ambiguities. Commit the spec; leave the tree clean.
+BUILD session B2 — bronze ingestion, per the spec's section-10 B2 checklist:
+1. Add duckdb+pyarrow to requirements.txt (record versions); add data/ to
+   .gitignore.
+2. Build src/bronze_fetch.py exactly per spec section 2: layout/versioning
+   section 1.1 + 2.5, manifest section 2.3, fetch protocol section 2.4
+   (default concurrency 4, aggregate 5 req/s, retry ladder 2/4/8/16/32s,
+   circuit breaker, the 403 two-pass tentative-absent rule, atomic writes,
+   sha256 of uncompressed payload), modes --full/--update/--verify.
+3. Build src/warehouse.py (bronze.manifest/files/coverage views).
+4. Run the legacy import (spec section 2.6) of src/data/.
+5. Run the full pull: index years 2015->present (+2014 floor re-check),
+   all 3 series, all 6 feeds, every index race; then the end-of-run
+   tentative-absent sweep. Expect ~8k requests, 30-60 min, ~<=1 GB gzipped.
+6. Build src/bronze_report.py and emit the interim coverage matrix;
+   re-run --update until failed count is ~0 (leave B3's terminal
+   verification for B3).
+Zero design judgment calls: if the spec is genuinely ambiguous anywhere,
+STOP and flag it rather than choosing. If today is a race weekend, E1
+duties (prediction + odds capture) come first. Commit code + interim
+coverage summary; leave the tree clean.
 ```
 
-**Bottom line:** Direction set 2026-07-19: a clean local medallion rebuild (DuckDB engine + parquet + gzipped raw-JSON bronze, no platform). Next is **B1 — design the medallion architecture spec** (Fable), which every build session then executes with zero judgment calls. Order: Bronze (download ALL feeds/series back to the real floor, immutable + hashed) -> Silver (clean tables, the driver-race one proven field-for-field against today's data) -> Gold (features re-proven to reproduce 0.413 before replacing the old path). The perishable weekly predict+odds capture (E1) never pauses for the rebuild; scoring and the market benchmark are re-homed as Gold consumers (the old standalone-script sessions are retired). Feature and causal-pace work run on Gold, still gated.
+**Bottom line:** B1 is done (2026-07-19): specs/medallion_architecture.md is committed (4d3a415) — the execution contract for the whole rebuild, with the silver regression gate (C) and the 0.413/0.476/0.449 re-prove gate (D) frozen. Next is **B2 — bronze ingestion** (Sonnet): the full historical pull of all 6 feeds x 3 series from the 2015 index floor into an immutable, hashed, versioned archive. The perishable weekly predict+odds capture (E1) never pauses for the rebuild; scoring and the market benchmark are re-homed as Gold consumers. Feature and causal-pace work run on Gold, still gated.
