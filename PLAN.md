@@ -22,7 +22,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| B1 | Design the medallion architecture (spec) | ⬅ next | Fable 5 · thinking on | ~2-4 hr | Design the clean bronze/silver/gold rebuild on paper before building any of it — schemas, storage choice, and the rule that the model's proven accuracy must be reproduced, not re-chosen. | Produce specs/medallion_architecture.md: DuckDB engine + parquet + JSON.gz bronze; bronze catalog w/ per-file sha256; silver reproduces races_parsed.pkl fields (regression-gated); gold re-proves 0.413 before replacing the pkl path; migration/continuity + retirement list. |
+| B1 | Design the medallion architecture (spec) | ⬅ next | Fable 5 · thinking on · xhigh | ~2-4 hr | Design the clean bronze/silver/gold rebuild on paper before building any of it — schemas, storage choice, and the rule that the model's proven accuracy must be reproduced, not re-chosen. | Produce specs/medallion_architecture.md: DuckDB engine + parquet + JSON.gz bronze; bronze catalog w/ per-file sha256; silver reproduces races_parsed.pkl fields (regression-gated); gold re-proves 0.413 before replacing the pkl path; migration/continuity + retirement list. |
 | B2 | Bronze ingestion — full historical pull | pending | Sonnet 5 · thinking on · high | ~1-2 hr (mostly polite fetching) | Download every available NASCAR feed — all series, back as far as the data goes — into a permanent, unchanged local archive with a fingerprint per file. | Discovery pass finds the detailed-feed floor (index reaches 2015), then a resumable, capped-concurrency (<=6), retry/backoff pull of 6 feeds x Cup/Xfinity/Trucks into data/bronze/*.json.gz + a DuckDB catalog (url, fetched_at, sha256, bytes). Feeds 403 under load. |
 | B3 | Bronze verification & coverage | pending | Sonnet 5 · thinking on · high | ~30-60 min | Confirm the archive is complete and every file is intact before anything is built on it. | Coverage manifest terminal (ok/absent/failed=0); superset check that the existing 163 races' consumed feeds are present; spot-parse sample files; hashes recorded. |
 
@@ -68,7 +68,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| G1 | Pre-register the roadmap-#5 design spec | pending | Fable 5 · thinking on | ~2-4 hr | Bank the design for the hardest feature (clean-air pace) while execution stays gated on a proven market edge. | Pre-register specs/clean_air_causal_pace.md: restart/pit-cycle natural experiments sourced from the new silver pit/flag tables; kill/keep gate. Fixed-effects is a dead end (report section 7). |
+| G1 | Pre-register the roadmap-#5 design spec | pending | Fable 5 · thinking on · xhigh | ~2-4 hr | Bank the design for the hardest feature (clean-air pace) while execution stays gated on a proven market edge. | Pre-register specs/clean_air_causal_pace.md: restart/pit-cycle natural experiments sourced from the new silver pit/flag tables; kill/keep gate. Fixed-effects is a dead end (report section 7). |
 | G2 | Implement roadmap #5 | ⛔ blocked | Sonnet 5 · thinking on · xhigh | TBD | Build clean-air pace only if the market says it is worth it. | Per G1's pre-registered gate; consumes silver pit/flag tables + gold features. |
 
 ## Phase H — Infra (AWS, optional, per-item go)
@@ -93,7 +93,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 ## Handoff — next session (B1)
 
-**Model & settings:** Fable 5, thinking on.
+**Model & settings:** Fable 5, thinking on, effort xhigh.
 
 B1 is a Fable design session that produces specs/medallion_architecture.md (no production code) — a running Fable session already qualifies to do it. Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
 

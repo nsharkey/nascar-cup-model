@@ -38,7 +38,7 @@ STATUS_MARKER = {           # enum -> Markdown marker (authors write the enum, n
     "retired": "⊘ retired",   # overtaken by events / superseded — kept as record, not active work
 }
 STATUS_ENUM = set(STATUS_MARKER)
-EFFORT_ENUM = {"low", "medium", "high", "xhigh", "max", None}
+EFFORT_ENUM = {"low", "medium", "high", "xhigh", "max", "ultra", None}
 
 
 # ------------------------------------------------------------------ load + validate

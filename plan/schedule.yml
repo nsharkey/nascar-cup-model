@@ -194,8 +194,8 @@ sessions:
     phase: "B"
     title: "Design the medallion architecture (spec)"
     status: "next"
-    model: "Fable 5 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~2-4 hr"
     ref: null
     exec_summary: >-
@@ -409,8 +409,8 @@ sessions:
     phase: "G"
     title: "Pre-register the roadmap-#5 design spec"
     status: "pending"
-    model: "Fable 5 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~2-4 hr"
     ref: null
     exec_summary: >-
