@@ -75,10 +75,24 @@ src/            download → parse → predict pipeline, audit engine (walkforwa
                 and the audit's analysis steps (sensitivity, typology, models, calibration)
 report/         full written audit report
 predictions/    the forward-test log (committed pre-race, hashed)
+research/       vendored external research packages (immutable sources + derived
+                crosswalks; see research/track_audit/INTEGRATION.md)
 ```
 
 Raw feed data and the parsed pickle are intentionally not committed
 (re-downloadable via `src/download.py`; see `.gitignore`).
+
+## Reference research: track & configuration audit
+
+`research/track_audit/` vendors a hash-verified external audit of the Cup
+track universe (2015–2026, 43 physical configurations, points races only):
+narrative report, structured JSON/CSV reference data, structural-similarity
+edges, and a source ledger. Its 1–10 scores are **analyst structural priors,
+not measurements**, and nothing from it feeds the frozen production model.
+A derived crosswalk maps its configuration-level `track_id`s to the feed
+track names this pipeline uses. Provenance, evidence model, and validation:
+[`research/track_audit/INTEGRATION.md`](research/track_audit/INTEGRATION.md);
+gate: `cd src && python3 test_track_audit.py`.
 
 ## Honest caveats
 

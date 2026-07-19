@@ -105,6 +105,17 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   fetch protocol disambiguates absent-vs-throttled. Frozen scoring/market
   spec file paths are honored via a bronze-fed compatibility shim (no
   amendments needed).
+- **2026-07-19 (track-audit package vendored):** owner-supplied external
+  track/configuration research integrated at `research/track_audit/` — six
+  immutable, SHA-256-manifest-verified files (43 physical configurations,
+  2015–2026, points races only) + a derived `track_id`↔feed-name crosswalk,
+  loader (`src/track_audit.py`) and validation gate
+  (`src/test_track_audit.py`, PASS). Its 1–10 scores are analyst structural
+  priors, NOT measurements; nothing feeds the frozen model. See
+  `research/track_audit/INTEGRATION.md`. **Finding for B3:** the package's
+  schedule audit exposes that `races_parsed.pkl` is missing the fall-2025
+  Talladega playoff race (163 races where 164 completed 2022→cutoff) — the
+  B3 bronze coverage superset check should confirm and close this gap.
 - **Next single step:** `B2` in the plan — bronze ingestion (Sonnet build
   session; kickoff prompt in `plan/schedule.yml`). Scoring/benchmark are
   re-homed as Gold consumers in D2; prediction #1 is scored there.
@@ -140,6 +151,8 @@ specs/              pre-registered, frozen design docs (scoring, market
                     gate, feature A/Bs) — read specs/README.md first
 planning/           living plan docs (aws_solutions.md — plan-only infra
                     roadmap, nothing implemented)
+research/           vendored external research (track_audit/ — immutable
+                    hash-verified package + derived crosswalk; INTEGRATION.md)
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate

@@ -167,3 +167,63 @@ and each race's `schedule[]` (the `event_name == "Race"` entry's `start_time_utc
 
 Additional archived feeds exist but are **not** consumed today (pit-stop, flag,
 lap-notes, live-feed) — see `planning/aws_solutions.md`.
+
+---
+
+## 7. Track-audit reference package — `research/track_audit/`
+
+Vendored external research (integrated 2026-07-19; provenance, evidence
+model, and update procedure in `research/track_audit/INTEGRATION.md`).
+Immutable source files — `src/test_track_audit.py` re-verifies the package
+manifest's SHA-256 hashes plus all schemas below. Loader:
+`src/track_audit.py` (stdlib only). **The ten `*_prior` fields are analyst
+structural priors (Working Hypotheses), NOT measured statistics; future 2026
+races are NOT completed observations.** Nothing here feeds the frozen
+production model.
+
+### 7a. `nascar_cup_track_configurations.csv` (= `tracks[]` in the JSON bundle)
+
+One row per **physical configuration** (43 rows) — era splits, not
+facilities (`atlanta_pre_2022` ≠ `atlanta_post_2022`, etc.).
+
+| field | type | meaning |
+|-------|------|---------|
+| `track_id` | str | Stable configuration key. **Join key for every package file.** |
+| `facility` / `configuration` / `location` | str | Venue name, layout label, city/state. |
+| `length_mi` / `shape` / `surface` / `turns` / `banking` | mixed | Physical spec (Verified Fact tier). |
+| `road_course` | bool | `True`/`False` in the CSV. |
+| `primary_family` / `secondary_family` | str | Package taxonomy (12 primary families). Coexists with the frozen `MY_TYPE`; see §7d. |
+| `*_prior` ×10 | int 1–10 | **Analyst structural priors** (tire deg., track position, passing, attrition, restarts, pit road, qualifying, strategy, DFS dominator, finish variance). Uncalibrated. |
+| `key_comparables` / `key_change_notes` / `racing_analysis` / `dfs_betting_implications` | str | Narrative analysis (Strong Inference tier); DFS/betting guidance lives here. |
+| `source_ids` | str | Semicolon-separated refs into the S001–S041 ledger. |
+| `confidence` / `evidence_class` / `score_type` | str | Preserve verbatim — the zero-trust labeling. |
+| `completed_points_races_2015_2025` | int | Completed observations. |
+| `completed_points_races_2026_through_cutoff` | int | Completed 2026 races at the 2026-07-19 cutoff. |
+| `future_scheduled_points_races_2026` | int | **Scheduled, not observed.** Never train on these. |
+| `scheduled_points_races_2026_total` / `scope_event_count_including_2026_schedule` | int | Identities: completed-2026 + future = 2026 total; 2015-25 + 2026 total = scope count (gate-enforced). |
+| `first_year_in_scope` / `last_year_in_scope_or_schedule` | int | Era bounds. |
+| `structural_nearest_neighbors` | str | Mirror of §7b (gate-checked for agreement). |
+
+### 7b. `nascar_track_similarity_edges.csv`
+
+`source_track_id, neighbor_rank (1–5), target_track_id,
+structural_similarity_score (0–100], distance (≥0), method`. Analyst-prior
+feature distances within structural supergroups — **not historical outcome
+correlations** (the `method` string says so and the gate keeps it that way).
+
+### 7c. `nascar_track_sources.csv`
+
+`source_id (S001–S041), title, publisher, url, source_type, reliability,
+coverage`. Also embedded in the JSON bundle; the gate requires the two
+ledgers to agree field-for-field.
+
+### 7d. `crosswalk_track_ids.csv` (DERIVED, repo-authored)
+
+Maps package `track_id` ↔ the feed `track` strings in `races_parsed.pkl`
+(§1a), era-aware. `track_id, feed_track_name, season_start, season_end,
+date_note, mapping (one_to_one|era_split|unmapped), in_repo_scope,
+my_type (frozen walkforward.MY_TYPE class), package_primary_family, notes`.
+One row per era-range (`sonoma_short` has two). Phoenix 2018 needs a race
+month, not just a season (`date_note`); helper:
+`track_audit.track_id_for(name, season, month=None)`. Both ID systems are
+preserved — neither replaces the other.

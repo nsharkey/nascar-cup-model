@@ -1,0 +1,45 @@
+track_id,feed_track_name,season_start,season_end,date_note,mapping,in_repo_scope,my_type,package_primary_family,notes
+daytona_oval,Daytona International Speedway,2015,9999,,one_to_one,true,SS,Drafting superspeedway,
+talladega_oval,Talladega Superspeedway,2015,9999,,one_to_one,true,SS,Drafting superspeedway,
+atlanta_pre_2022,Atlanta Motor Speedway,2015,2021,,era_split,false,,Intermediate oval,pre-reconfiguration era; no rows in the repo dataset (2022+ floor); historical feed string unverified; my_type left blank deliberately — the name-keyed SS bucket was validated on 2022+ drafting-config data only and does not describe this era
+atlanta_post_2022,Atlanta Motor Speedway,2022,9999,,era_split,true,SS,Condensed drafting speedway,facility renamed EchoPark Speedway for 2026 but feed string unchanged as of 2026-07-19
+auto_club_2mi,Auto Club Speedway,2015,2023,,one_to_one,true,INT,High-speed intermediate,last Cup points race 2023
+charlotte_oval,Charlotte Motor Speedway,2015,9999,,one_to_one,true,INT,Intermediate oval,oval only; the Roval has a distinct feed string
+chicagoland_oval,Chicagoland Speedway,2015,9999,,one_to_one,true,INT,Intermediate oval,no Cup points races 2020-2025; returned 2026
+darlington,Darlington Raceway,2015,9999,,one_to_one,true,INT,Intermediate oval,package family differs from MY_TYPE bucket by design; both preserved
+homestead,Homestead-Miami Speedway,2015,9999,,one_to_one,true,INT,Intermediate oval,
+kansas,Kansas Speedway,2015,9999,,one_to_one,true,INT,Intermediate oval,
+kentucky_pre_2016,Kentucky Speedway,2015,2015,,era_split,false,,Intermediate oval,no rows in the repo dataset; historical feed string unverified
+kentucky_post_2016,Kentucky Speedway,2016,2020,,era_split,false,,Intermediate oval,no rows in the repo dataset; historical feed string unverified
+las_vegas,Las Vegas Motor Speedway,2015,9999,,one_to_one,true,INT,Intermediate oval,
+michigan,Michigan International Speedway,2015,9999,,one_to_one,true,INT,High-speed intermediate,
+texas_pre_2017,Texas Motor Speedway,2015,2016,,era_split,false,,Intermediate oval,pre-repave era; no rows in the repo dataset; historical feed string unverified
+texas_post_2017,Texas Motor Speedway,2017,9999,,era_split,true,INT,Intermediate oval,
+indianapolis_oval,Indianapolis Motor Speedway,2015,9999,,one_to_one,true,INT,Large flat oval,no Cup oval races 2021-2023 (road course years); road course has a distinct feed string
+pocono,Pocono Raceway,2015,9999,,one_to_one,true,INT,Large flat oval,package family differs from MY_TYPE bucket by design; both preserved
+bristol_concrete,Bristol Motor Speedway,2015,9999,,one_to_one,true,SHORT,High-banked compact oval,dirt configuration has a distinct feed string
+bristol_dirt,Bristol Motor Speedway Dirt,2021,2023,,one_to_one,true,OTHER,Dirt oval,retired micro-regime; repo dataset holds 2022-2023 only (2021 predates the 2022 floor)
+dover,Dover Motor Speedway,2015,2025,,one_to_one,true,SHORT,High-banked compact oval,named Dover International Speedway before 2021; historical feed string unverified; closed at 2025 — no 2026 points date (All-Star only); reopen on a future points return
+iowa,Iowa Speedway,2024,9999,,one_to_one,true,SHORT,Short oval,
+martinsville,Martinsville Speedway,2015,9999,,one_to_one,true,SHORT,Short oval,
+nashville,Nashville Superspeedway,2021,9999,,one_to_one,true,INT,High-banked compact oval,package family differs from MY_TYPE bucket by design; both preserved
+new_hampshire,New Hampshire Motor Speedway,2015,9999,,one_to_one,true,SHORT,Flat short oval,
+north_wilkesboro,North Wilkesboro Speedway,2026,9999,,one_to_one,true,SHORT,Short oval,first points race 2026-07-19 (race 5618); zero completed rows at integration time
+phoenix_pre_2018f,Phoenix Raceway,2015,2018,through the 2018 spring race; start/finish relocated for the 2018 November race,era_split,false,,Flat short oval,intra-2018 split needs race date not just season; branded ISM Raceway 2018-2019; historical feed string unverified
+phoenix_post_2018f,Phoenix Raceway,2018,9999,from the 2018 November race onward,era_split,true,SHORT,Flat short oval,all repo-scope (2022+) Phoenix rows belong here
+richmond,Richmond Raceway,2015,9999,,one_to_one,true,SHORT,Short oval,named Richmond International Raceway before 2018; historical feed string unverified
+wwt_gateway,World Wide Technology Raceway,2022,9999,,one_to_one,true,INT,Flat short oval,package family differs from MY_TYPE bucket by design; both preserved
+charlotte_roval_v1,Charlotte Motor Speedway Road Course,2018,2023,,era_split,true,ROAD,Hybrid road course,
+charlotte_roval_v2,Charlotte Motor Speedway Road Course,2024,9999,,era_split,true,ROAD,Hybrid road course,
+chicago_street,Chicago Street Race,2023,2025,,one_to_one,true,ROAD,Street course,package facility label is Chicago Street Course; feed string is Chicago Street Race
+cota_full,Circuit of The Americas,2021,2024,,era_split,true,ROAD,Permanent road course,
+cota_short,Circuit of The Americas,2025,9999,,era_split,true,ROAD,Permanent road course,
+daytona_road,,2020,2021,,unmapped,false,,Hybrid road course,no rows in the repo dataset (2020-2021 only); historical feed string unverified so left blank
+indianapolis_road,Indianapolis Motor Speedway Road Course,2021,2023,,one_to_one,true,ROAD,Hybrid road course,repo dataset holds 2022-2023 (2021 predates the 2022 floor)
+mexico_city,Autódromo Hermanos Rodríguez,2025,2025,,one_to_one,true,ROAD,Permanent road course,not on the 2026 schedule; possible future return — reopen the range if it does
+road_america,Road America,2021,2022,,one_to_one,true,ROAD,Permanent road course,repo dataset holds 2022 only (2021 predates the 2022 floor)
+san_diego_street,San Diego Street Course,2026,9999,,one_to_one,true,ROAD,Street course,package facility label is Qualcomm Circuit at Naval Base Coronado; feed string is San Diego Street Course
+sonoma_short,Sonoma Raceway,2015,2018,,era_split,true,ROAD,Permanent road course,chute layout era 1 of 2; see the 2022+ row for the current era
+sonoma_short,Sonoma Raceway,2022,9999,,era_split,true,ROAD,Permanent road course,chute layout era 2 of 2
+sonoma_carousel,Sonoma Raceway,2019,2021,,era_split,false,,Permanent road course,raced 2019 and 2021 (2020 canceled); no rows in the repo dataset
+watkins_glen,Watkins Glen International,2015,9999,,one_to_one,true,ROAD,Permanent road course,
