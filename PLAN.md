@@ -25,7 +25,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | B1 | Design the medallion architecture (spec) | ✅ done | Fable 5 · thinking on · xhigh | ~2 hr | Designed the clean bronze/silver/gold rebuild on paper before building any of it — schemas, storage, fetch protocol, and the frozen rule that the model's proven accuracy must be reproduced, not re-chosen. | specs/medallion_architecture.md committed: DuckDB + parquet + versioned json.gz bronze w/ sha256 manifest; silver parity via parse_lib reuse (C-gate frozen, field-for-field vs anchored pkl w/ upstream-revision attribution); gold features in SQL (D-gate frozen, R0-R3 reproduce 0.413/0.476/0.449); frozen-spec paths honored via bronze-fed shim. URL patterns + 403-absent semantics live-verified; index floor = 2015. |
 | B2 | Bronze ingestion — full historical pull | ✅ done | Sonnet 5 · thinking on · high | ~2 hr 40 min (incl. a live speedup mid-session + a resumable bug-fix restart) | Downloaded every available NASCAR feed — all series, back to the real floor — into a permanent, unchanged local archive with a fingerprint per file: 4,222 files stored, 1,964 confirmed genuinely absent, zero failed. | src/bronze_fetch.py (protocol per spec section 2) + src/warehouse.py (bronze.* duckdb catalog) + src/bronze_report.py (coverage matrix). Discovered detailed-feed floor (distinct from the 2015 index floor): weekend-feed/live-feed 2018, live-flag-data 2019, lap-times/live-pit-data/ lap-notes 2020, uniform across all 3 series. Two live data-quality bugs found and fixed: winner_driver_id unset for all 2015-2019 + 12/41 of 2022 (race_has_run() fallback on average_speed/total_race_time); URL year=2017 200s with 2018's data instead of 403ing (index_year_matches() majority-vote detection). Owner-directed dated amendment (spec 2.4) after the literal circuit-breaker/ladder constants projected 10-50+ hr: newest-year-first task order + shortened tripped-ladder + breaker recovery, none of which raise the request rate, cut the real run under 2 hr. ~519 MB raw / ~63 MB gzipped. DATA_DICTIONARY.md section 8 documents the bronze schema + both findings. |
-| B3 | Bronze verification & coverage | ⬅ next | Sonnet 5 · thinking on · high | ~30-60 min | Confirm the archive is complete and every file is intact before anything is built on it. | Coverage manifest terminal (ok/absent/failed=0); superset check that the existing 163 races' consumed feeds are present; reconcile the bronze race index (points races 2022->present) against races_parsed.pkl AND the vendored track-audit schedule counts (research/track_audit/) — must surface the known missing fall-2025 Talladega playoff race and any other gap; spot-parse sample files; hashes recorded. |
+| B3 | Bronze verification & coverage | ✅ done | Sonnet 5 · thinking on · high | ~1 hr | Confirmed the archive is complete and every sampled file is intact. 4 of 5 checks passed cleanly; the fifth (comparing today's data against the original download) can't be run at all because that original copy was never saved — a gap already known from the prior session, now formally logged for the owner to resolve before the next build step. | Terminal coverage: stored=4,222/absent=1,964/failed=0 across 1,031 completed races x 6 feeds. Superset check: 163/163 pkl races have lap-times+weekend-feed stored; sha-comparison half blocked (0 of 326 legacy per-race files importable — only race_list_2026.json exists). Index reconciliation: bronze=164 vs pkl=163 vs track-audit-implied=164; sole gap race_id 5580 (fall-2025 Talladega), root-caused this session to a null weekend_race field in the stored payload itself (confirmed via exhaustive scan — the only one of 164). Spot-parse 120/120, hash-verify 100/100 (duckdb 1.4.0, pyarrow 19.0.0). report/BRONZE_COVERAGE.md + RESULT — B3 committed (ffc3ba8). |
 | B4 | Recover 2017 index metadata via race_id probe (optional) | pending | Sonnet 5 · thinking on · high | ~20-40 min | Optional completeness nicety: recover 2017's race schedule/results, the one season missing from the archive. Adds nothing to the model — it only fills a historical-metadata gap. | The cf.nascar.com 2017 index URL is permanently aliased to 2018 (serves 2018's races verbatim; DATA_DICTIONARY §8d), so 2017 has no enumerable race list and is absent from bronze.races_index. 2017's race_ids occupy the observed gap between 2016 (Cup ends 4518) and 2018 (Cup starts 4673) — a ~154-id block — and are recoverable by probing that range directly, bypassing the broken index. NOTE: 2017 is below the detailed-feed floor (weekend-feed/lap-times start 2018; 2015-2016 also store no detailed feeds), so this yields index/schedule metadata only, no modeling rows — strictly a completeness item, immaterial to the frozen model. Preserve bronze immutability and the manifest/aliasing guards when adding the probe path. |
 
 ## Phase C — Silver — cleaned & conformed
@@ -34,7 +34,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| C1 | Silver driver-race table (behavior-preserving) | pending | Sonnet 5 · thinking on · high | ~3-5 hr | Rebuild the cleaned per-driver-per-race table the model uses — proven to match today's numbers exactly, so nothing about the validated model changes. | Silver driver-race table in DuckDB/parquet from bronze; field-for-field regression vs races_parsed.pkl (163/163) covering finish/start/status/pace_med85/etc.; dedupe + type conform. |
+| C1 | Silver driver-race table (behavior-preserving) | ⬅ next | Sonnet 5 · thinking on · high | ~3-5 hr | Rebuild the cleaned per-driver-per-race table the model uses — proven to match today's numbers exactly, so nothing about the validated model changes. | Silver driver-race table in DuckDB/parquet from bronze; field-for-field regression vs races_parsed.pkl (163/163) covering finish/start/status/pace_med85/etc.; dedupe + type conform. |
 | C2 | Silver lap / pit / flag tables | pending | Sonnet 5 · thinking on · high | ~2-4 hr | Build cleaned tables for the richer data we've never used — lap-by-lap, pit stops, and cautions — so it's ready when the model wants it. | Lap-level (times/positions), pit-level (stop timing/tires/positions gained), flag-level (caution/stage transitions) silver tables from the newly-archived feeds; keyed to race+driver. Feeds roadmap-#5 pace work. |
 | C3 | Track reference tables from vendored audit | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize the vendored track audit into queryable reference tables — physical facts, crosswalk, and quarantined analyst priors — so every silver/gold table can join on track configuration. Proposed by the F5 derivation spike (26dff0c); reference tables only, no model change. | Build silver.track_dim (43 configs: physical facts + parsed banking + era bounds + hp750_2026 flag; the ten 1-10 analyst priors excluded by design), silver.track_xwalk (crosswalk verbatim + a race_track join view), silver.track_priors (10 priors long-form, score_type/evidence labels carried so they can never be silently used as measurements), silver.rules_era (6 era keys 2015->2026) + the §2.3 leakage-free derived features (config_age, config/era race number, era_key, hp750_2026). All per research/track_audit_derivation.md §2. Package files untouched (the test_track_audit.py hash gate stays green); extend that gate with re-derivation checks (row counts, banking parse, dim-xwalk integrity). |
 
@@ -112,47 +112,50 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (B3)
+## Handoff — next session (C1)
 
 **Model & settings:** Sonnet 5, thinking on, effort high.
 
-B2 is a Sonnet build session executing the spec's section-10 B2 checklist with zero design judgment calls (every choice is pre-resolved in the spec; genuine ambiguity means stop and flag, not choose). Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
+C1 is a Sonnet build session executing the spec's section-10 C1 checklist with zero design judgment calls (every choice is pre-resolved in the spec; genuine ambiguity means stop and flag, not choose). Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, then specs/medallion_architecture.md section 2.9 IN FULL —
-it is the execution contract for this session (the B3 gate conditions).
+Read HANDOFF.md, then specs/medallion_architecture.md sections 3 and 4
+IN FULL (silver build strategy + the FROZEN C-gate) — it is the
+execution contract for this session.
 
-BUILD session B3 — bronze verification, per the spec's section-10 B3
-checklist. Drive section 2.9's five conditions to terminal:
-1. Terminal coverage: every (index race 2015->present x 3 series x 6
-   feeds) is stored or absent; failed count = 0. Re-run
-   `bronze_fetch.py --update` if anything has drifted since B2.
-2. Superset check: for every race in races_parsed.pkl, lap-times and
-   weekend-feed are stored, and the latest bronze payload sha equals the
-   legacy import's sha. KNOWN GAP (B2 finding, 2026-07-19): the legacy
-   src/data/races/ raw-JSON cache doesn't exist in this checkout, so
-   there is no legacy-import sha to compare against for those 163
-   races. Do not silently skip this condition or invent a workaround —
-   document the gap explicitly in the report and flag it to the owner.
-3. Reconcile the bronze race index (points races 2022->present) against
-   races_parsed.pkl AND the vendored track-audit schedule counts
-   (research/track_audit/) — must surface the known missing fall-2025
-   Talladega playoff race (163 where 164 completed) and any other gap.
-4. Spot-parse: 20 random stored files per feed type parse as JSON with
-   the expected top-level structure.
-5. Hash verify: 100 random stored files re-hash to their recorded
-   sha256 (gunzip -> sha256 -> compare). `bronze_fetch.py --verify`
-   already implements this generically -- reuse it, don't reinvent it.
-Commit report/BRONZE_COVERAGE.md (per-feed x per-series first-year-with-
-data table, counts by terminal state, total bytes, the mismatch list,
-installed duckdb/pyarrow versions, manifest.jsonl sha256). Fill in
-`## RESULT — B3` in specs/medallion_architecture.md (dated). Zero
-design judgment calls: if the spec is genuinely ambiguous anywhere,
+BUILD session C1 — silver parity, per the spec's section-10 C1 checklist:
+1. Take the section 4.1 anchor FIRST, before any silver code runs: copy
+   src/races_parsed.pkl to data/anchors/races_parsed_anchor_{YYYYMMDD}.pkl,
+   record its sha256 and race count (163, unless E1 has appended races
+   by then — the universe grows with it).
+2. Build src/silver_build.py's parity path (sections 3.1-3.3): feed each
+   race's latest bronze lap-times + weekend-feed through parse_lib.parse_race()
+   UNMODIFIED — do not rewrite the parser in SQL, that would be re-choosing
+   not preserving. Also build silver.races. Extend src/warehouse.py.
+3. Run a --full silver build, then src/gate_silver.py (sections 4.2-4.4):
+   race presence, race-level fields, driver sets, every driver field
+   (exact == for floats, no epsilon). Run the section 4.3 mismatch-
+   attribution loop until PASS.
+4. KNOWN BLOCKER for section 4.3: B3 (report/BRONZE_COVERAGE.md,
+   ffc3ba8) found the legacy per-race cache (src/data/races/) that
+   races_parsed.pkl was built from does not exist in this checkout —
+   only race_list_2026.json was ever legacy-imported. If every anchor
+   race comes back bit-identical, this never triggers and is moot. If
+   ANY race mismatches, section 4.3's step 1 (compare bronze sha vs.
+   legacy-import sha) has no baseline for it — STOP, do not invent a
+   substitute baseline or guess, and escalate to the owner for a
+   resolution (recover a legacy-cache export, or an owner-directed
+   fallback attribution method) before proceeding on that race.
+5. On gate PASS: commit report/SILVER_REGRESSION.md (anchor sha256 +
+   race count, rows compared, field-comparison counts, every
+   PASS-with-note in full, environment versions); fill in
+   `## RESULT — C-gate` in the spec (dated); extend DATA_DICTIONARY.md.
+Zero design judgment calls: if the spec is genuinely ambiguous anywhere,
 STOP and flag it rather than choosing. If today is a race weekend, E1
 duties (prediction + odds capture) come first. Update plan/schedule.yml
-(B3 -> done, C1/C2 -> next candidates) and re-render via
-`python src/report_plan.py`; commit; leave the tree clean.
+(C1 -> done; re-evaluate whether C2 becomes the single 'next') and
+re-render via `python src/report_plan.py`; commit; leave the tree clean.
 ```
 
-**Bottom line:** The rebuild foundation is laid: B1 (the frozen execution contract, with the silver-regression and re-prove gates) and B2 (the full historical bronze pull) are both done as of 2026-07-19. Next in the mainline is B3 — bronze verification (Sonnet) — which gates the silver work; the perishable weekly predict+odds capture never pauses for the rebuild, and it plus everything downstream is re-homed as a Gold consumer. Governance and all three research spikes are complete and folded into the phase tables below; nothing they propose enters the frozen model without a gated A/B.
+**Bottom line:** Bronze is built AND verified: B1-B3 all done as of 2026-07-19, with B3 confirming zero failed fetches and hash-clean sampled files. Next in the mainline is C1 — silver driver-race parity (Sonnet) — which gates gold via the frozen C-gate; C1 carries one open item from B3 (no legacy-cache sha baseline for the 163 anchor races) that only bites if a race mismatches. The perishable weekly predict+odds capture never pauses for the rebuild, and it plus everything downstream is re-homed as a Gold consumer. Governance and all three research spikes are complete and folded into the phase tables below; nothing they propose enters the frozen model without a gated A/B.

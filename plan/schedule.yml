@@ -13,16 +13,18 @@ meta:
     the perishable weekly market capture running throughout. Rendered from data,
     kept here and nowhere else.
   bottom_line: >-
-    The rebuild foundation is laid: B1 (the frozen execution contract, with the
-    silver-regression and re-prove gates) and B2 (the full historical bronze
-    pull) are both done as of 2026-07-19. Next in the mainline is B3 — bronze
-    verification (Sonnet) — which gates the silver work; the perishable weekly
-    predict+odds capture never pauses for the rebuild, and it plus everything
-    downstream is re-homed as a Gold consumer. Governance and all three research
-    spikes are complete and folded into the phase tables below; nothing they
-    propose enters the frozen model without a gated A/B.
+    Bronze is built AND verified: B1-B3 all done as of 2026-07-19, with B3
+    confirming zero failed fetches and hash-clean sampled files. Next in the
+    mainline is C1 — silver driver-race parity (Sonnet) — which gates gold
+    via the frozen C-gate; C1 carries one open item from B3 (no legacy-cache
+    sha baseline for the 163 anchor races) that only bites if a race
+    mismatches. The perishable weekly predict+odds capture never pauses for
+    the rebuild, and it plus everything downstream is re-homed as a Gold
+    consumer. Governance and all three research spikes are complete and
+    folded into the phase tables below; nothing they propose enters the
+    frozen model without a gated A/B.
   handoff_note: >-
-    B2 is a Sonnet build session executing the spec's section-10 B2 checklist
+    C1 is a Sonnet build session executing the spec's section-10 C1 checklist
     with zero design judgment calls (every choice is pre-resolved in the spec;
     genuine ambiguity means stop and flag, not choose). Doctrine for the whole
     rebuild: preserve the validated results and pre-registered decisions,
@@ -369,69 +371,36 @@ sessions:
   - id: "B3"
     phase: "B"
     title: "Bronze verification & coverage"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~30-60 min"
-    ref: null
+    wall_clock: "~1 hr"
+    ref: "ffc3ba8"
     exec_summary: >-
-      Confirm the archive is complete and every file is intact before anything is
-      built on it.
+      Confirmed the archive is complete and every sampled file is intact.
+      4 of 5 checks passed cleanly; the fifth (comparing today's data against
+      the original download) can't be run at all because that original copy
+      was never saved — a gap already known from the prior session, now
+      formally logged for the owner to resolve before the next build step.
     tech_summary: >-
-      Coverage manifest terminal (ok/absent/failed=0); superset check that the
-      existing 163 races' consumed feeds are present; reconcile the bronze race
-      index (points races 2022->present) against races_parsed.pkl AND the
-      vendored track-audit schedule counts (research/track_audit/) — must
-      surface the known missing fall-2025 Talladega playoff race and any other
-      gap; spot-parse sample files; hashes recorded.
+      Terminal coverage: stored=4,222/absent=1,964/failed=0 across 1,031
+      completed races x 6 feeds. Superset check: 163/163 pkl races have
+      lap-times+weekend-feed stored; sha-comparison half blocked (0 of 326
+      legacy per-race files importable — only race_list_2026.json exists).
+      Index reconciliation: bronze=164 vs pkl=163 vs track-audit-implied=164;
+      sole gap race_id 5580 (fall-2025 Talladega), root-caused this session to
+      a null weekend_race field in the stored payload itself (confirmed via
+      exhaustive scan — the only one of 164). Spot-parse 120/120, hash-verify
+      100/100 (duckdb 1.4.0, pyarrow 19.0.0). report/BRONZE_COVERAGE.md +
+      RESULT — B3 committed (ffc3ba8).
     deps: ["B2"]
     status_note: >-
-      known must-surface case: races_parsed.pkl lacks fall-2025 Talladega (163
-      where the schedule implies 164; HANDOFF 2026-07-19). The superset check
-      alone is keyed to the 163 existing races and CANNOT catch it — the
-      index-vs-pkl reconciliation exists for exactly this. B2 finding
-      (2026-07-19): the legacy src/data/races/ raw-JSON cache races_parsed.pkl
-      was built from doesn't exist in this checkout — only race_list_2026.json
-      was importable via section 2.6. The superset check's sha comparison
-      against the legacy import (spec 2.9 condition 2) therefore has no
-      baseline for those 163 races; report this as a documented gap rather
-      than silently skipping the check, and flag it to the owner rather than
-      choosing how to proceed.
-    kickoff_prompt: |
-      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-      Read HANDOFF.md, then specs/medallion_architecture.md section 2.9 IN FULL —
-      it is the execution contract for this session (the B3 gate conditions).
-
-      BUILD session B3 — bronze verification, per the spec's section-10 B3
-      checklist. Drive section 2.9's five conditions to terminal:
-      1. Terminal coverage: every (index race 2015->present x 3 series x 6
-         feeds) is stored or absent; failed count = 0. Re-run
-         `bronze_fetch.py --update` if anything has drifted since B2.
-      2. Superset check: for every race in races_parsed.pkl, lap-times and
-         weekend-feed are stored, and the latest bronze payload sha equals the
-         legacy import's sha. KNOWN GAP (B2 finding, 2026-07-19): the legacy
-         src/data/races/ raw-JSON cache doesn't exist in this checkout, so
-         there is no legacy-import sha to compare against for those 163
-         races. Do not silently skip this condition or invent a workaround —
-         document the gap explicitly in the report and flag it to the owner.
-      3. Reconcile the bronze race index (points races 2022->present) against
-         races_parsed.pkl AND the vendored track-audit schedule counts
-         (research/track_audit/) — must surface the known missing fall-2025
-         Talladega playoff race (163 where 164 completed) and any other gap.
-      4. Spot-parse: 20 random stored files per feed type parse as JSON with
-         the expected top-level structure.
-      5. Hash verify: 100 random stored files re-hash to their recorded
-         sha256 (gunzip -> sha256 -> compare). `bronze_fetch.py --verify`
-         already implements this generically -- reuse it, don't reinvent it.
-      Commit report/BRONZE_COVERAGE.md (per-feed x per-series first-year-with-
-      data table, counts by terminal state, total bytes, the mismatch list,
-      installed duckdb/pyarrow versions, manifest.jsonl sha256). Fill in
-      `## RESULT — B3` in specs/medallion_architecture.md (dated). Zero
-      design judgment calls: if the spec is genuinely ambiguous anywhere,
-      STOP and flag it rather than choosing. If today is a race weekend, E1
-      duties (prediction + odds capture) come first. Update plan/schedule.yml
-      (B3 -> done, C1/C2 -> next candidates) and re-render via
-      `python src/report_plan.py`; commit; leave the tree clean.
+      2026-07-19: done. Condition 2's sha-comparison gap is NOT resolved —
+      carried forward as an explicit owner-escalation item for C1 (see RESULT
+      — B3 in the spec): C1's section 4.3 mismatch attribution has no
+      legacy-import sha baseline for the 163 anchor races and needs either a
+      recovered legacy cache or an owner-directed fallback method before it
+      can run mechanically on any race that mismatches.
 
   - id: "B4"
     phase: "B"
@@ -468,7 +437,7 @@ sessions:
   - id: "C1"
     phase: "C"
     title: "Silver driver-race table (behavior-preserving)"
-    status: "pending"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~3-5 hr"
@@ -481,7 +450,59 @@ sessions:
       regression vs races_parsed.pkl (163/163) covering
       finish/start/status/pace_med85/etc.; dedupe + type conform.
     deps: ["B2"]
-    status_note: "heads-up (B3 finding): bronze will contain the fall-2025 Talladega race that races_parsed.pkl lacks. The frozen C-gate judges parity field-for-field on the anchored 163 races; the rebuilt silver should ADD the recovered race — never drop it to force a row-count match."
+    status_note: >-
+      Picked as the single plan 'next' over C2 on 2026-07-19: both are
+      unblocked by B2, but D1 depends on C1 only (the C-gate, §4, blocks gold)
+      — not a new design choice, just the existing dependency graph. C2
+      remains equally startable and is not blocked by this pick. heads-up
+      (B3 finding): bronze will contain the fall-2025 Talladega race that
+      races_parsed.pkl lacks. The frozen C-gate judges parity field-for-field
+      on the anchored 163 races; the rebuilt silver should ADD the recovered
+      race — never drop it to force a row-count match. B3 escalation
+      (unresolved): section 4.3's mismatch attribution has no legacy-import
+      sha baseline for any of the 163 anchor races (src/data/races/ doesn't
+      exist in this checkout) — if the parity build comes back bit-identical
+      for all 163, this is moot; if any race mismatches, STOP at the
+      attribution step for that race and escalate to the owner rather than
+      substituting a different baseline.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, then specs/medallion_architecture.md sections 3 and 4
+      IN FULL (silver build strategy + the FROZEN C-gate) — it is the
+      execution contract for this session.
+
+      BUILD session C1 — silver parity, per the spec's section-10 C1 checklist:
+      1. Take the section 4.1 anchor FIRST, before any silver code runs: copy
+         src/races_parsed.pkl to data/anchors/races_parsed_anchor_{YYYYMMDD}.pkl,
+         record its sha256 and race count (163, unless E1 has appended races
+         by then — the universe grows with it).
+      2. Build src/silver_build.py's parity path (sections 3.1-3.3): feed each
+         race's latest bronze lap-times + weekend-feed through parse_lib.parse_race()
+         UNMODIFIED — do not rewrite the parser in SQL, that would be re-choosing
+         not preserving. Also build silver.races. Extend src/warehouse.py.
+      3. Run a --full silver build, then src/gate_silver.py (sections 4.2-4.4):
+         race presence, race-level fields, driver sets, every driver field
+         (exact == for floats, no epsilon). Run the section 4.3 mismatch-
+         attribution loop until PASS.
+      4. KNOWN BLOCKER for section 4.3: B3 (report/BRONZE_COVERAGE.md,
+         ffc3ba8) found the legacy per-race cache (src/data/races/) that
+         races_parsed.pkl was built from does not exist in this checkout —
+         only race_list_2026.json was ever legacy-imported. If every anchor
+         race comes back bit-identical, this never triggers and is moot. If
+         ANY race mismatches, section 4.3's step 1 (compare bronze sha vs.
+         legacy-import sha) has no baseline for it — STOP, do not invent a
+         substitute baseline or guess, and escalate to the owner for a
+         resolution (recover a legacy-cache export, or an owner-directed
+         fallback attribution method) before proceeding on that race.
+      5. On gate PASS: commit report/SILVER_REGRESSION.md (anchor sha256 +
+         race count, rows compared, field-comparison counts, every
+         PASS-with-note in full, environment versions); fill in
+         `## RESULT — C-gate` in the spec (dated); extend DATA_DICTIONARY.md.
+      Zero design judgment calls: if the spec is genuinely ambiguous anywhere,
+      STOP and flag it rather than choosing. If today is a race weekend, E1
+      duties (prediction + odds capture) come first. Update plan/schedule.yml
+      (C1 -> done; re-evaluate whether C2 becomes the single 'next') and
+      re-render via `python src/report_plan.py`; commit; leave the tree clean.
   - id: "C2"
     phase: "C"
     title: "Silver lap / pit / flag tables"
@@ -498,6 +519,12 @@ sessions:
       flag-level (caution/stage transitions) silver tables from the newly-archived
       feeds; keyed to race+driver. Feeds roadmap-#5 pace work.
     deps: ["B2"]
+    status_note: >-
+      2026-07-19 (B3 session): not blocked by anything — B2 is done and this
+      has no dependency on C1. Not picked as the plan's single 'next' only
+      because the plan format allows exactly one at a time and D1's gate
+      chain runs through C1, not C2 (see C1's status_note). Equally valid to
+      start now if the owner prefers breadth-first over the gate-critical path.
   - id: "C3"
     phase: "C"
     title: "Track reference tables from vendored audit"

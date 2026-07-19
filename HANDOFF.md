@@ -137,9 +137,32 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   built it) — only `race_list_2026.json` was importable via §2.6. §4.3's
   mismatch attribution has no legacy-import sha baseline for those races
   and needs owner escalation instead of the mechanical shas-differ check.
-- **Next single step:** `B3` in the plan — bronze verification (Sonnet
-  build session; gates C1/C2). Scoring/benchmark are re-homed as Gold
-  consumers in D2; prediction #1 is scored there.
+- **2026-07-19 (B3 done, ffc3ba8):** bronze verification. 4/5 of spec §2.9's
+  terminal conditions PASS outright: terminal coverage (`failed`=0 across
+  4,222 stored / 1,964 absent); spot-parse (120/120); hash-verify (100/100,
+  `bronze_fetch.py --verify --sample 100`). Condition 3 (index reconciliation)
+  PASS with the expected gap surfaced: bronze=164 vs `races_parsed.pkl`=163 vs
+  track-audit-implied=164 completed Cup points races 2022→present; sole gap
+  is race_id 5580 (fall-2025 Talladega) — root-caused this session by reading
+  the stored payload directly: its `weekend-feed`'s `weekend_race` field is
+  `null` (the only one of 164), an upstream NASCAR data gap, not a download or
+  parse defect. Condition 2 (superset check) is **not** a clean pass: the
+  "stored" half passes for all 163 anchor races, but the sha-comparison half
+  cannot be computed at all — the legacy per-race cache (`src/data/races/`)
+  `races_parsed.pkl` was built from doesn't exist in this checkout (only
+  `race_list_2026.json` was ever legacy-imported; B2 finding, not new).
+  Documented as an **open owner-escalation item carried into C1**: §4.3's
+  mismatch attribution has no legacy-import sha baseline for any of the 163
+  anchor races, and can only run mechanically if every anchor race turns out
+  bit-identical. Full detail: `report/BRONZE_COVERAGE.md`,
+  `## RESULT — B3` in the spec.
+- **Next single step:** `C1` in the plan — silver driver-race parity (Sonnet
+  build session; the frozen C-gate, gates D1/gold). Carries B3's condition-2
+  escalation forward — see C1's `status_note` in `plan/schedule.yml`. C2
+  (silver breadth) is equally unblocked and not picked only because the plan
+  format allows one `next` at a time and D1's gate chain runs through C1.
+  Scoring/benchmark are re-homed as Gold consumers in D2; prediction #1 is
+  scored there.
 - **2026-07-19 (G1 done):** `specs/clean_air_causal_pace.md` pre-registered
   (0c8e9fa) — the roadmap-#5 design, banked before any of its data exists.
   Two natural experiments (restart-reshuffle pit-box IV; pit-cycle offset
