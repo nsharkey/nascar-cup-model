@@ -290,8 +290,18 @@ post-race and 0/empty pre-race in every observed year (verified against
 fresh independent request, isolated to 2017 (every other year 2015-2026 is
 self-consistent). `bronze_fetch.index_year_matches()` detects any
 recurrence by majority vote on `race_season` vs. the requested URL year and
-treats a mismatch as `absent` — 2017's real races are fully covered via the
-(correct) 2018 fetch, so nothing is lost.
+treats a mismatch as `absent`. The aliased file is a redundant copy of 2018
+(which is itself fetched correctly under its own URL), so **no 2018 data is
+affected** — but 2017's **own** races are consequently absent from bronze:
+with no valid 2017 index there are no 2017 race_ids to enumerate. This is
+neither disk loss (our copy is intact and quarantined) nor necessarily
+permanent at the source — 2017's race_ids occupy the observed gap between
+2016 (Cup ends 4518) and 2018 (Cup starts 4673), a 154-id block that could
+be recovered by probing that range directly, bypassing the broken index.
+But 2017 is below the detailed-feed floor (§8e) — 2015-2016 likewise store
+no detailed feeds — so the only unique gap is 2017's **index metadata**
+(schedule/results), which the frozen model never consumes. It costs the
+model nothing that the index-only years 2015-2016 don't already.
 
 ### 8e. Detailed-feed floor discovered by the B2 pull (2026-07-19)
 
@@ -300,5 +310,8 @@ aliased 2017) were attempted. Result: 4,222 stored, 1,964 confirmed
 `absent`, 0 `failed`. The index floor (2015) and the detailed-feed floor
 are **not the same** — `weekend-feed`/`live-feed` start 2018, `live-flag-data`
 2019, `lap-times`/`live-pit-data`/`lap-notes` 2020, uniformly across all
-three series. 2015-2017 detailed feeds are archived-absent, not missing —
-the pull attempted them and got a two-pass-confirmed 403.
+three series. 2015-2016 detailed feeds are archived-absent, not missing —
+the pull attempted them and got a two-pass-confirmed 403. 2017 detailed
+feeds were **not attempted at all** (no valid 2017 index ⇒ no 2017
+race_ids to request; §8d) — the manifest holds zero 2017 detailed-feed
+rows, distinct from 2015-2016's confirmed-`absent` rows.

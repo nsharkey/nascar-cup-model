@@ -433,6 +433,38 @@ sessions:
       (B3 -> done, C1/C2 -> next candidates) and re-render via
       `python src/report_plan.py`; commit; leave the tree clean.
 
+  - id: "B4"
+    phase: "B"
+    title: "Recover 2017 index metadata via race_id probe (optional)"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~20-40 min"
+    ref: null
+    exec_summary: >-
+      Optional completeness nicety: recover 2017's race schedule/results, the one
+      season missing from the archive. Adds nothing to the model — it only fills a
+      historical-metadata gap.
+    tech_summary: >-
+      The cf.nascar.com 2017 index URL is permanently aliased to 2018 (serves
+      2018's races verbatim; DATA_DICTIONARY §8d), so 2017 has no enumerable
+      race list and is absent from bronze.races_index. 2017's race_ids occupy
+      the observed gap between 2016 (Cup ends 4518) and 2018 (Cup starts 4673) —
+      a ~154-id block — and are recoverable by probing that range directly,
+      bypassing the broken index. NOTE: 2017 is below the detailed-feed floor
+      (weekend-feed/lap-times start 2018; 2015-2016 also store no detailed
+      feeds), so this yields index/schedule metadata only, no modeling rows —
+      strictly a completeness item, immaterial to the frozen model. Preserve
+      bronze immutability and the manifest/aliasing guards when adding the
+      probe path.
+    deps: ["B2"]
+    status_note: >-
+      Logged 2026-07-19 from a DATA_DICTIONARY audit that also corrected two
+      2017 framing errors in §8d/§8e (the aliased file is a redundant 2018 copy,
+      not 2017 coverage; 2017 detailed feeds were never attempted — zero
+      manifest rows — distinct from 2015-2016's confirmed-absent). Low priority:
+      nothing downstream needs 2017.
+
   - id: "C1"
     phase: "C"
     title: "Silver driver-race table (behavior-preserving)"
