@@ -38,10 +38,15 @@ Editing a rendered file by hand is a gate failure, not a workflow. The schema:
 
 - `meta`: `plan_name`, `as_of` (absolute date, never "today"), `spec_version`,
   `standfirst`, `bottom_line`, optional `handoff_note`.
-  - **`standfirst` is evergreen** — the plan's durable identity: what the project
-    *is*, the arc it spans, and its standing invariants. Write it so it stays true
-    as phases complete and sessions are added; keep point-in-time status
-    ("bronze is done", "C1 is next") OUT of it. It should rarely change.
+  - **`standfirst` tracks the plan's current scope and shape** — what the project
+    *is*, the arc it spans, and its standing invariants. **Refresh it whenever the
+    plan changes in substance** — a new phase, a new session or experiment family,
+    a direction shift — so it always describes the plan as it now stands. It does
+    NOT move for status-only changes (a session flipping to done, a `ref` landing,
+    a note edit); those belong in `bottom_line`. Rule of thumb: *structural change
+    → revisit the standfirst; status-only change → leave it.* It carries no
+    point-in-time status itself ("bronze is done", "C1 is next") — that is
+    `bottom_line`'s job — but its scope must keep pace with what the plan covers.
   - **`bottom_line` is the current-status wrap-up** — the one field that *is*
     meant to move each session (where we are now, what's next in 1–2 sentences).
     Snapshot language lives here, not in the standfirst.
