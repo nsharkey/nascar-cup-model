@@ -135,5 +135,10 @@ The sprint plan is **structured data + a deterministic renderer + a drift
 gate**, not a hand-maintained doc. Edit `plan/schedule.yml` and run
 `python src/report_plan.py` to regenerate `PLAN.md` and `plan/PLAN.html` —
 **never hand-edit a rendered file** (`src/test_report_plan.py` fails CI if a
-render diverges from the YAML). "Show me the plan" = run the renderer. Full
+render diverges from the YAML).
+
+**When the owner asks to see / look at the sprint plan, run
+`python src/report_plan.py --open`** — it re-renders from the YAML and opens
+`plan/PLAN.html` in the local browser (nothing is uploaded). Only publish the
+claude.ai artifact form when the owner explicitly wants a shareable link. Full
 spec: `PLAN_FORMAT.md`.

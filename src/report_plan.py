@@ -11,6 +11,7 @@ PLAN_FORMAT.md.
 
 Usage:
   python src/report_plan.py            # validate + (re)write PLAN.md and plan/PLAN.html
+  python src/report_plan.py --open     # ^ then open plan/PLAN.html locally — THE way to view the plan
   python src/report_plan.py --check    # validate + assert committed renders match; exit 1 on drift
   python src/report_plan.py --markdown # print Markdown to stdout, write nothing
 """
@@ -18,6 +19,7 @@ import argparse
 import html
 import re
 import sys
+import webbrowser
 from pathlib import Path
 
 import yaml
@@ -315,6 +317,8 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true",
                     help="validate + assert committed PLAN.md/plan/PLAN.html match the render; exit 1 on drift")
     ap.add_argument("--markdown", action="store_true", help="print Markdown to stdout, write nothing")
+    ap.add_argument("--open", action="store_true", dest="open_",
+                    help="render, then open plan/PLAN.html in the default browser (the canonical way to view the plan)")
     args = ap.parse_args(argv)
 
     plan = read_plan()
@@ -350,6 +354,9 @@ def main(argv=None):
     n = len(plan["sessions"])
     print(f"wrote {PLAN_MD.relative_to(ROOT)} and {PLAN_HTML.relative_to(ROOT)} "
           f"({n} sessions across {len(plan['phases'])} phases)")
+    if args.open_:
+        webbrowser.open(PLAN_HTML.as_uri())
+        print(f"opened {PLAN_HTML.relative_to(ROOT)} in your default browser")
     return 0
 
 

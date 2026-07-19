@@ -20,11 +20,17 @@ Three parts, one source of truth:
 ## Commands
 
 ```bash
-python src/report_plan.py            # validate + (re)write PLAN.md and plan/PLAN.html
+python src/report_plan.py --open     # THE way to view the plan: render, then open plan/PLAN.html locally
+python src/report_plan.py            # validate + (re)write PLAN.md and plan/PLAN.html (no browser)
 python src/report_plan.py --check    # validate + assert committed renders match; exit 1 on drift
 python src/report_plan.py --markdown # print Markdown to stdout, write nothing
 python src/test_report_plan.py       # the full gate (schema + cardinality + drift); exit 1 on any failure
 ```
+
+**"Show me / look at the sprint plan" always means: run `python src/report_plan.py --open`.**
+It regenerates from `plan/schedule.yml` (so the view is never stale) and opens the
+Economist-style `plan/PLAN.html` in the local browser — no publishing, nothing leaves
+the machine. Publish the artifact form only when the user explicitly wants a shareable link.
 
 ## 1. Source of truth — `plan/schedule.yml`
 
