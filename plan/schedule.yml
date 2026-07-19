@@ -991,8 +991,8 @@ sessions:
       features on the gold feature layer; adopt iff walk-forward Wilcoxon
       p<=0.0167 AND mean delta-rho>=+0.005. Analytics until the gate passes; MY_TYPE
       untouched.
-    deps: ["C3", "D1"]
-    status_note: "gated on C3 + D1 (gold feature layer + frozen engine) + >=8 scored races + its own pre-registered spec (F5 catalog #6); model A/B, not an adoption. D1 dep added 2026-07-19 to match twin F9 — an A/B on the gold feature layer cannot run without it"
+    deps: ["C3", "D1", "D2"]
+    status_note: "gated on C3 + D1 (gold feature layer + frozen engine) + D2 (scoring consumer that produces scored races) + >=8 scored races + its own pre-registered spec (F5 catalog #6); model A/B, not an adoption. D1+D2 deps added 2026-07-19 — as a frozen-model A/B it inherits the roadmap-#4 >=8-scored-races gate, which cannot be met until D2 is live; twin F9 patched the same way"
   - id: "F9"
     phase: "F"
     title: "Era-reset features A/B (hp750-2026 / era race-number)"
@@ -1011,8 +1011,8 @@ sessions:
       audit-recommended partial coefficient reset at era breaks — as candidate PL
       features on gold; adopt iff walk-forward Wilcoxon p<=0.0167 AND mean
       delta-rho>=+0.005. MY_TYPE untouched; analytics until the gate passes.
-    deps: ["C3", "D1"]
-    status_note: "gated on C3 + D1 + >=8 scored races + own spec; but the 2026 hp750 era break is LIVE in the current forward test — most time-relevant of the F5 net-new ideas (catalog #7)"
+    deps: ["C3", "D1", "D2"]
+    status_note: "gated on C3 + D1 + D2 (scoring consumer that produces scored races) + >=8 scored races + own spec; but the 2026 hp750 era break is LIVE in the current forward test — most time-relevant of the F5 net-new ideas (catalog #7). D2 dep added 2026-07-19 — a frozen-model A/B inherits the roadmap-#4 >=8-scored-races gate, unmeetable until D2 is live"
   - id: "F10"
     phase: "F"
     title: "Dynamic-skill recency A/B (spec lift + run)"
