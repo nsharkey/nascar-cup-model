@@ -7,6 +7,47 @@ change. Every item below requires its own explicit go decision before any
 build session runs. Nothing in this document touches the frozen model, the
 weekly protocol, or the pre-registered specs.
 
+## DECISION 2026-07-19 — AWS indefinitely deferred; local-first
+
+The owner directed: **indefinitely defer any AWS build-out; lock up the
+local capture solutions first before doing any AWS work.** Consequences:
+
+- The **AWS build sessions A1–A3 (below) are frozen** — none may run until
+  the owner explicitly lifts this deferral. They remain documented as the
+  eventual cloud target, not a near-term plan.
+- The **local capture plan (next section) is now the active path.** Every
+  capture need is served locally first; AWS is revisited only if a local
+  approach proves inadequate (the one concrete gap: a poller/odds job
+  firing while the laptop is off — see per-item notes).
+- No GitHub Actions on this private repo, local or otherwise (quota trap).
+- This is still planning: each local item below needs its own owner go
+  before a build session runs.
+
+## Local-first capture plan (active)
+
+All fetching already runs locally — `src/update_data.py` is a 4-line
+`urllib` loop against `cf.nascar.com/cacher/...`. "Local capture" is
+therefore mostly extending an existing loop; only the ephemeral live-feed
+poller is genuinely new engineering. macOS scheduling primitives: `launchd`
+(fires at wall-clock time, re-runs missed jobs on wake), `pmset schedule
+wake` (wakes the Mac from sleep), `caffeinate -i` (holds the machine awake
+for a race-window poll). The reliability gap vs AWS is only ever "the Mac
+must be awake"; it does not matter for anything fetched after the fact.
+
+| # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
+|---|---|---|---|---|---|---|
+| L1 | Archive mirror + endpoint expansion | pending, ⬅ next local | Sonnet 5, thinking on, high | ~1 h | Back up all source data and start saving three extra archived feeds, so nothing is lost if NASCAR stops serving old races | Extend the `update_data.py` fetch loop to also pull `live-pit-data.json`, `live-flag-data.json`, `lap-notes.json` per race → `data/races/`; one-time backfill of ~163 races + fold into the weekly increment |
+| L2 | Local closing-odds capture | pending, gated on odds-API coverage check | Sonnet 5, thinking on, high | 1–2 h | Automatically record betting prices every race morning from this machine | `launchd` job ~1 h pre-green → licensed odds API → raw JSON + paste-ready spec-§5.1 `book_prices.entries`; human still pastes+commits. Soft-fails (noticed, fixable) if Mac off Saturday |
+| L3 | Local weekly pipeline | pending, gated on GitHub remote existing | Sonnet 5, thinking on, high | 1–2 h | Make the weekly public prediction post fire automatically | `launchd` detects qualifying off weekend feed → `update_data.py` + `predict_next.py` → git commit/push via existing local SSH key (no cloud credentials — simpler than the AWS version) |
+| L4 | Local live-feed poller | pending, opportunistic (no consumer yet) | Sonnet 5, thinking on, high | 1–2 h | Start recording the one race-day stream that's otherwise lost forever, accepting gaps when the laptop is asleep | `pmset` wake pre-green → `launchd` starts poller → `caffeinate` held → poll `live-feed.json` @5–10 s → gzip JSONL to `data/`. Log will have holes on asleep/off race days |
+
+Local ordering (flips the AWS priority): **L1 first** (trivial, immediate
+retention hedge), **L2** if odds-API coverage checks out (the picks-feeding
+link), **L3** once the GitHub remote exists, **L4** opportunistically —
+irreversibility argues for starting *some* snapshot log, but no roadmap
+item consumes it and the awake-Mac fragility makes a local log
+"better-than-nothing," not dependable.
+
 ## Ground truth this plan stands on (probed live, 2026-07-18)
 
 - `cf.nascar.com` is AWS CloudFront — the project already consumes
@@ -117,7 +158,11 @@ so its absence is a decision, not an oversight.
 - At build time, re-verify pricing/coverage claims — this document records
   2026-07-18 facts.
 
-## Build sessions, if/when triggered
+## AWS build sessions — FROZEN (deferred indefinitely, see DECISION 2026-07-19)
+
+These remain the eventual cloud target if a local approach proves
+inadequate. **None may run until the owner lifts the AWS deferral.** The
+active plan is the local-first table above.
 
 Goal: capture-side infrastructure that protects the forward test's sample
 size and preserves irreplaceable data, at ~$1–3/mo total.
@@ -132,7 +177,8 @@ Independence: A1, A2, A3 are fully independent of each other and of all
 `specs/` work; any subset can build in any order. None may run before its
 owner go.
 
-**Bottom line:** the only AWS spend worth making soon is S1 (odds capture),
-because missed closing prices permanently weaken the market benchmark; S2
-is cheap optionality on irreplaceable data; everything else waits for its
-trigger.
+**Bottom line:** AWS is deferred indefinitely (2026-07-19). Capture is
+local-first — L1 (archive mirror) is the next actionable build, then L2
+(odds) if coverage checks out, L3 once a remote exists, L4 opportunistically.
+The AWS sessions above stay frozen as the eventual cloud fallback and run
+only if the owner lifts the deferral.

@@ -26,7 +26,19 @@ meta:
     before the North Wilkesboro green flag. G1 is also banked (2026-07-19,
     0c8e9fa): the clean-air causal-pace design is pre-registered with frozen
     gates; its execution (G2) still waits on the market benchmark returning
-    EDGE.
+    EDGE. Capture infra (Phase H) is now local-first: AWS is deferred
+    indefinitely (2026-07-19) and its sessions are frozen as the eventual cloud
+    fallback; the local versions L1-L4 are the active path, with L1 (local
+    archive mirror) the next actionable local item behind the mainline rebuild.
+    Three ungated, runnable-now research spikes, independent of the rebuild and
+    of each other: F5 (done 26dff0c) inventoried what's derivable from the
+    vendored track audit — all its proposals are now folded in: C3 (Phase C), the
+    F3/F4 tightenings, and net-new candidates F8 (config-novelty) + F9 (era-reset);
+    only a post-F3 simulator spike is held as premature. F6 (running) scans the
+    external NASCAR knowledge landscape;
+    F7 assesses whether a Bayesian approach beats the current walk-forward
+    Plackett-Luce. All propose only; nothing enters the frozen model without a
+    gated A/B.
   handoff_note: >-
     B2 is a Sonnet build session executing the spec's section-10 B2 checklist
     with zero design judgment calls (every choice is pre-resolved in the spec;
@@ -62,7 +74,9 @@ phases:
       Parse, clean, dedupe, conform bronze into DuckDB/parquet tables. The
       driver-race table must reproduce today's parsed fields EXACTLY
       (regression-gated), so the validated model is untouched; new lap/pit/flag
-      tables unlock the feeds we've never used.
+      tables unlock the feeds we've never used. C3 adds vendored track-audit
+      reference tables (physical facts + crosswalk + quarantined priors) —
+      package-only, no hard dep on C1/C2.
   - key: "D"
     num: "IV"
     title: "Gold — model & analytics surface"
@@ -91,7 +105,17 @@ phases:
       and F2 is serial after F1's decision. F3/F4 are follow-ups from the
       vendored track-audit package (research/track_audit/) — analytics and
       reference outputs gated on the medallion build rather than on scored
-      races; neither touches the frozen model.
+      races; neither touches the frozen model. F5/F6/F7 are ungated,
+      RUNNABLE-NOW research spikes independent of and parallelizable with the
+      rebuild (and with each other): F5 (done, 26dff0c) inventoried everything
+      derivable from the vendored track audit and scoped F3/F4 + a candidate C3
+      dimension table; F6 (running) scans the external NASCAR knowledge landscape
+      (academic, betting/DFS/fantasy, open-source) for transferable ideas; F7
+      assesses whether a Bayesian approach is appropriate/better than the current
+      L2-penalized walk-forward Plackett-Luce. All propose only — nothing enters
+      the frozen model without its own gated A/B. F8/F9 are net-new track-audit
+      feature A/Bs surfaced by F5 (config-novelty; era-reset — whose 2026 hp750
+      break is live in the current forward test), gated on C3 + scored races.
   - key: "G"
     num: "VII"
     title: "Causal clean-air pace (gated: market EDGE)"
@@ -102,12 +126,17 @@ phases:
       pit cycles) comes from the new silver pit/flag tables.
   - key: "H"
     num: "VIII"
-    title: "Infra (AWS, optional, per-item go)"
+    title: "Capture infra — local-first (AWS deferred indefinitely)"
     model: "Sonnet 5 · thinking on · high"
     note: >-
-      Capture-side infrastructure at a few dollars a month. Odds capture protects
-      the perishable data; the live poller + S3 mirror back up the ephemeral
-      stream and the bronze archive. Plan-only; each needs its own go.
+      Capture-side infrastructure that protects the forward test's sample size
+      and preserves irreplaceable data. DECISION 2026-07-19: AWS build-out is
+      deferred INDEFINITELY — the local versions (L1-L4) are the active path and
+      run first; the AWS sessions (H1-H3) are frozen as the eventual cloud
+      fallback and run only if the owner lifts the deferral. All fetching is
+      already local (src/update_data.py is a 4-line urllib loop); only the
+      live-feed poller is new engineering. No GitHub Actions (quota trap).
+      Plan-only; each item needs its own owner go. See planning/aws_solutions.md.
   - key: "R"
     num: "R"
     title: "Retired — superseded by the medallion rebuild"
@@ -344,6 +373,32 @@ sessions:
       flag-level (caution/stage transitions) silver tables from the newly-archived
       feeds; keyed to race+driver. Feeds roadmap-#5 pace work.
     deps: ["B2"]
+  - id: "C3"
+    phase: "C"
+    title: "Track reference tables from vendored audit"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Materialize the vendored track audit into queryable reference tables —
+      physical facts, crosswalk, and quarantined analyst priors — so every
+      silver/gold table can join on track configuration. Proposed by the F5
+      derivation spike (26dff0c); reference tables only, no model change.
+    tech_summary: >-
+      Build silver.track_dim (43 configs: physical facts + parsed banking + era
+      bounds + hp750_2026 flag; the ten 1-10 analyst priors excluded by design),
+      silver.track_xwalk (crosswalk verbatim + a race_track join view),
+      silver.track_priors (10 priors long-form, score_type/evidence labels
+      carried so they can never be silently used as measurements), silver.rules_era
+      (6 era keys 2015->2026) + the §2.3 leakage-free derived features (config_age,
+      config/era race number, era_key, hp750_2026). All per
+      research/track_audit_derivation.md §2. Package files untouched (the
+      test_track_audit.py hash gate stays green); extend that gate with
+      re-derivation checks (row counts, banking parse, dim-xwalk integrity).
+    deps: []
+    status_note: "NO hard dep on C1/C2 — reads only the vendored package (F5 report); benefits from C1's DuckDB warehouse conventions, so listed after C2 for tidy build order. Priors quarantined in their own table; nothing feeds the frozen model without a gated A/B"
 
   - id: "D1"
     phase: "D"
@@ -463,14 +518,18 @@ sessions:
       measurements from our own lap, pit, and caution data — turning reference
       priors into calibrated per-track profiles for DFS and betting work.
     tech_summary: >-
-      Pre-register a spec first (specs/README.md discipline), then compute the
-      audit's metric specs (tire-deg slope TDS, restart volatility RVS,
-      pit-share PIS, qualifying importance QIS, laps-led Herfindahl DCI, ...)
-      per crosswalk track_id x era from silver laps/pit_stops/flag_events +
-      gold results, with hierarchical shrinkage toward the package's 12
-      families; write a gold track_profiles table. The vendored priors in
-      research/track_audit/ stay untouched (source vs derived separation);
-      analytics/reference output only — no model change.
+      Pre-register a spec first (specs/README.md discipline) using
+      research/track_audit_derivation.md §3 as the derivation source: the §3
+      metric definitions with the easy-six (results-grade) / live-data-four split,
+      per-metric sample floors and shrinkage hyperparameters fixed a priori,
+      hierarchical shrinkage toward the package's 12 families. Compute per
+      crosswalk track_id x era from silver laps/pit_stops/flag_events + gold
+      results. Dual outputs: gold.track_profiles (full-sample, analytics-only,
+      build-graph-isolated from wf_features) + gold.track_profiles_asof
+      (walk-forward, feature-eligible only via a gated A/B); FVS/residual metrics
+      pinned to the frozen engine; explicit TPP clean-air exclusion deferring
+      anything causal to specs/clean_air_causal_pace.md. Vendored priors untouched
+      (source vs derived); reference output — no model change without a gated A/B.
     deps: ["C2", "D1"]
     status_note: "audit follow-up (research/track_audit/INTEGRATION.md); needs silver lap/pit/flag (C2) + gold (D1)"
   - id: "F4"
@@ -486,15 +545,279 @@ sessions:
       for drivers — replacing the audit's structural guesses with measured
       skill transfer between tracks.
     tech_summary: >-
-      Pre-register a spec, then compute Driver Skill Transferability per the
-      audit's metric spec: cross-validated driver-residual correlation between
-      track_id/era pairs from gold walk-forward residuals; compare against
-      nascar_track_similarity_edges.csv (structural priors). Where they
-      disagree, empirical wins for analytics; the structural file stays as
-      vendored reference. Candidate input to a future typed-history refinement
-      — any MODEL change still requires its own gated A/B.
+      Pre-register a spec (research/track_audit_derivation.md §4 as source), then
+      compute Driver Skill Transferability: residual = frozen-engine pre-race
+      expected rank replayed from gold (D1); leave-one-season-out CV of
+      driver-residual correlation between track_id/era pairs; family-pair
+      hierarchical pooling with a pre-registered n-floor. Comparison protocol =
+      edge-restricted Spearman + top-3 Jaccard + a named disagreement list vs
+      nascar_track_similarity_edges.csv; structural edges retained as the SOLE
+      donor structure for zero-history configs. MY_TYPE untouched — any pooling
+      refinement exits F4 as an A/B candidate, not an adoption.
     deps: ["D1"]
     status_note: "audit follow-up; needs gold residual history (D1); informs but never directly changes the frozen model"
+  - id: "F5"
+    phase: "F"
+    title: "Track-audit derivation research spike (what can we derive?)"
+    status: "done"
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-5 hr"
+    ref: "26dff0c"
+    exec_summary: >-
+      Studied everything the vendored track audit lets us build and mapped each
+      derivation to concrete prediction and simulation features. Found three
+      derivable layers plus a 12-knob simulation surface, and turned them into
+      concrete plan proposals — so the downstream builds are scoped from a
+      complete inventory rather than piecemeal. Report proposes only; no tables
+      built, no frozen spec changed, hash gate green.
+    tech_summary: >-
+      Deliverable research/track_audit_derivation.md: (1) full field inventory
+      across all 6 package files, each tagged by evidence class (Verified Fact /
+      Calculated / Strong Inference / Working Hypothesis) and governance tier
+      (freely-usable vs model-gated); (2) LAYER-A join-derivable features usable
+      now via the crosswalk (length/banking/surface/road_course/turns/family/
+      comparables) -> defines a candidate silver/gold track-dimension table (C3);
+      (3) LAYER-B calibratable metrics — for each of the 10 analyst priors, the
+      leakage-safe walk-forward metric that replaces it and the silver/gold source
+      it needs -> sharpens F3's pre-registered scope; (4) LAYER-C comparability/
+      similarity derivations -> sharpens F4; (5) SIM parameter map — which track
+      knobs a race simulator needs (position premium, restart volatility, tire-deg
+      curve, pit importance, caution/attrition rates) and which field supplies
+      each, v0-placeholder-from-priors vs calibrated-from-silver; (6) explicit
+      leakage/circularity assessment for anything derived from priors; (7) a ranked
+      catalog where each derivable table/feature becomes a candidate build session.
+      Respects INTEGRATION.md doctrine: source files immutable, derived artifacts
+      separate, nothing feeds the frozen model without its own gated A/B.
+    deps: []
+    status_note: "DONE 2026-07-19 (26dff0c), all proposals folded: C3 (Phase C), F3/F4 tech-summary tightenings, and net-new candidates F8 (config-novelty) + F9 (era-reset). Only the post-F3 simulator spike (#5) is deliberately held as premature until F3 lands"
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read research/track_audit/INTEGRATION.md IN FULL, then the package's
+      nascar_cup_track_audit_bundle.json and the crosswalk — plus PLAN.md Phase F
+      (F3/F4) and specs/medallion_architecture.md section 5 (gold layer).
+
+      RESEARCH SPIKE F5 — a full study of what data we can DERIVE from the vendored
+      track audit to help predictions and simulations. This is a research/design
+      session: the deliverable is a report that PROPOSES; build no tables, change no
+      frozen spec, touch no package file (the hash gate must stay green — run
+      src/test_track_audit.py to confirm at start and end).
+
+      Produce research/track_audit_derivation.md covering:
+      1. Full field inventory across all 6 package files, each tagged by the audit's
+         evidence class AND governance tier (freely-usable Verified Fact vs the ten
+         1-10 analyst priors that are Working Hypotheses and are model-gated).
+      2. LAYER A — features join-derivable NOW via the crosswalk (physical facts,
+         family, comparables). Specify the candidate silver/gold track-dimension
+         table (columns, keys, immutable-source lineage) — this becomes a C3
+         proposal.
+      3. LAYER B — for EACH of the 10 priors, the empirical, leakage-safe
+         walk-forward metric that would replace it, and the exact silver/gold source
+         (lap/pit/flag from C2, results from D1). This sharpens F3's spec scope; do
+         not compute anything (the data does not exist yet) — specify the derivation.
+      4. LAYER C — comparability/similarity derivations (measured skill transfer,
+         comparable-track pooling) that sharpen F4.
+      5. SIM parameter map — the track knobs a race simulator needs and which field
+         supplies each, distinguishing a v0 placeholder from raw priors vs a
+         calibrated value from silver.
+      6. Leakage/circularity assessment for any prior-derived quantity, and the
+         explicit line: nothing enters the frozen PL prediction model without its own
+         pre-registered, walk-forward-gated A/B (INTEGRATION.md doctrine).
+      7. A ranked catalog: each derivable table/feature -> a candidate build session,
+         payoff band then effort, with its data dependency and gate.
+      End by proposing the concrete plan edits (new C3 session, tightened F3/F4
+      scope, any net-new feature ideas) for the owner to fold in — do not edit
+      plan/schedule.yml yourself unless asked. Commit the report; leave the tree clean.
+  - id: "F6"
+    phase: "F"
+    title: "External NASCAR knowledge scan (web research spike)"
+    status: "pending"
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~4-6 hr"
+    ref: null
+    exec_summary: >-
+      Search the web for how everyone else models NASCAR — academic papers,
+      betting and DFS/fantasy analytics, and open-source projects — and distill
+      the credible, transferable ideas (features, methods, data sources) into
+      candidate additions to this project, each mapped to our architecture and
+      governance. Produces a cited research report that proposes; it builds
+      nothing and changes no frozen spec.
+    tech_summary: >-
+      Deliverable research/external_knowledge_scan.md via fan-out web search +
+      source fetch + adversarial verification (deep-research style, every claim
+      cited). Sweeps: (1) ACADEMIC — motorsport/NASCAR finishing-position and
+      ranking models (Plackett-Luce and alternatives), DNF/attrition, caution and
+      pit-strategy modeling, driver-skill estimation, transferable methods from F1
+      and other ranking sports; (2) BETTING/DFS/FANTASY — public methodologies and
+      the signals they use (practice/qualifying speed, loop data, track history,
+      equipment/manufacturer, weather), plus H2H-matchup market structure relevant
+      to the market benchmark; (3) OPEN-SOURCE/ANALYTICAL — GitHub repos, nascaR.data
+      (already source S005), public dashboards and blogs, for data sources and
+      modeling approaches; (4) DATA SOURCES beyond cf.nascar.com (loop data, weather,
+      practice) — what is public/licensable. For each idea: credibility (validated
+      vs hype, common leakage traps flagged), fit to our walk-forward PL + medallion
+      architecture, governance tier, overlap vs what we already do/plan (MY_TYPE,
+      pace_med85, DNF/pooling A/Bs, clean-air, track-audit F3/F4/F5) so nothing is
+      duplicated, and a candidate plan session (payoff band then effort). Doctrine:
+      proposes only; any model feature needs its own pre-registered, gated A/B;
+      licensed/ToS-clean sources only.
+    deps: []
+    status_note: "IN PROGRESS — kicked off 2026-07-19. Pure web research + distillation; no data dependency, independent of the rebuild and of F5/F7 (separate report files). Mainline next stays B2"
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      First read README.md, PLAN.md (esp. Phase F), specs/ (scoring, market benchmark,
+      DNF, pooling, clean-air) and research/track_audit/INTEGRATION.md so you know what
+      this project ALREADY does and plans — the goal is to find external ideas that add
+      to it, not duplicate it.
+
+      RESEARCH SPIKE F6 — a web-research scan of the external NASCAR knowledge landscape,
+      distilled into candidate additions to this project. Use the deep-research approach:
+      fan-out web searches, fetch primary sources, adversarially verify claims, synthesize
+      a CITED report. This is a research/design session: the deliverable PROPOSES; build
+      nothing, change no frozen spec.
+
+      Produce research/external_knowledge_scan.md sweeping four areas:
+      1. ACADEMIC — peer-reviewed + preprint work on NASCAR/motorsport finishing-position
+         and rank modeling (Plackett-Luce and alternatives), DNF/attrition, caution and
+         pit-strategy modeling, driver-skill estimation; plus transferable methods from F1
+         and other ranking sports.
+      2. BETTING / DFS / FANTASY — public methodologies and the signals they use (practice
+         and qualifying speed, loop data, track history, equipment/manufacturer, weather),
+         and H2H-matchup market structure relevant to specs/market_benchmark_decision_rule.md.
+      3. OPEN-SOURCE / ANALYTICAL PROJECTS — GitHub repos, nascaR.data (already our source
+         S005), public dashboards/blogs — for data sources and modeling approaches.
+      4. DATA SOURCES beyond cf.nascar.com (loop data, weather, practice/qualifying,
+         equipment) — what is public and what is licensable; note ToS constraints.
+
+      For EACH idea distilled: cite the source; assess credibility (evidence vs hype, and
+      flag common leakage/circularity traps in public models); map fit to our walk-forward
+      Plackett-Luce + medallion architecture; assign a governance tier; state overlap with
+      what we already do or plan (so nothing duplicates MY_TYPE, pace_med85, the DNF/pooling
+      A/Bs, clean-air, or the track-audit spikes); and propose it as a candidate plan session
+      (payoff band then effort, with data dependency and gate). Hard line: nothing enters the
+      frozen prediction model without its own pre-registered, walk-forward-gated A/B; use only
+      licensed / terms-of-service-clean sources.
+
+      End by proposing the concrete plan edits (new candidate sessions) for the owner to fold
+      in — do not edit plan/schedule.yml yourself unless asked. Commit the report; leave the
+      tree clean.
+  - id: "F7"
+    phase: "F"
+    title: "Bayesian modeling assessment (appropriate / better than current?)"
+    status: "pending"
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~4-6 hr"
+    ref: null
+    exec_summary: >-
+      Assess whether a Bayesian approach to the model is appropriate and whether it
+      would beat the current walk-forward Plackett-Luce — across three formulations
+      and judged on four payoffs (accuracy, uncertainty, small-sample behavior,
+      interpretability). Assessment-and-design only: it reasons and pre-registers a
+      fair comparison, but fits nothing and changes no frozen spec. If it concludes
+      'pursue', the actual head-to-head is a separate, gated build.
+    tech_summary: >-
+      Deliverable research/bayesian_modeling_assessment.md. Framing: the current
+      pl_fit(lam=0.5) in walkforward.py is ALREADY the MAP estimate of a Gaussian-prior
+      Bayesian PL (ridge lambda <-> prior precision), so 'go Bayesian' means adding
+      posteriors / hierarchy / dynamics, not starting over. Assess all three
+      formulations per owner (2026-07-19): (A) HIERARCHICAL Bayesian PL — posteriors +
+      partial pooling across driver/team/mfr/track, unifying the F2 pooling and F3
+      track work under one model; (B) DYNAMIC state-space skill — latent driver skill
+      as a random walk replacing the fixed 0.5^(k/8) half-life recency; (C) GENERATIVE
+      outcome model — finish jointly with DNF/attrition + cautions (overlaps F1/G).
+      For each, score the four payoffs: predictive accuracy vs the frozen 0.413/0.476/
+      0.449 walk-forward rho, calibrated uncertainty (posterior win-probs for sims /
+      DFS / the market benchmark), small-sample/early-season partial pooling, and
+      interpretability. Treat COMPUTE as a first-class constraint — MCMC/VI refit at
+      each of ~163 walk-forward steps is the central feasibility question; assess
+      inference tooling (PyMC/numpyro/Stan installable in the local .venv), amortized
+      vs per-step inference, and identifiability/leakage risks. Deliver a recommend-or-
+      -null verdict and, if pursue, a PRE-REGISTERED walk-forward A/B design (same rho
+      protocol + adopt/kill rule) ready to lift into a gated build. Proposes only; fits
+      nothing; frozen model untouched.
+    deps: []
+    status_note: "RUNNABLE NOW — methodology assessment, no fitting; uses the existing 163-race walk-forward protocol only as the eval frame. Independent of the rebuild and of F5/F6. Mainline next stays B2. Scope per owner (2026-07-19): assessment+design depth, all three formulations, all four payoffs"
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read src/walkforward.py IN FULL (the current model: L2-penalized walk-forward
+      Plackett-Luce, pl_fit(lam=0.5), recency half-life 8, MY_TYPE typology), plus
+      report/NASCAR_AUDIT_REPORT.md (how 0.413/0.476/0.449 walk-forward Spearman rho was
+      established), specs/ (scoring, market benchmark, DNF, pooling), and PLAN.md Phase F.
+
+      RESEARCH SPIKE F7 — assess whether a BAYESIAN approach is appropriate for this
+      model and whether it would be BETTER than the current approach. This is an
+      assessment-and-design session: reason it through and pre-register a fair
+      comparison, but FIT NOTHING, build nothing, and change no frozen spec.
+
+      Framing to start from: the current pl_fit(lam=0.5) is already the MAP estimate of a
+      Gaussian-prior Bayesian Plackett-Luce (the ridge lambda IS a prior precision). So
+      the question is what full posteriors / hierarchy / dynamics would add — not a
+      from-scratch replacement.
+
+      Produce research/bayesian_modeling_assessment.md assessing ALL THREE formulations:
+        A. HIERARCHICAL Bayesian PL — posteriors + partial pooling across driver / team /
+           manufacturer / track (would unify the F2 pooling and F3 track work).
+        B. DYNAMIC state-space skill — latent driver skill as a random walk, replacing the
+           fixed 0.5^(k/8) half-life recency weighting.
+        C. GENERATIVE outcome model — finish modeled jointly with DNF/attrition and
+           cautions, beyond pure ranking (note overlap with the DNF A/B F1 and clean-air G).
+      Judge each on ALL FOUR payoffs: (1) predictive accuracy vs the frozen 0.413/0.476/
+      0.449 walk-forward rho; (2) calibrated uncertainty — genuine posterior win-
+      probabilities for sims, DFS, and the market-benchmark edge test; (3) small-sample /
+      early-season behavior via partial pooling; (4) interpretability / coherence.
+      Treat COMPUTE as a first-class constraint: refitting MCMC or VI at each of ~163
+      walk-forward steps is the central feasibility question — assess inference tooling
+      (PyMC / numpyro / Stan, installable in the local .venv), per-step vs amortized
+      inference, runtime, and identifiability/leakage risks (the walk-forward as-of
+      discipline must be preserved).
+
+      End with a clear recommend-or-null verdict per formulation, and — for anything you
+      recommend pursuing — a PRE-REGISTERED walk-forward A/B design (same rho protocol,
+      explicit adopt/kill rule) ready to drop into a gated build, since no model change
+      ships without one. Propose the concrete plan edits for the owner to fold in; do not
+      edit plan/schedule.yml yourself unless asked. Commit the report; leave the tree clean.
+  - id: "F8"
+    phase: "F"
+    title: "Config-novelty features A/B (config age / race-number)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-5 hr"
+    ref: null
+    exec_summary: >-
+      Test whether how new or unfamiliar a track configuration is to the field —
+      its age and how many times it has been raced — improves predictions.
+      Proposed by the F5 derivation spike (catalog #6).
+    tech_summary: >-
+      Pre-register a spec first, then A/B config_race_number / config_age_years /
+      return_gap (from C3's silver.track_dim, all leakage-free) as candidate PL
+      features on the gold feature layer; adopt iff walk-forward Wilcoxon
+      p<=0.0167 AND mean delta-rho>=+0.005. Analytics until the gate passes; MY_TYPE
+      untouched.
+    deps: ["C3"]
+    status_note: "gated on C3 + >=8 scored races + its own pre-registered spec (F5 catalog #6); model A/B, not an adoption"
+  - id: "F9"
+    phase: "F"
+    title: "Era-reset features A/B (hp750-2026 / era race-number)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~3-5 hr"
+    ref: null
+    exec_summary: >-
+      Test whether accounting for rules-package era breaks — including the live
+      2026 750-hp change — improves predictions. The most time-relevant new idea:
+      the 2026 break is happening inside the current forward test. F5 catalog #7.
+    tech_summary: >-
+      Pre-register a spec, then A/B era_key / era_race_number / hp750_2026
+      interactions (from C3's silver.rules_era + track_dim) — including the
+      audit-recommended partial coefficient reset at era breaks — as candidate PL
+      features on gold; adopt iff walk-forward Wilcoxon p<=0.0167 AND mean
+      delta-rho>=+0.005. MY_TYPE untouched; analytics until the gate passes.
+    deps: ["C3", "D1"]
+    status_note: "gated on C3 + D1 + >=8 scored races + own spec; but the 2026 hp750 era break is LIVE in the current forward test — most time-relevant of the F5 net-new ideas (catalog #7)"
 
   - id: "G1"
     phase: "G"
@@ -539,53 +862,120 @@ sessions:
     deps: ["G1", "C2", "D1", "D2"]
     status_note: "gated on the market benchmark returning EDGE; also needs the data pipeline — bronze pit/flag download (B2) -> silver pit/flag tables (C2) -> gold features (D1)"
 
+  - id: "L1"
+    phase: "H"
+    title: "Local archive mirror + archived-endpoint expansion"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1 hr"
+    ref: null
+    exec_summary: >-
+      Back up all source data locally and start saving three extra archived feeds,
+      so nothing is lost if NASCAR stops serving old races.
+    tech_summary: >-
+      Extend the src/update_data.py fetch loop to also pull live-pit-data.json,
+      live-flag-data.json, lap-notes.json per race -> data/races/; one-time
+      backfill of ~163 races + fold into the weekly increment. planning/aws_solutions.md L1.
+    deps: []
+    status_note: "next LOCAL capture item (mainline next is still B2); owner go; trivial fetch-loop extension, immediate retention hedge"
+  - id: "L2"
+    phase: "H"
+    title: "Local closing-odds capture (launchd)"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Automatically record betting prices every race morning from this machine.
+    tech_summary: >-
+      launchd job ~1 h pre-green -> licensed odds API -> raw JSON + paste-ready
+      book_prices.entries (scoring spec 5.1); human still pastes+commits. Soft-fails
+      if the Mac is off Saturday. planning/aws_solutions.md L2.
+    deps: []
+    status_note: "gated on confirming a licensed odds API lists NASCAR H2H matchups; the picks-feeding link"
+  - id: "L3"
+    phase: "H"
+    title: "Local weekly pipeline (launchd)"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Make the weekly public prediction post fire automatically from this machine.
+    tech_summary: >-
+      launchd detects qualifying off the weekend feed -> update_data.py +
+      predict_next.py -> git commit/push via the existing local SSH key (no cloud
+      credentials — simpler than the AWS version). planning/aws_solutions.md L3.
+    deps: ["E2"]
+    status_note: "GitHub remote exists (E2 done); while the owner is engaged weekly, manual keeps a human eye on each prediction — build on first missed/near-missed commit"
+  - id: "L4"
+    phase: "H"
+    title: "Local live-feed poller (pmset + caffeinate)"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Start recording the one race-day stream that is otherwise lost forever,
+      accepting gaps when the laptop is asleep or off.
+    tech_summary: >-
+      pmset wake pre-green -> launchd starts poller -> caffeinate held -> poll
+      live-feed.json @5-10 s -> gzip JSONL to data/. Log will have holes on
+      asleep/off race days; no roadmap item consumes it yet. planning/aws_solutions.md L4.
+    deps: []
+    status_note: "opportunistic — irreversibility argues for starting some snapshot log, but no consumer exists and awake-Mac fragility makes it better-than-nothing, not dependable"
   - id: "H1"
     phase: "H"
-    title: "S1 closing-odds capture"
-    status: "pending"
+    title: "S1 closing-odds capture (AWS — FROZEN)"
+    status: "blocked"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1-2 hr"
     ref: null
     exec_summary: >-
-      Automate recording the closing prices the benchmark depends on, so a busy
-      weekend cannot lose them.
+      Cloud fallback for odds capture if the local version proves unreliable —
+      frozen until the owner lifts the AWS deferral.
     tech_summary: >-
       EventBridge -> Lambda -> licensed odds API -> S3; emits book_prices.entries
-      per scoring spec 5.1. planning/aws_solutions.md S1.
+      per scoring spec 5.1. planning/aws_solutions.md S1 (A1). Superseded for now by L2.
     deps: []
-    status_note: "owner go; the priority infra item"
+    status_note: "FROZEN 2026-07-19 — AWS deferred indefinitely; runs only if the owner lifts the deferral (e.g. L2 can't cover a laptop-off Saturday)"
   - id: "H2"
     phase: "H"
-    title: "S2 live-feed poller + S3 bronze mirror"
-    status: "pending"
+    title: "S2 live-feed poller + S3 bronze mirror (AWS — FROZEN)"
+    status: "blocked"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1-2 hr"
     ref: null
     exec_summary: >-
-      Record the one race-day stream that is otherwise lost, and back up the
-      permanent archive off-machine.
+      Cloud fallback for the live poller and off-machine archive backup — frozen
+      until the owner lifts the AWS deferral.
     tech_summary: >-
       Race-window Lambda polling live-feed.json; S3 mirror of data/bronze/.
-      planning/aws_solutions.md S2/S3.
+      planning/aws_solutions.md S2/S3 (A2). Superseded for now by L1 (mirror) + L4 (poller).
     deps: ["B2"]
+    status_note: "FROZEN 2026-07-19 — AWS deferred indefinitely; the dependable-poller argument that would justify unfreezing"
   - id: "H3"
     phase: "H"
-    title: "S4 weekly automation"
-    status: "pending"
+    title: "S4 weekly automation (AWS — FROZEN)"
+    status: "blocked"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-4 hr"
     ref: null
     exec_summary: >-
-      Make the weekly public prediction post automatic so a busy Saturday cannot
-      break the experiment.
+      Cloud fallback for the weekly automation — frozen until the owner lifts the
+      AWS deferral.
     tech_summary: >-
       Qualifying-detection off the weekend feed -> predict -> commit/push; NOT
-      GitHub Actions (quota trap).
+      GitHub Actions (quota trap). planning/aws_solutions.md S4. Superseded for now by L3.
     deps: ["E2"]
-    status_note: "unblocked 2026-07-19 (E2 done — remote exists); runs when phase H is reached"
+    status_note: "FROZEN 2026-07-19 — AWS deferred indefinitely; the local L3 has no cloud-credential problem, so this unfreezes only for unattended reliability"
 
   - id: "R1"
     phase: "R"
