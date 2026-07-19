@@ -5,6 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-19"
   spec_version: 1
+  shape_sig: "ddbbdeb3cae17eab"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order, run as a live forward test against the closing-line market.

@@ -9,6 +9,9 @@ Fails on:
   3. Completeness— exec/tech/model/wall_clock present on every row; 'next' has a kickoff.
   4. Referential — every phase resolves; every dep id resolves to a session.
   5. Drift       — committed PLAN.md AND plan/PLAN.html byte-match report_plan's render.
+  6. Verbosity   — every free-text field within its per-field word cap (MAX_WORDS).
+  7. Shape sync  — meta.shape_sig matches the live phases/sessions, so a structural
+                   change forces meta.standfirst to be reconciled (--sync-shape to affirm).
 
 A hand-edit of either rendered file — or a reskin of the HTML — turns this red.
 That is the anti-drift guarantee: the display is a pure function of plan/schedule.yml.
@@ -50,12 +53,17 @@ def main():
     check(rp.PLAN_HTML.exists() and rp.PLAN_HTML.read_text(encoding="utf-8") == htmlout,
           "[drift] plan/PLAN.html differs from render — run `python src/report_plan.py`, never hand-edit it")
 
+    # 7: shape sync — a structural change (added/removed/renamed phase or session) must
+    # re-affirm meta.standfirst via --sync-shape, so the scope line never silently lags.
+    ok, msg = rp.shape_status(plan)
+    check(ok, f"[shape] {msg}")
+
     if failures:
         print(f"FAIL — {len(failures)} problem(s):", file=sys.stderr)
         for f in failures:
             print(f"  - {f}", file=sys.stderr)
         return 1
-    print(f"PASS — schema valid, cardinality OK, renders match "
+    print(f"PASS — schema valid, cardinality OK, renders match, shape in sync "
           f"({len(plan['sessions'])} sessions, {len(plan['phases'])} phases).")
     return 0
 

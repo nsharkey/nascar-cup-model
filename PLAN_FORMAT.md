@@ -22,9 +22,10 @@ Three parts, one source of truth:
 ```bash
 python src/report_plan.py --open     # THE way to view the plan: render, then open plan/PLAN.html locally
 python src/report_plan.py            # validate + (re)write PLAN.md and plan/PLAN.html (no browser)
-python src/report_plan.py --check    # validate + assert committed renders match; exit 1 on drift
+python src/report_plan.py --check    # validate + assert committed renders match + shape in sync; exit 1 on any
 python src/report_plan.py --markdown # print Markdown to stdout, write nothing
-python src/test_report_plan.py       # the full gate (schema + cardinality + drift); exit 1 on any failure
+python src/report_plan.py --sync-shape  # re-affirm meta.shape_sig after a structural change (see check 7)
+python src/test_report_plan.py       # the full gate (schema + cardinality + drift + verbosity + shape); exit 1 on any failure
 ```
 
 **"Show me / look at the sprint plan" always means: run `python src/report_plan.py --open`.**
@@ -97,9 +98,36 @@ one `next` while work is open, zero when complete; (3) **completeness** —
 `next` session has a `kickoff_prompt`; (4) **referential** — every `phase` and
 every `dep` resolves; (5) **drift** — committed `PLAN.md` *and* `plan/PLAN.html`
 equal the render; (6) **verbosity** — each free-text field within its per-field
-word cap (below). This is what makes the display model-independent: any session,
+word cap (below); (7) **shape sync** — `meta.shape_sig` matches the live plan
+shape (below). This is what makes the display model-independent: any session,
 on any model, either regenerates from the YAML (identical output by construction)
 or fails the gate. A model cannot restyle the plan and still pass.
+
+### Shape sync — the standfirst must keep pace with the plan
+
+This plan evolves in *substance*, not just status — whole phases and experiment
+families get added. So `meta.standfirst` (the scope/identity line) is **not**
+evergreen: it has to be refreshed whenever the plan's shape changes, or it
+silently under-describes the plan. That "refresh the standfirst" step is easy to
+forget, so it's gated, not trusted to discipline.
+
+`report_plan.py` computes a `plan_shape_signature` — a hash over which **phases
+and sessions exist (key/id + title)**, order-independent. It is deliberately blind
+to `status`, `ref`, `deps`, and every free-text field, so a session flipping to
+`done` or a dep being added does **not** trip it — only a structural change
+(phase/session **added, removed, or renamed**) does. The last-reconciled signature
+is stored in `meta.shape_sig`; check 7 fails when it no longer matches.
+
+**Workflow when you add/rename/remove a phase or session:**
+1. Make the structural edit in `plan/schedule.yml`.
+2. **Look at `meta.standfirst`** — does its scope still describe the plan? Edit it
+   if the change widened what the plan covers (a new experiment family, a new
+   phase); leave it if the change fits the existing scope.
+3. Run `python src/report_plan.py --sync-shape` to re-affirm the signature.
+4. Re-render (`python src/report_plan.py`) and commit.
+
+Skipping step 2/3 is the point of failure the gate closes: you cannot land a
+structural change without consciously reconciling the standfirst first.
 
 ### Verbosity caps
 

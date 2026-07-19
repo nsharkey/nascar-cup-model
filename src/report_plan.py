@@ -16,6 +16,7 @@ Usage:
   python src/report_plan.py --markdown # print Markdown to stdout, write nothing
 """
 import argparse
+import hashlib
 import html
 import re
 import sys
@@ -63,6 +64,47 @@ def _word_count(text):
 def read_plan(path=SCHEDULE):
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def plan_shape_signature(plan):
+    """Deterministic 16-hex signature of the plan's STRUCTURE — which phases and
+    sessions exist (key/id + title), order-independent. It changes when a phase or
+    session is added, removed, or renamed, and is unaffected by status, ref, deps,
+    or any free-text field. Used to flag when meta.standfirst may have fallen behind
+    the plan's scope (see PLAN_FORMAT.md §4, check 7)."""
+    parts = []
+    for p in plan.get("phases") or []:
+        parts.append(f"P|{p.get('key')}|{p.get('title')}")
+    for s in plan.get("sessions") or []:
+        parts.append(f"S|{s.get('id')}|{s.get('phase')}|{s.get('title')}")
+    canon = "\n".join(sorted(parts))
+    return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:16]
+
+
+def shape_status(plan):
+    """(ok, message). Compares the stored meta.shape_sig to the live shape so a
+    structural change forces the author to reconcile meta.standfirst."""
+    stored = (plan.get("meta") or {}).get("shape_sig")
+    actual = plan_shape_signature(plan)
+    if not stored:
+        return False, ("meta.shape_sig is unset — after checking meta.standfirst still describes "
+                       "the plan, run `python src/report_plan.py --sync-shape`")
+    if stored != actual:
+        return False, (f"plan structure changed since the standfirst was last reconciled "
+                       f"(stored {stored}, now {actual}) — revisit meta.standfirst so its scope still "
+                       f"matches the plan, then run `python src/report_plan.py --sync-shape` to re-affirm")
+    return True, "shape in sync"
+
+
+def _write_shape_sig(sig, path=SCHEDULE):
+    """Rewrite (or insert) the `  shape_sig: \"...\"` line under meta, preserving the rest."""
+    text = path.read_text(encoding="utf-8")
+    line = f'  shape_sig: "{sig}"'
+    if re.search(r"(?m)^\s*shape_sig:.*$", text):
+        text = re.sub(r"(?m)^\s*shape_sig:.*$", line, text, count=1)
+    else:  # insert right after the spec_version line
+        text = re.sub(r"(?m)^(\s*spec_version:.*)$", r"\1\n" + line, text, count=1)
+    path.write_text(text, encoding="utf-8")
 
 
 def validate(plan):
@@ -370,6 +412,9 @@ def main(argv=None):
     ap.add_argument("--markdown", action="store_true", help="print Markdown to stdout, write nothing")
     ap.add_argument("--open", action="store_true", dest="open_",
                     help="render, then open plan/PLAN.html in the default browser (the canonical way to view the plan)")
+    ap.add_argument("--sync-shape", action="store_true", dest="sync_shape",
+                    help="recompute meta.shape_sig from the current phases/sessions and write it back — "
+                         "do this after confirming meta.standfirst still describes the plan")
     args = ap.parse_args(argv)
 
     plan = read_plan()
@@ -380,6 +425,13 @@ def main(argv=None):
             print(f"  - {e}", file=sys.stderr)
         return 1
 
+    if args.sync_shape:
+        newsig = plan_shape_signature(plan)
+        _write_shape_sig(newsig)
+        print(f"meta.shape_sig synced to {newsig}. Confirm meta.standfirst still describes the "
+              f"plan's scope, then re-render (`python src/report_plan.py`) and commit.")
+        return 0
+
     md = render_markdown(plan)
     htmlout = render_html(plan)
 
@@ -388,16 +440,20 @@ def main(argv=None):
         return 0
 
     if args.check:
-        drift = []
+        problems = []
         if not PLAN_MD.exists() or PLAN_MD.read_text(encoding="utf-8") != md:
-            drift.append("PLAN.md")
+            problems.append("PLAN.md differs from the render — re-run `python src/report_plan.py`; never hand-edit a render")
         if not PLAN_HTML.exists() or PLAN_HTML.read_text(encoding="utf-8") != htmlout:
-            drift.append("plan/PLAN.html")
-        if drift:
-            print(f"PLAN DRIFT: {', '.join(drift)} differ(s) from render of plan/schedule.yml — "
-                  f"re-run `python src/report_plan.py` and commit; never hand-edit a render.", file=sys.stderr)
+            problems.append("plan/PLAN.html differs from the render — re-run `python src/report_plan.py`; never hand-edit a render")
+        ok, msg = shape_status(plan)
+        if not ok:
+            problems.append(msg)
+        if problems:
+            print("PLAN CHECK FAILED:", file=sys.stderr)
+            for p in problems:
+                print(f"  - {p}", file=sys.stderr)
             return 1
-        print("plan OK: schema valid, renders match.")
+        print("plan OK: schema valid, renders match, shape in sync.")
         return 0
 
     PLAN_MD.write_text(md, encoding="utf-8")
