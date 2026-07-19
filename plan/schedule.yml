@@ -35,7 +35,7 @@ phases:
   - key: "A"
     num: "I"
     title: "Foundation & pre-registration (governance)"
-    model: "Fable 5 · thinking on"
+    model: "Fable 5 · thinking on · xhigh"
     note: >-
       Judgment-shaped work done before any result existed — audit, frozen config
       VALUES, immutable rulebooks, adversarial review. Complete and
@@ -88,7 +88,7 @@ phases:
   - key: "G"
     num: "VII"
     title: "Causal clean-air pace (gated: market EDGE)"
-    model: "Fable 5 · thinking on"
+    model: "Fable 5 · thinking on · xhigh"
     note: >-
       The hardest feature, attempted only if the market benchmark returns EDGE.
       The design spec can be written now; its raw material (restart reshuffles,

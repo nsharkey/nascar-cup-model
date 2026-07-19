@@ -6,7 +6,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 ## Phase A — Foundation & pre-registration (governance)
 
-*Fable 5 · thinking on* — Judgment-shaped work done before any result existed — audit, frozen config VALUES, immutable rulebooks, adversarial review. Complete and architecture-independent: it survives the rebuild unchanged and is the equity the rebuild must preserve, not re-choose.
+*Fable 5 · thinking on · xhigh* — Judgment-shaped work done before any result existed — audit, frozen config VALUES, immutable rulebooks, adversarial review. Complete and architecture-independent: it survives the rebuild unchanged and is the equity the rebuild must preserve, not re-choose.
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
@@ -64,7 +64,7 @@ The single living plan for the walk-forward Plackett-Luce Cup Series model, now 
 
 ## Phase G — Causal clean-air pace (gated: market EDGE)
 
-*Fable 5 · thinking on* — The hardest feature, attempted only if the market benchmark returns EDGE. The design spec can be written now; its raw material (restart reshuffles, pit cycles) comes from the new silver pit/flag tables.
+*Fable 5 · thinking on · xhigh* — The hardest feature, attempted only if the market benchmark returns EDGE. The design spec can be written now; its raw material (restart reshuffles, pit cycles) comes from the new silver pit/flag tables.
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
