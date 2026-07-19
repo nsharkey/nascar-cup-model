@@ -115,8 +115,8 @@ sessions:
     phase: "A"
     title: "Zero-trust audit"
     status: "done"
-    model: "Fable 5 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
     wall_clock: "—"
     ref: "472d43c"
     exec_summary: >-
@@ -131,8 +131,8 @@ sessions:
     phase: "A"
     title: "Frozen config + walk-forward engine"
     status: "done"
-    model: "Fable 5 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
     wall_clock: "—"
     ref: null
     exec_summary: >-
@@ -147,8 +147,8 @@ sessions:
     phase: "A"
     title: "Forward-test harness + prediction #1"
     status: "done"
-    model: "Fable 5 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
     wall_clock: "—"
     ref: "bdd6984"
     exec_summary: >-
@@ -162,8 +162,8 @@ sessions:
     phase: "A"
     title: "Pre-registration specs"
     status: "done"
-    model: "Fable 5 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
     wall_clock: "—"
     ref: "7b9a526"
     exec_summary: >-
@@ -178,8 +178,8 @@ sessions:
     phase: "A"
     title: "Adversarial review + amendments"
     status: "done"
-    model: "Fable 5 / Opus 4.8 · thinking on"
-    settings: {thinking: true, effort: null}
+    model: "Fable 5 / Opus 4.8 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~1 day"
     ref: "e0c07c5"
     exec_summary: >-
