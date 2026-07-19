@@ -152,7 +152,7 @@ sessions:
     status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~2-4 hr (first build; then a few min/week)"
+    wall_clock: "~2-4 hr"
     ref: null
     exec_summary: >-
       Turn the first race into the first scored data point — the tool that
@@ -188,7 +188,7 @@ sessions:
     status: "pending"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~15-30 min + human odds step (recurring)"
+    wall_clock: "~15-30 min"
     ref: null
     exec_summary: >-
       Log each pick publicly before the green flag, and record the closing
@@ -203,7 +203,7 @@ sessions:
     status: "pending"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~10-20 min (recurring, once B0 exists)"
+    wall_clock: "~10-20 min"
     ref: null
     exec_summary: "Add each completed race to the scored log."
     tech_summary: >-
@@ -231,7 +231,7 @@ sessions:
     status: "pending"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~2-3 hr (first meaningful look needs enough priced races)"
+    wall_clock: "~2-3 hr"
     ref: null
     exec_summary: "Compute the running edge verdict from the sealed inputs."
     tech_summary: >-
