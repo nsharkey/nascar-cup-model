@@ -720,7 +720,7 @@ sessions:
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1-2 hr"
-    ref: null
+    ref: "1f74557"
     exec_summary: >-
       Materialized four structured race-level objects the weekend feed has
       carried for years but silver never read — caution segments with cause
