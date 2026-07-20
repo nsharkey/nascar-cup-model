@@ -465,14 +465,44 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   for the rain-shortened 2024 Coca-Cola 600 (`actual_laps` fell below the
   stage-1–3 cumulative). Zero design-judgment escalations needed. Full
   detail: `report/SILVER_BREADTH.md` (C4 addendum), `DATA_DICTIONARY.md` §9g.
-- **Next single step (plan `next` = F19):** incentive-state analytics
-  (playoff pressure, measured), per `research/domain_knowledge_scan.md` §5/
-  §10.3 (**Sonnet 5 · thinking on · high**). Tier A — descriptive-only,
-  never joins a feature bank without its own later pre-registered A/B;
-  explicitly conditioned on the 2026 Chase-format break (playoff points +
-  win-and-in abolished 2026-01-12), so 2017–2025 findings must be reported
-  separately from live 2026 tracking, not pooled. The verbatim kickoff is in
-  `plan/schedule.yml` (session F19) and rendered in `PLAN.md`. Independently,
+- **2026-07-20 (F19 done):** incentive-state analytics per
+  `research/domain_knowledge_scan.md` §5/§10.3 — `src/incentive_analytics.py`
+  (read-only against `data/nascar.duckdb`), `report/INCENTIVE_ANALYTICS.md`.
+  Three descriptive findings, 2017–2025 (results-grade) + live 2026 tracking:
+  (a) crash-class DNF rate vs cutline proximity in the last 3–5 regular-season
+  races is a **clean null once disaggregated by rank rather than `|distance|`**
+  — the naive bucketing conflates safe front-runners with hopeless
+  backmarkers; the bubble cohort (ranks 11–21) races *cleanest* of any group,
+  not dirtiest, both in the last 3 and last 5 races. (b) Bubble drivers'
+  stage-point spike vs their own season baseline is **real and significant**
+  (+0.86 vs baseline, p=0.003), and locked-in drivers' (rank ≤10) stage
+  points drop vs baseline over the same window (−1.28, p=0.0001; between
+  cohorts p=1.4e-7) — 2020–2025 (`silver.stage_results` schema floor). The
+  strongest of the three, and the best candidate for a future M-tier A/B
+  (needs its own pre-registered spec, not built here). (c) The locked-in
+  cohort's expected-vs-actual finish correlation (a self-contained
+  season-to-date-form proxy, deliberately not the frozen model's own
+  walk-forward rho — that would need pace features below their 2020 data
+  floor) shows **no significant late-season degradation**, a noisy
+  underpowered null over 9 season-pairs (Wilcoxon p=1.0). 2026 format break
+  kept unpooled per the pre-registered instruction:
+  `playoff_points_earned = 0` independently reconfirmed across all 798 2026
+  rows (vs 65–85/season > 0 in 2019–2025). H5's championship-contender flag
+  stayed out of scope, routed to F3. Tier A throughout — no feature bank
+  joined, no gated surface touched, 14/14 gates green before and after.
+- **Next single step (plan `next` = F3):** track-audit prior calibration
+  (empirical per-track metrics on gold), per
+  `research/track_audit_derivation.md` §3 (**Sonnet 5 · thinking on ·
+  xhigh**). Promoted off F19's close-out: both deps (C2, D1) were already
+  satisfied, C4 lands the caution-taxonomy inputs its F16 additions need, and
+  F19 explicitly routes H5's contender-exclusion sensitivity check here
+  rather than building it as a model feature (0.3% exposure kills it as
+  one). Pre-register a spec, then build ten empirical metrics (TDS/TPP/PDI/
+  ARS/RVS/PIS/QIS/SFS/DCI/FVS) with dual full-sample/as-of outputs — the
+  as-of variant is the only one ever feature-eligible, and only via its own
+  later gated A/B. Analytics/reference tier — never touches the frozen
+  model, no `>=8`-scored-races gate. The verbatim kickoff is in
+  `plan/schedule.yml` (session F3) and rendered in `PLAN.md`. Independently,
   the standing weekly loop (E1) fires at the next Cup race (Brickyard 400,
   race 5619, 2026-07-26) — predict / seal / push before the green flag,
   record closing prices **before the scheduled flag** (5618's were post-flag
@@ -534,7 +564,11 @@ src/                pipeline: download.py, parse_lib.py, parse.py,
                     test_score_race.py + market_benchmark.py (D2, frozen specs,
                     verbatim) -- gold_predict_dryrun.py (D2, dry-run only:
                     section 7.3 dual-run proof; NOT the cutover, predict_next.py
-                    is untouched and still the path of record)
+                    is untouched and still the path of record) -- pricing_layer.py
+                    + gate_pricing.py (M2, diagnostic Monte-Carlo pricer),
+                    calibration_backtest.py (M3, backtest engine, Tier A) --
+                    incentive_analytics.py (F19, Tier A, read-only analytics --
+                    report/INCENTIVE_ANALYTICS.md)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 data/               gitignored medallion foundation (bronze/silver/gold +
