@@ -122,7 +122,7 @@ must predate the race's scheduled green flag (`market_benchmark_decision_rule.md
 
 ## 5. `predictions/scores_log.csv`
 
-Written by the (to-be-built) `score_race.py`; contract frozen in
+Written by `score_race.py` (built in D2 — see §11); contract frozen in
 `scoring_methodology.md §6` (incl. its amendments). One row per scored race,
 idempotent upsert, sorted by `(date, race_id)`.
 
