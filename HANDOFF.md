@@ -244,11 +244,34 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   the 2026 out-of-sample figure for the model actually in production should
   use 0.447, not 0.449** (the header block above and README predate this
   finding and are unchanged — a documentation cleanup, not a gate blocker).
-- **Next single step:** `D2` in the plan — gold scoring + benchmark
-  consumers, scores race #1 (Sonnet, xhigh; §5.5/§7.3). Fully unblocked —
-  D1's D-gate passed clean. Note §7.3's dual-run cutover check needs a real
-  race weekend, so D2 may only partially complete cutover even if the code
-  lands clean this session.
+- **2026-07-19 (D2 done, code+dual-run PASS; race-5618 scoring pending on
+  NASCAR):** `score_race.py`/`test_score_race.py` (all 10 frozen fixtures
+  pass), `market_benchmark.py`, the §5.5 bronze→legacy-cache shim
+  (`bronze_fetch.py --sync-legacy-cache`), and the `gold.scores`/
+  `gold.predictions` read-only views are built exactly per the frozen specs.
+  §7.3 step 2's dual-run identity check ran for real against race 5618 (via
+  a new dry-run-only `gold_predict_dryrun.py`, `predict_next.py` untouched)
+  and **PASSED**: the gold path's freshly generated payload is dict-identical
+  to the legacy path's already-published one after stripping
+  `generated_utc`/`sha256_of_payload`. Actually scoring race 5618 was
+  attempted and correctly refused — as of this session NASCAR had not yet
+  posted results, ~3h past the scheduled 23:00 UTC green flag; `score_race.py`
+  exited nonzero per the frozen refusal rule, `scores_log.csv` untouched.
+  **Finding:** race 5618's 3 recorded book prices were committed 27 min after
+  the *scheduled* green flag (real green flag was delayed further), making
+  them inadmissible for the market-benchmark statistic per the provenance
+  amendment — not a bug, still fully valid for `score_race.py`'s descriptive
+  counts. Full detail: `specs/medallion_architecture.md` `## RESULT — D2`,
+  `DATA_DICTIONARY.md` §11. Cutover step 4 (re-pointing `predict_next.py`) is
+  explicitly NOT done — owner-gated, needs two clean weekly cycles per §7.3
+  step 5.
+- **Next single step:** re-run the D2 checklist's scoring step once race 5618
+  posts results: `bronze_fetch.py --update` → `--sync-legacy-cache 5618` →
+  `score_race.py 5618`. No further gold build/gate engineering is required —
+  D1's gate and D2's dual-run check already cover the mechanics; what remains
+  is calendar-gated (waiting on the race), not code-gated. Once a second
+  scored, priced race exists, revisit whether cutover's two-clean-cycle bar
+  is met.
 
 ## Roadmap (agreed order — do not skip ahead)
 
@@ -289,9 +312,16 @@ DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
 src/                pipeline: download.py, parse_lib.py, parse.py,
                     update_data.py, predict_next.py, walkforward.py (engine),
                     report_plan.py (plan renderer), step2/3/4/6 (audit analyses)
-                    -- medallion rebuild (B2): bronze_fetch.py (ingestion,
-                    --full/--update/--verify), warehouse.py (duckdb catalog),
-                    bronze_report.py (coverage matrix)
+                    -- medallion rebuild: bronze_fetch.py (ingestion,
+                    --full/--update/--verify/--sync-legacy-cache), warehouse.py
+                    (duckdb catalog: bronze/silver/gold schemas + gold.scores/
+                    gold.predictions read-only views), bronze_report.py
+                    (coverage matrix), silver_build.py + gate_silver.py (C1/C2),
+                    gold_build.py + gate_gold.py (D1) -- score_race.py +
+                    test_score_race.py + market_benchmark.py (D2, frozen specs,
+                    verbatim) -- gold_predict_dryrun.py (D2, dry-run only:
+                    section 7.3 dual-run proof; NOT the cutover, predict_next.py
+                    is untouched and still the path of record)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 data/               gitignored medallion foundation (bronze/silver/gold +

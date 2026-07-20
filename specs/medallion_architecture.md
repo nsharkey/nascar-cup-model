@@ -1130,6 +1130,96 @@ status and re-render.
 6. Fill `## RESULT — D2`; update HANDOFF (weekly protocol + repo map +
    current status); update plan YAML; commit.
 
-## RESULT — D2 / cutover (to be filled)
+## RESULT — D2 / cutover (2026-07-19)
 
-*(pending)*
+**Consumers built and verified; cutover NOT executed (owner-gated, §7.3 step 5 needs two clean
+weekly cycles). Step 3 (score race 5618) blocked on an external fact, not a code defect: as of
+this session NASCAR had not yet posted results for race 5618, ~3h past its scheduled 23:00 UTC
+green flag.**
+
+1. **`src/score_race.py` + `src/test_score_race.py`** built exactly per `scoring_methodology.md`
+   (incl. all amendments: completeness gate, snapshot freeze, §5 pipeline order, n<3 blanks,
+   provenance note). All 10 fixtures (F1–F10) pass, including the F8 tamper/positive-case pair and
+   F9's byte-identical idempotency round-trip.
+2. **§5.5 compatibility shim**: `bronze_fetch.py --sync-legacy-cache RACE_ID` — extracts the
+   latest bronze weekend-feed payload for a Cup race to `src/data/races/{year}_{race_id}_wf.json`,
+   byte-identical (gunzip, no re-serialization). `score_race.py` itself imports nothing from
+   bronze. Smoke-tested against race 5617 (already in bronze): round-trips correctly.
+3. **`src/market_benchmark.py`** built exactly per the amended spec (K≥20 floor gating every
+   boundary including final-look NO-EDGE/EDGE; dual interim boundary; add-one bootstrap p; 9,501st
+   order-statistic futility bound; pinned `default_rng(20260718)` mechanics; primary-book binding;
+   admissibility). Live run against current data: correctly detects primary book `draftkings`
+   (bound at commit `5af852c`, the only commit anywhere under `predictions/` that has ever added a
+   non-empty `book_prices.entries`), reports 0 scored races (no snapshot yet for 5618) → N=0, no
+   look has occurred. Imports only the entry schema + malformed→dedup→void pipeline from
+   `score_race.py` (refactored into a shared `malformed_dedup_void()`), not §5.3's strict-favorite
+   filter, per the market spec's own resolved-ambiguity register.
+4. **Gold convenience views**: `gold.scores` (over `predictions/scores_log.csv`, created once that
+   file exists) and `gold.predictions` (over the sealed JSONs via `read_json_auto`, live now — 1
+   row for race 5618). Both read-only; `warehouse.py` rebuilds them from disk like every other gold
+   view.
+5. **Score race 5618 — attempted, correctly refused.** `update_data.py` run first (0 races added,
+   refreshed the race-list cache); `score_race.py 5618` exited nonzero with `race 5618 not complete
+   -- refusing to score`, per the frozen refusal rule (§1.2 + the completeness-gate amendment) —
+   confirmed directly against the live feed (`winner_driver_id` null, `average_speed` 0, zero
+   entries with a `finishing_position`) rather than assumed. `scores_log.csv` was not created.
+   **Owner note:** re-run `bronze_fetch.py --update`, then `--sync-legacy-cache 5618`, then
+   `score_race.py 5618` once NASCAR posts race 5618's results — nothing else in this session
+   depended on that race finishing.
+6. **§7.3 step 2 dual-run identity check — PASS**, run for real (not simulated) against race 5618.
+   Built `src/gold_predict_dryrun.py` (dry-run only; does not write to `predictions/`;
+   `predict_next.py` is untouched and remains the path of record) implementing predict_next.py's
+   exact training/current-form/sampling logic sourced from `gold.wf_features` (training, single
+   final `pl_fit` over the full accumulated set — not gate_gold.py's incremental walk-forward
+   refit) and `gold.driver_form` / `gold.driver_type_form` (current form, per §5.3) instead of the
+   pkl replay. Ran it live for race 5618 (same network grid fetch as the legacy path used); compared
+   against the legacy path's already-published payload reconstructed to its pristine
+   at-generation-time form (drop `sha256_of_payload`, reset `book_prices` to the empty template —
+   the same reconstruction `score_race.py`'s own hash verification performs, so this reconstruction
+   is independently proven bit-exact to what `predict_next.py` originally wrote) with
+   `generated_utc` also dropped from both sides. **Result: the two payloads are dict-equal —
+   every field, including `weights` (6dp) and every driver's `utility`/`pred_rank`/`p_win`/
+   `p_top5`/`p_top10`/`h2h_prob` entries (4dp), matches exactly.** This is the first real test of
+   §5.3's current-form views and the live weekly-prediction code path — D1's R0–R3 validated
+   `gold.wf_features` and the walk-forward *validation* loop, not this. `gold_predict_dryrun.py` is
+   committed (not deleted) since its logic is what actual cutover (§7.3 step 4) will fold into
+   `predict_next.py` in place.
+7. **Finding (dated, provenance amendment): race 5618's 3 recorded `book_prices` entries are
+   currently inadmissible for the market-benchmark statistic.** `score_race.py`'s
+   `post_race_price_note()` (scoring spec's provenance amendment) and a direct git-log check both
+   confirm: all 3 entries first appear in commit `5af852c`, committer timestamp
+   `2026-07-19T23:26:57-04:00` = `2026-07-19T23:26:57Z`... — 26m57s **after** race 5618's scheduled
+   green flag (`2026-07-19T23:00:00Z`, from `race_list_basic.json`'s `schedule[]`). Per the
+   admissibility amendment ("first git commit... committed earlier than the race's scheduled
+   start"), this makes all 3 entries inadmissible for `market_benchmark.py`'s statistic regardless
+   of push timing (a commit cannot have been pushed before it was created, so the stricter
+   post-remote push-ancestry condition is moot here — already fails on the local-timestamp
+   condition alone). They remain fully valid for `score_race.py`'s descriptive `book_n` counts once
+   5618 is scored, carrying the `post-race price entry` note. Not a code defect and not corrected
+   here — the rule is FROZEN and this is exactly the kind of real-world timing edge (a delayed
+   green flag makes a 27-minute-late commit look "late" against the *scheduled*, not actual, start)
+   the amendment's own text anticipates. Net effect: once 5618 is scored, `market_benchmark.py` will
+   still report N=0 (no admissible picks) until a future race's prices are committed before its
+   scheduled green flag.
+8. **Provenance-check implementation note (recorded, not a spec ambiguity):** the admissibility
+   amendment's "once a remote exists, the qualifying commit must additionally be an ancestor of a
+   ref pushed before the scheduled start" clause is approximated by local committer timestamp alone
+   in both `score_race.py` and `market_benchmark.py` (no reflog-based push-time reconstruction was
+   implemented — git does not natively record push times, and building a reliable proxy was judged
+   not worth the complexity for a check whose local-timestamp half already determines every case
+   seen so far). This inherits exactly the limitation the amendment's own text names ("the same
+   known limitation... as the prediction seal itself"). Both provenance checks are wrapped to fail
+   safe (skip the note / treat as inadmissible) rather than crash on any git error.
+9. **Cutover (§7.3): steps 1–3 satisfied (C-gate + D-gate PASS; dual-run identity PASS; score-race
+   shim wired and green on its own tests), step 3's real scoring pending race 5618's results as
+   above. Step 4 (re-point `predict_next.py`, the irreversible move) is explicitly NOT performed
+   this session per the owner-gated stop instruction — it requires two clean weekly cycles per §7.3
+   step 5, not a single session. The legacy pkl path remains the path of record.**
+10. Environment: python 3.13.5, numpy 2.1.3 (Anaconda `python`, not `python3` — the latter lacks
+    numpy/scipy in this checkout), scipy 1.15.3, duckdb 1.4.0, pyarrow 19.0.0 — unchanged from D1.
+
+**Next single step:** re-run steps 5–6 of the D2 checklist above once race 5618 posts results
+(`bronze_fetch.py --update` → `--sync-legacy-cache 5618` → `score_race.py 5618`), then let the
+weekly protocol accumulate a second scored, priced race before revisiting cutover. No further gold
+build/gate work is required — D1's gate and this session's dual-run check already cover the
+mechanics; what remains is calendar-gated, not engineering-gated.

@@ -2,13 +2,20 @@
 """Bronze layer ingestion for the medallion rebuild (specs/medallion_architecture.md, section 2).
 
 Modes:
-  --full    discovery + full historical pull (2014 floor re-check + 2015->present, 3 series, 6 feeds)
-  --update  weekly increment: refresh current/next-year index, revision-window re-fetch, retry failed
-  --verify  re-hash stored/imported files against the manifest's recorded sha256
+  --full                 discovery + full historical pull (2014 floor re-check + 2015->present,
+                          3 series, 6 feeds)
+  --update                weekly increment: refresh current/next-year index, revision-window
+                          re-fetch, retry failed
+  --verify                re-hash stored/imported files against the manifest's recorded sha256
+  --sync-legacy-cache ID  section 5.5 compatibility shim: extract the latest bronze weekend-feed
+                          payload for Cup race ID to src/data/races/{year}_{race_id}_wf.json,
+                          byte-identical to the bronze-stored (gunzipped) payload. Run before
+                          score_race.py, which has no knowledge of bronze and just reads that path.
 
 Run from src/ (data paths resolve from the repo root via __file__, per repo convention).
 """
-import argparse, glob, gzip, hashlib, json, os, random, threading, time, urllib.error, urllib.request, uuid
+import argparse, glob, gzip, hashlib, json, os, random, sys, threading, time
+import urllib.error, urllib.request, uuid
 from collections import Counter, deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
@@ -648,12 +655,43 @@ def cmd_verify(sample):
     print(f'[bronze_fetch] verify complete: {ok} ok, {missing} missing, {mismatch} mismatched')
 
 
+# --------------------------------------------------------------------------
+# Section 5.5 -- legacy-cache compatibility shim
+# --------------------------------------------------------------------------
+
+def sync_legacy_wf_cache(race_id, series_id=1, year=None):
+    """Extracts the latest bronze weekend-feed payload for a race to the frozen scoring spec's
+    read path (src/data/races/{year}_{race_id}_wf.json), byte-identical to the bronze-stored
+    (gunzipped) payload -- no re-serialization through json.dump. score_race.py itself is not
+    modified to know about bronze (section 5.5); this is the separate upstream step. Returns the
+    written path, or None if bronze has no weekend-feed stored for this race yet."""
+    if year is None:
+        candidates = sorted(
+            glob.glob(os.path.join(BRONZE_DIR, f'series_{series_id}', '*', str(race_id))),
+            key=lambda p: int(os.path.basename(os.path.dirname(p))))
+        if not candidates:
+            return None
+        year = int(os.path.basename(os.path.dirname(candidates[-1])))
+    src_path = latest_stored_path(race_dir(series_id, year, race_id), 'weekend-feed')
+    if src_path is None:
+        return None
+    legacy_dir = os.path.join(REPO_ROOT, 'src', 'data', 'races')
+    os.makedirs(legacy_dir, exist_ok=True)
+    dest_path = os.path.join(legacy_dir, f'{year}_{race_id}_wf.json')
+    with gzip.open(src_path, 'rb') as f:
+        raw = f.read()
+    with open(dest_path, 'wb') as f:
+        f.write(raw)
+    return dest_path
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument('--full', action='store_true')
     mode.add_argument('--update', action='store_true')
     mode.add_argument('--verify', action='store_true')
+    mode.add_argument('--sync-legacy-cache', type=int, default=None, metavar='RACE_ID')
     ap.add_argument('--workers', type=int, default=DEFAULT_WORKERS)
     ap.add_argument('--sample', type=int, default=None, help='--verify: limit to N random files')
     args = ap.parse_args()
@@ -666,8 +704,14 @@ def main():
         cmd_full(workers)
     elif args.update:
         cmd_update(workers)
-    else:
+    elif args.verify:
         cmd_verify(args.sample)
+    else:
+        path = sync_legacy_wf_cache(args.sync_legacy_cache)
+        if path is None:
+            sys.exit(f'[bronze_fetch] no bronze weekend-feed stored for race '
+                     f'{args.sync_legacy_cache} yet')
+        print(f'[bronze_fetch] synced legacy cache: {path}')
 
 
 if __name__ == '__main__':

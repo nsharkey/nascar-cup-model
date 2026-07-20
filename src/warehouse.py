@@ -6,6 +6,7 @@ repo. This file recreates the duckdb schemas/views from that state; deleting nas
 never lose information. Run standalone (rebuilds bronze.*) or import build_warehouse() from
 silver_build.py / gold_build.py in later sessions to extend it.
 """
+import glob
 import gzip
 import json
 import os
@@ -283,6 +284,19 @@ def build_warehouse():
         path = os.path.join(gold_dir, f'{table_name}.parquet').replace('\\', '/')
         if os.path.exists(path):
             con.execute(f"CREATE OR REPLACE VIEW gold.{table_name} AS SELECT * FROM read_parquet('{path}')")
+
+    # Gold read-only conveniences (D2, section 5.5): views over the CSV/JSON artifacts of record.
+    # These never write -- predictions/scores_log.csv and the sealed prediction JSONs stay the
+    # artifacts of record, exactly as section 5.5 specifies.
+    scores_csv_path = os.path.join(REPO_ROOT, 'predictions', 'scores_log.csv').replace('\\', '/')
+    if os.path.exists(scores_csv_path):
+        con.execute(f"CREATE OR REPLACE VIEW gold.scores AS "
+                    f"SELECT * FROM read_csv_auto('{scores_csv_path}', header=true)")
+
+    predictions_glob = os.path.join(REPO_ROOT, 'predictions', 'race_*_prediction.json').replace('\\', '/')
+    if glob.glob(predictions_glob):
+        con.execute(f"CREATE OR REPLACE VIEW gold.predictions AS "
+                    f"SELECT * FROM read_json_auto('{predictions_glob}', union_by_name=true)")
 
     con.close()
 

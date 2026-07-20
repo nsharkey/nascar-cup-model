@@ -630,3 +630,100 @@ spec section 6's `## AMENDMENT` block (before `## RESULT — D-gate`) and `repor
 Note: HANDOFF.md/README.md's own headline "0.449" citations describe the mixed-provenance figure
 and are unchanged by this finding (a documentation cleanup out of D1's scope, not a gate blocker)
 — new citations of the 2026-OOS figure for the model actually in production should use 0.447.
+
+---
+
+## 11. Scoring and market-benchmark consumers — `src/score_race.py`, `src/market_benchmark.py` (medallion rebuild, D2)
+
+Implement `scoring_methodology.md` and `market_benchmark_decision_rule.md` verbatim (incl. every
+amendment). Output contracts (`predictions/scores_log.csv`, `book_prices.entries[]`) are already
+documented in sections 3–5 above and unchanged by this build — this section covers only the new
+code and its gold-side plumbing.
+
+### 11a. `src/score_race.py`
+
+Pure functions per the spec's implementation checklist: `verify_hash`, `load_results`,
+`common_set`, `score_rho`, `score_h2h`, `grade_books` (built on a shared
+`malformed_dedup_void()` — see 11b), `compose_row`, `upsert_row`; `main()` wires them per section 8.
+Does not import anything from bronze — section 5.5's compatibility shim (11c) is a separate,
+upstream step. `src/test_score_race.py` implements all 10 frozen fixtures (F1–F10), plain stdlib
+asserts, no pytest.
+
+Two behaviors worth flagging explicitly since they're easy to miss reading the frozen spec alone:
+
+- **Completeness gate + snapshot freeze** (results-finality amendment): before loading results,
+  confirms `race_list_basic.json`'s `winner_driver_id` is truthy (same signal `update_data.py`
+  uses); on first successful scoring, copies the exact results bytes used to
+  `src/data/races/{year}_{race_id}_wf_scored.json`, which then takes precedence over `_wf.json` and
+  the network on every later run for that race and is never overwritten.
+- **`post-race price entry` note** (provenance amendment): for each `book_prices` entry, walks
+  `git log --follow` on the prediction JSON to find the first commit whose content contains that
+  exact entry (matched on unordered driver pair + book + `recorded_utc`), and compares that
+  commit's committer timestamp against the race's *scheduled* green-flag `start_time_utc`
+  (`race_list_basic.json`'s `schedule[]`, `event_name == "Race"`). Best-effort by design: any git
+  failure silently yields no note rather than crashing a real scoring run; the "ref pushed before
+  the scheduled start" refinement the amendment adds once a remote exists is approximated by the
+  local committer timestamp alone (git has no native push-time record) — see spec section
+  `## RESULT — D2` item 8 for the full reasoning.
+
+### 11b. Shared entry pipeline — `score_race.malformed_dedup_void(entries)`
+
+Factored out of `grade_books` because the market spec's own resolved-ambiguity register says it
+imports exactly this: "the entry schema (scoring 5.1) and the malformed→dedup→void pipeline
+(scoring 5.2 and its pipeline-order amendment)" — but NOT section 5.3's strict-book-favorite
+filter, which stays local to `score_race.grade_books`. `market_benchmark.py` imports this function
+directly rather than duplicating the pipeline.
+
+### 11c. `src/bronze_fetch.py --sync-legacy-cache RACE_ID` — section 5.5 compatibility shim
+
+`sync_legacy_wf_cache(race_id, series_id=1, year=None)`: finds the latest bronze-stored
+weekend-feed for a Cup race (globbing `data/bronze/series_1/*/​{race_id}/` for the year if not
+given), gunzips it, and writes the raw bytes — byte-identical, no `json.dump` re-serialization — to
+`src/data/races/{year}_{race_id}_wf.json`, the exact path `scoring_methodology.md` section 1.2
+names. `score_race.py` itself has no knowledge of bronze; this is a separate step that runs first
+in the weekly flow (`bronze_fetch.py --update` → `--sync-legacy-cache RACE_ID` → `score_race.py
+RACE_ID`).
+
+### 11d. `src/market_benchmark.py`
+
+Recomputes every graded pick from scratch on each run (idempotent). A race counts for this script's
+statistic exactly when its `_wf_scored.json` snapshot exists — never `_wf.json`, never the network,
+never `scores_log.csv` (section 6 inputs-pinned amendment). `find_primary_book()` walks commit
+history across all of `predictions/` oldest-first and binds to the book named in the first commit
+that ever added a non-empty `book_prices.entries` anywhere — currently `draftkings`, bound at
+commit `5af852c`. Resampling mechanics are pinned exactly: `numpy.random.default_rng(20260718)`
+constructed fresh per look, `B=10000`, add-one bootstrap p, futility bound = the 9,501st ascending
+order statistic of the resampled mean-profit-per-pick values, dual interim boundary (bootstrap p
+AND a one-sided t-test on per-race profit totals both ≤ 0.001), and the K≥20 race-count floor
+gating every decision arm — including final-look NO-EDGE, not just EDGE (the amendment's "a final
+look with K < 20 returns UNDERPOWERED" is unconditional).
+
+### 11e. `gold.scores`, `gold.predictions` — read-only conveniences (`src/warehouse.py`)
+
+Views only, created when their source exists; never written to. `gold.scores` = `read_csv_auto`
+over `predictions/scores_log.csv`. `gold.predictions` = `read_json_auto` over
+`predictions/race_*_prediction.json` (`union_by_name=true`, since not every field is present in
+every prediction — e.g. `book_prices.entries` shape varies). The CSV and sealed JSONs remain the
+artifacts of record; rebuilding `nascar.duckdb` never touches them.
+
+### 11f. `src/gold_predict_dryrun.py` — dry-run only, section 7.3 step 2 verification
+
+Not part of the weekly protocol and not the cutover. Reproduces `predict_next.py`'s exact
+training/current-form/sampling logic sourced from `gold.wf_features` (training — a single final
+`pl_fit` over the full accumulated eligible-race set, not gate_gold.py's incremental walk-forward
+refit) and `gold.driver_form` / `gold.driver_type_form` (current form, section 5.3) instead of the
+pkl replay, and returns the payload in-memory without writing to `predictions/`. Used once, live,
+to prove the section 7.3 dual-run identity check for race 5618 (PASS — see spec `## RESULT — D2`).
+Kept committed because its logic is what actual cutover folds into `predict_next.py` in place;
+`predict_next.py` itself is untouched and remains the path of record.
+
+### 11g. D2 finding — race 5618's book prices are provenance-inadmissible (2026-07-19)
+
+All 3 of race 5618's recorded `book_prices` entries first appear in commit `5af852c`
+(`2026-07-19T23:26:57Z`), 26m57s after the race's *scheduled* green flag (`2026-07-19T23:00:00Z`
+per `race_list_basic.json`). Per the admissibility amendment this makes them inadmissible for
+`market_benchmark.py`'s statistic (they still count fully toward `score_race.py`'s descriptive
+`book_n`, carrying the `post-race price entry` note). Not a bug and not corrected — the race's
+actual green flag was delayed well past its scheduled time (results still weren't posted ~3h
+later), which is exactly the real-world edge the frozen rule's scheduled-time basis anticipates
+rather than tries to detect after the fact.

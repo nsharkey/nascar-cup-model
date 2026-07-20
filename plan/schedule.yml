@@ -15,29 +15,24 @@ meta:
     without a pre-registered, walk-forward-gated A/B, and the perishable weekly
     market capture never pauses. Rendered from data, kept here and nowhere else.
   bottom_line: >-
-    Bronze is built AND verified (B1-B4 done; 2017 recovered and wired in like
-    any other year). The silver layer is now COMPLETE: parity C1, breadth C2
-    (8 new lap/pit/flag/practice/live tables), and track reference C3 (7 new
-    tables from the vendored audit package -- track_dim/xwalk/priors/
-    similarity_prior/rules_era/race_track/race_track_features) are all done;
-    the frozen C-gate re-ran clean after both C2 and C3 (still PASS,
-    silver.driver_race untouched). D1 (gold features + re-point engine +
-    re-prove 0.413/0.476/0.449) is now the single 'next' step and the
-    gate-critical path to gold. The perishable weekly predict+odds capture
-    never pauses — race 5618's prediction and its 3 DraftKings closing
-    matchups are logged. Governance and all three research spikes are
-    complete; nothing they propose enters the frozen model without a gated
-    A/B.
+    Bronze (B1-B4) and silver (C1-C3) are complete. Gold is now complete too:
+    D1's feature bank re-proved 0.413/0.476/0.447 clean, and D2 built the
+    scoring/benchmark consumers, the bronze compat shim, and the gold views --
+    all tested green, plus a real (not simulated) section 7.3 dual-run PASS
+    against race 5618. What's left is calendar-gated, not engineering-gated:
+    score race 5618 once NASCAR posts results, then revisit cutover. E1 (the
+    standing weekly loop) is 'next' since no build session is otherwise
+    ready. The perishable weekly capture never pauses -- race 5618's
+    prediction and 3 DraftKings matchups are logged (provenance-inadmissible
+    for the benchmark stat; see D2's status_note). Governance and all
+    research spikes are complete.
   handoff_note: >-
-    D1 is a Sonnet build session (thinking on, xhigh) executing
-    specs/medallion_architecture.md sections 5-6 (gold build + the FROZEN
-    D-gate) and its own kickoff_prompt with zero design judgment calls (every
-    choice is pre-resolved; genuine ambiguity means stop and flag, not choose
-    — exactly as C1 did for the fepace finding and C3 did for the crosswalk
-    row-count/Phoenix-tiebreak findings). Doctrine for the whole rebuild:
-    preserve the validated results and pre-registered decisions, RE-PROVE the
-    model on the new foundation rather than re-choosing it, and never pause
-    the perishable weekly odds capture.
+    E1 is 'next' as of 2026-07-19 (D2) -- D2's own remainder (score race
+    5618) is gated on NASCAR posting results, not a build session, so it
+    rides along inside E1's kickoff as a leftover step rather than getting
+    its own slot. Once a second scored race exists, re-evaluate F1's and
+    cutover's gates. Doctrine stands: preserve validated results, RE-PROVE on
+    the new foundation rather than re-choose, never pause the weekly capture.
 
 phases:
   - key: "A"
@@ -799,29 +794,43 @@ sessions:
   - id: "D2"
     phase: "D"
     title: "Gold scoring + benchmark consumers (scores race #1)"
-    status: "next"
+    status: "half_done"
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~3-5 hr"
-    ref: null
+    ref: "PENDING-COMMIT"
     exec_summary: >-
-      Move scoring and the market-edge test onto the new foundation and finally
-      score the first race.
+      Moved scoring and the market-edge test onto the new foundation, and proved
+      (for real, not simulated) that the new gold-sourced prediction path produces
+      the exact same public pick the old one already published. Scoring the first
+      race itself is on hold until NASCAR posts its results -- not something this
+      session could force or fake.
     tech_summary: >-
-      Scoring (specs/scoring_methodology.md + amendments) and market_benchmark
-      (amended spec) as gold consumers reading bronze results + sealed predictions;
-      scores prediction #1 (race 5618); absorbs retired R1/R2/R3.
+      score_race.py/test_score_race.py (all 10 frozen fixtures pass), market_benchmark.py,
+      the section 5.5 bronze->legacy-cache shim (bronze_fetch.py --sync-legacy-cache),
+      and gold.scores/gold.predictions views all built exactly per the frozen specs.
+      Section 7.3 step 2's dual-run identity check PASSED for real (gold_predict_dryrun.py,
+      dry-run only) -- gold-sourced payload for race 5618 is dict-identical to the
+      already-published legacy payload after stripping generated_utc/sha256_of_payload.
+      Scoring race 5618 was attempted and correctly refused (race not yet run per the
+      live feed, ~3h past scheduled green flag); scores_log.csv not yet born. Finding:
+      race 5618's 3 book prices were committed 27min after the *scheduled* green flag
+      (real one was delayed further) -- inadmissible for market_benchmark's statistic
+      per the provenance amendment, still valid for score_race's descriptive counts.
+      Cutover step 4 (re-point predict_next.py) explicitly NOT done -- owner-gated,
+      needs two clean weekly cycles per section 7.3 step 5.
     deps: ["D1"]
     status_note: >-
-      2026-07-19: promoted to 'next' -- D1's D-gate PASSED cleanly (report/
-      GOLD_REPROOF.md; zero mismatches across R0-R3), so gold is unblocked for
-      consumers. Note the two dated spec amendments from D1 (gold.wf_features
-      scope; the corrected 0.447 2026-OOS figure) -- neither changes anything
-      D2 touches (scoring/market_benchmark read bronze results + sealed
-      predictions, not gold.wf_features), but know the context. Section 7.3's
-      dual-run check needs a real race weekend, so cutover may only partially
-      complete this session even if the code lands clean -- report honestly
-      what's done vs. still pending the next weekend rather than forcing it.
+      2026-07-19: half-done, not blocked -- every piece of code is built, tested, and
+      (where testable without a finished race) proven correct; what remains is waiting
+      on NASCAR to post race 5618's results, then re-running three commands
+      (bronze_fetch.py --update -> --sync-legacy-cache 5618 -> score_race.py 5618) and
+      letting the weekly protocol accumulate a second scored, priced race. No further
+      gold build/gate engineering is required -- D1's gate and this session's dual-run
+      check already cover the mechanics. Full detail: specs/medallion_architecture.md
+      `## RESULT — D2`, DATA_DICTIONARY.md section 11. Deliberately left with no plan
+      item marked 'next' -- what remains is calendar-gated (waiting on a race), not a
+      schedulable build session.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then specs/medallion_architecture.md sections 5.5 and 7.3
@@ -861,7 +870,7 @@ sessions:
   - id: "E1"
     phase: "E"
     title: "Weekly pre-race: predict + commit + push + record odds"
-    status: "pending"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~15-30 min (recurring)"
@@ -874,7 +883,39 @@ sessions:
       predict_next -> commit -> push -> record ALL primary-book matchups per the
       market-spec full-board amendment. Perishable; never paused for the rebuild.
     deps: []
-    status_note: "LIVE/recurring, not unstarted — prediction #1 is already sealed (A3 done); this is the repeating weekly loop, next occurrence pending. Perishable — runs on the race calendar even mid-rebuild; do not starve it."
+    status_note: >-
+      2026-07-19: promoted to 'next' -- D2 left no build session ready to pick up
+      (its own remainder is calendar-gated, see D2's status_note), and E1 is the
+      one item that's always eligible whenever a race weekend arrives. Also check,
+      each time this runs, whether race 5618 has posted results yet -- if so, run
+      bronze_fetch.py --update -> --sync-legacy-cache 5618 -> score_race.py 5618
+      first (D2's leftover step) before this week's new prediction.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md first, confirm with `git log --oneline -4` and `git status`.
+
+      This is the recurring weekly loop (E1), not a one-off build session -- run it
+      every race weekend regardless of what else is in progress (doctrine, HANDOFF
+      section 7.2: the perishable capture never pauses for the rebuild).
+
+      0. First check: has race 5618 posted results yet? If so, run D2's leftover
+         step before anything else: `bronze_fetch.py --update` ->
+         `--sync-legacy-cache 5618` -> `score_race.py 5618`. Commit the score.
+      1. After qualifying posts for the next race: `python3 update_data.py` then
+         `python3 predict_next.py`.
+      2. `git add -A && git commit -m "pre-race: <track>" && git push` -- before
+         the green flag. The public timestamp is the point.
+      3. Record book head-to-head matchup prices at close into the JSON's
+         `book_prices.entries[]` per specs/scoring_methodology.md section 5.1 and
+         the market spec's full-board recording duty (ALL primary-book matchups,
+         not a subset) -- commit and push before the scheduled green flag, or the
+         provenance amendment makes them inadmissible for the market benchmark
+         (as happened to race 5618's prices this session -- see D2's status_note).
+      4. Superspeedway stand-down still applies (log, never act). No post-hoc
+         predictions -- predict_next.py refuses once results exist.
+      Zero design judgment calls: this is a mechanical, well-worn loop; if
+      anything about the live feed or grid looks structurally different from
+      prior weeks, STOP and flag rather than improvising.
   - id: "E2"
     phase: "E"
     title: "Create GitHub remote + first push"
