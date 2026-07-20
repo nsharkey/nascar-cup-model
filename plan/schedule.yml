@@ -2023,7 +2023,7 @@ sessions:
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~3-5 hr"
-    ref: null
+    ref: "abd8516"
     exec_summary: >-
       Turned the model's existing simulation into a labeled fair-odds readout across
       order-derived markets that also speeds up the weekly manual capture, and proved
