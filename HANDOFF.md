@@ -490,23 +490,58 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   rows (vs 65–85/season > 0 in 2019–2025). H5's championship-contender flag
   stayed out of scope, routed to F3. Tier A throughout — no feature bank
   joined, no gated surface touched, 14/14 gates green before and after.
-- **Next single step (plan `next` = F3):** track-audit prior calibration
-  (empirical per-track metrics on gold), per
-  `research/track_audit_derivation.md` §3 (**Sonnet 5 · thinking on ·
-  xhigh**). Promoted off F19's close-out: both deps (C2, D1) were already
-  satisfied, C4 lands the caution-taxonomy inputs its F16 additions need, and
-  F19 explicitly routes H5's contender-exclusion sensitivity check here
-  rather than building it as a model feature (0.3% exposure kills it as
-  one). Pre-register a spec, then build ten empirical metrics (TDS/TPP/PDI/
-  ARS/RVS/PIS/QIS/SFS/DCI/FVS) with dual full-sample/as-of outputs — the
-  as-of variant is the only one ever feature-eligible, and only via its own
-  later gated A/B. Analytics/reference tier — never touches the frozen
-  model, no `>=8`-scored-races gate. The verbatim kickoff is in
-  `plan/schedule.yml` (session F3) and rendered in `PLAN.md`. Independently,
-  the standing weekly loop (E1) fires at the next Cup race (Brickyard 400,
-  race 5619, 2026-07-26) — predict / seal / push before the green flag,
-  record closing prices **before the scheduled flag** (5618's were post-flag
-  → inadmissible), then score after results post. The D2 cutover still needs
+- **2026-07-20 (F3 done):** track-audit prior calibration — empirical track
+  profiles, per `specs/track_profiles.md` (pre-registered first, per
+  `specs/README.md` discipline) and `research/track_audit_derivation.md` §3.
+  `src/track_profiles_build.py` built `gold.track_profiles` (130 rows,
+  `(track_id, era_key)`, full-sample, analytics/DFS/betting reference ONLY)
+  and `gold.track_profiles_asof` (329 rows, adds `race_id`/`race_seq`,
+  walk-forward — the only variant that could ever be feature-eligible, and
+  only via a future gated A/B). All ten metrics (TDS/TPP/PDI/ARS/RVS/PIS/
+  QIS/SFS/DCI/FVS) per their own derivation-doc subsection, plus the three
+  F16 additions: caution-cause taxonomy + lucky-dog rate extending ARS to
+  2017+ via C4's `caution_segments`, a K7 make-clustering component (draft-
+  alliance adjacency at SS/drafting tracks, analytics-only), and an H5
+  championship-contender-exclusion sensitivity check on TDS. New gate
+  `src/gate_track_profiles.py` — **PASS**, build-graph isolation verified
+  (zero references to `track_profiles` in `gold_build.py`/`walkforward.py`/
+  `predict_next.py`). Full gate surface **15/15 green** (14 inherited + this
+  session's new gate); the frozen C-gate and D-gate re-ran unaffected. Two
+  dated pre-data spec amendments recorded mid-build (RVS's active-pit-cycle
+  screen uses lap-count proximity rather than an unverified cross-feed
+  race-time comparison; restart detection sourced from `silver.lap_flags`
+  alone after a spot-check found `silver.flag_events` genuinely disagrees
+  with it about whether a caution occurred at all on some races — not a
+  stable off-by-one). Sanity checks (report, not gated): FVS-model
+  independently reproduces the audit's own SS-unpredictability finding
+  (Drafting-superspeedway family walk-forward rho 0.042 vs 0.48–0.64
+  elsewhere, via a completely different computation than the original
+  backtest); K7 shows a real same-make adjacency signal at Daytona/
+  Talladega (index 0.95–1.36, up to 36% above chance); H5's contender
+  exclusion moves TDS_core by 0.0002–0.0009 sec/lap at championship cells —
+  negligible, exactly as F19 predicted from the 0.3% exposure. 80–87% of
+  track/era cells are `below_floor` — the correct, expected consequence of
+  the a priori 5-race sample floor against the genuinely small per-track
+  sample sizes the derivation doc itself documented, not a defect. Full
+  detail: `report/TRACK_PROFILES.md`.
+- **Next single step (plan `next` = F4):** empirical track similarity vs
+  structural edges (Driver Skill Transferability), per
+  `research/track_audit_derivation.md` §4 (**Sonnet 5 · thinking on ·
+  xhigh**). Promoted off F3's close-out per phase F's own enumerated order
+  (F3/F4/F13/F14/F19); dep (D1) already satisfied; F3 left a reusable
+  frozen-engine-replay-on-gold function F4 can reuse rather than
+  re-deriving. Pre-register a spec, then compute driver-residual
+  correlation between track configs (leave-one-season-out CV) and compare
+  against the vendored structural-similarity edges (edge-restricted
+  Spearman + top-3 Jaccard + a named disagreement list), plus a pltree
+  cross-validation of `MY_TYPE` against `silver.track_dim`'s physical
+  covariates. Analytics/reference tier — never touches the frozen model, no
+  `>=8`-scored-races gate. The verbatim kickoff is in `plan/schedule.yml`
+  (session F4) and rendered in `PLAN.md`. Independently, the standing
+  weekly loop (E1) fires at the next Cup race (Brickyard 400, race 5619,
+  2026-07-26) — predict / seal / push before the green flag, record closing
+  prices **before the scheduled flag** (5618's were post-flag →
+  inadmissible), then score after results post. The D2 cutover still needs
   a **second** scored, *admissibly-priced* race before its two-clean-cycle
   bar can be assessed. The calibration backtest (M3) should be re-run
   periodically as the forward stream accrues non-SS races toward K≥20
@@ -548,8 +583,8 @@ research/           vendored external research (track_audit/ — immutable
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate
-GATES.md            the 8-gate health surface + interpreter split;
-                    run `src/run_gates.sh` to prove all 8 green in one command
+GATES.md            the 15-gate health surface + interpreter split;
+                    run `src/run_gates.sh` to prove all 15 green in one command
 DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
                     JSON, CSV contracts, raw cf.nascar.com feeds)
 src/                pipeline: download.py, parse_lib.py, parse.py,
@@ -568,7 +603,10 @@ src/                pipeline: download.py, parse_lib.py, parse.py,
                     + gate_pricing.py (M2, diagnostic Monte-Carlo pricer),
                     calibration_backtest.py (M3, backtest engine, Tier A) --
                     incentive_analytics.py (F19, Tier A, read-only analytics --
-                    report/INCENTIVE_ANALYTICS.md)
+                    report/INCENTIVE_ANALYTICS.md) -- track_profiles_build.py +
+                    gate_track_profiles.py (F3, gold.track_profiles/
+                    track_profiles_asof, build-graph isolated -- Tier A/analytics,
+                    report/TRACK_PROFILES.md)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 data/               gitignored medallion foundation (bronze/silver/gold +
