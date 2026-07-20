@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-19"
   spec_version: 1
-  shape_sig: "87c3ffa3d4369494"
+  shape_sig: "a1afba9f53ee58ab"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order, run as a live forward test against the closing-line market.
@@ -24,8 +24,10 @@ meta:
     standing weekly loop) is 'next' since no build session is otherwise
     ready. The perishable weekly capture never pauses -- race 5618's
     prediction and 3 DraftKings matchups are logged (provenance-inadmissible
-    for the benchmark stat; see D2's status_note). Governance and all
-    research spikes are complete.
+    for the benchmark stat; see D2's status_note). Governance is complete and
+    the backlog-building spikes are done; two feasibility/hypothesis spikes are
+    newly queued — F16 (domain knowledge) and F17 (SMT broadcast-telemetry,
+    owner-prioritized, Fable · xhigh).
   handoff_note: >-
     E1 is 'next' as of 2026-07-19 (D2) -- D2's own remainder (score race
     5618) is gated on NASCAR posting results, not a build session, so it
@@ -91,7 +93,7 @@ phases:
       specs frozen and carried over, each adopted only on its own walk-forward
       gate; nothing enters the frozen model without one. Two families: the
       roadmap-#4 A/Bs (F1 DNF then F2 pooling, serial; gated on >=8 scored
-      races) and the track-audit / external-scan follow-ups (F3/F4, F8-F16).
+      races) and the track-audit / external-scan follow-ups (F3/F4, F8-F17).
       Analytics and reference sessions (F3/F4/F13/F14) never touch the frozen
       model. The three research spikes are done and folded into the session
       rows: F5 (26dff0c) scoped the track-audit derivations (C3, F3/F4,
@@ -1582,6 +1584,112 @@ sessions:
       overlap, candidate session (payoff band then effort). Proposes only; nothing
       enters the frozen model without its own pre-registered gated A/B. Commit the
       report; leave the tree clean.
+
+  - id: "F17"
+    phase: "F"
+    title: "SMT broadcast-telemetry feed feasibility + acquisition spike"
+    status: "pending"
+    model: "Fable 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~4-6 hr"
+    ref: null
+    exec_summary: >-
+      Determine whether NASCAR's rich broadcast telemetry — the SMT data behind
+      the on-air throttle/brake/GPS graphics — can be obtained for this project,
+      and if so how and under what terms. The owner's former-crew-chief contact
+      confirms the data exists on broadcast- and team-related servers, and a
+      peer-reviewed study describes the SMT feeds as public. This heavy research
+      spike settles which of three doors is actually open to a personal research
+      archive: a public fan-facing feed we could fetch the way we already fetch
+      NASCAR's timing data, a licensing or relationship path, or a dead end —
+      deciding the terms-of-use posture first, before any endpoint is touched.
+      Proposes only; builds nothing.
+    tech_summary: >-
+      Heavy multi-agent deep-research spike in F6's mold — claims adversarially
+      verified vs fetched primary sources; deliverable
+      research/smt_feed_feasibility.md. Establish with citations: (1) what SMT
+      serves and at what rate — team-grade ~120 Hz (GPS/throttle/brake/steering/
+      RPM via SMT Team Analytics) vs the fan-facing downsample (NASCAR→Ably
+      pub/sub websocket channels, ~2 Hz per the Ably case study) vs
+      broadcast-graphics ingest. (2) Three access doors, and which is open to a
+      non-commercial personal archive: SMT Team Analytics (credentialed to all
+      Cup/Xfinity teams since 2018 — the crew-chief's access, non-transferable);
+      the NASCAR app / broadcast Ably channels (candidate public/unauth surface —
+      probe for telemetry fields, granularity, history depth); the Bastin &
+      Healey 2024 JDS "public SMT feed" claim (provenance ambiguous — access
+      likely via their RCR collaboration). (3) ToS posture FIRST, extending A6 —
+      NASCAR app / TrackPass terms differ from cf.nascar.com cacher (F6 found
+      cacher uncovered by NDM terms, no bot-block). HARD CONSTRAINTS: probe only
+      genuinely public, unauthenticated surfaces (as for cacher); never
+      circumvent team- or broadcast-credentialed auth; if the only path is
+      credentialed, report a licensing/relationship route, not a scrape. Weigh
+      the crew-chief data-partnership option (inherits his team's terms — flag,
+      don't assume). Output: a door-by-door go/no-go, and if a public surface
+      exists, a scoped capture proposal in the L-series pattern. Fallback if
+      inaccessible: F13 in-house loop data + F15 vendored ratings already cover
+      the need. Proposes only; no endpoint hit before the ToS step clears.
+    deps: []
+    status_note: >-
+      Owner-directed 2026-07-19 ("too important — heavy, heavy research"),
+      authorized to run on Fable 5 · thinking on · xhigh. Origin: the owner's
+      former-crew-chief source asserts SMT telemetry lives on broadcast-related
+      servers; corroborated same day by Bastin & Healey 2024 (J. Data Science,
+      NCSU+RCR collaboration) calling SMT feeds "public", and by the NASCAR/Ably
+      realtime-delivery case study. Upgrades the prior memory verdict ("no public
+      feed") to "no confirmed public unauth endpoint — probe warranted". Runnable
+      now; E1 (perishable weekly capture) stays the standing next per doctrine —
+      this does not preempt it. Cross-refs: A6 (run its ToS read first), L1/L4 (a
+      public feed folds into local capture here), F13/F15 (fallback if SMT is
+      inaccessible). See memory nascar-live-endpoints.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read README.md, PLAN.md (Phase F + A6 + Phase H L1/L4/L5),
+      research/external_knowledge_scan.md (§5 data sources, §6.5 NDM ToS), and
+      memory nascar-live-endpoints so nothing duplicates prior probes.
+
+      RESEARCH SPIKE F17 — SMT broadcast-telemetry feed feasibility + acquisition.
+      Heavy, multi-agent deep research in F6's mold: every factual claim
+      adversarially verified against fetched primary sources. Question: can this
+      project obtain NASCAR's SMT telemetry (GPS/throttle/brake/steering/speed),
+      and if so through which door and under what terms? Deliverable
+      research/smt_feed_feasibility.md.
+
+      Settle three access doors and which (if any) is open to a non-commercial
+      personal archive:
+      (1) SMT Team Analytics — full ~120 Hz, all cars, credentialed to teams
+          since 2018. The owner's former-crew-chief source has this; establish
+          whether that access is transferable (it likely is not) and what a
+          legitimate team data-partnership would entail (inherits the team's
+          data-use terms — flag, do not assume).
+      (2) NASCAR app / broadcast realtime channels — NASCAR delivers a
+          downsampled (~2 Hz) feed to fans via Ably pub/sub websockets (verify
+          against the Ably/NASCAR case study). This is the ONLY candidate
+          public/unauthenticated surface: determine whether it exposes telemetry
+          fields (throttle/brake/steering/GPS) or only timing/position, at what
+          granularity, and how far back it is retrievable.
+      (3) The Bastin & Healey 2024 (Journal of Data Science) "public SMT feed"
+          claim — resolve its provenance (their access likely came via the RCR
+          collaboration, not an open endpoint); do not take "public" at face value.
+
+      ORDER — ToS FIRST, do not hit any endpoint before it clears:
+      1. Terms/authorization read, extending A6: the NASCAR app / TrackPass /
+         RaceView terms are distinct from cf.nascar.com cacher (F6 found cacher
+         uncovered by the NDM terms, no bot-block). Decide the posture and record
+         it before probing.
+      2. Only then, probe genuinely public, unauthenticated surfaces — same
+         polite protocol the project already uses for cacher.
+
+      HARD CONSTRAINTS (non-negotiable): never circumvent team- or
+      broadcast-credentialed authentication; if the only path is credentialed,
+      report it as a licensing/relationship route, not a scrape. No live-feed
+      capture infra is built here — a positive finding becomes a scoped L-series
+      capture proposal, nothing more.
+
+      OUTPUT: door-by-door go/no-go with citations; if a public telemetry surface
+      exists, a scoped capture-session proposal (L-series pattern) + a data
+      dictionary of the fields it carries; if not, say so plainly and record that
+      F13 (in-house loop data) + F15 (vendored ratings) remain the fallback.
+      Proposes only; builds nothing; commit the report and leave the tree clean.
 
   - id: "G1"
     phase: "G"
