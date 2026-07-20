@@ -719,6 +719,45 @@ in the **engine** — they depend on the per-race eligible set and are
 already-validated Python. Gold stores pre-race feature values; the engine
 consumes them.
 
+## AMENDMENT (2026-07-19, mid-D1, made *before* any gold code was written — flagged and
+escalated per this session's "zero design judgment calls" instruction, not discovered via a
+failed gate run)
+
+**Finding.** §5.2's scope as written ("series_id 1, `race_type_id` 1, every `parse_status='ok'`
+race" — no year bound) is broader than the legacy `races_parsed.pkl` the D-gate reproves against.
+`src/download.py` (retired at B2, §8) only ever fetched 2022+ Cup data, so the anchor's 163-race
+universe is entirely 2022–2026. But C1/C2's silver build ran over the full bronze archive, and a
+direct query confirmed **72 additional Cup/points/`ok` races exist in `silver.driver_race` for
+2020–2021** (36 each) that the legacy engine never saw. A follow-up query of the first 20 races of
+2022 found **~90–97% driver-field overlap with 2021** (34–36 of each ~36–40-car field). Since
+§5.2's `fin_h`/`pace_h`/`typ_h`/`n_hist` are unbounded recency-weighted means over *all* prior
+scope races, building the literal scope would give most 2022 drivers real, non-negligible
+2020–2021 history that the legacy pkl-based engine structurally cannot have (it starts empty at
+each driver's first 2022 race) — a data-window difference, not a plumbing difference. §6's R2 gate
+("identical `n_hist`" is a hard equality) would have failed for the large majority of the 2022
+backtest window on this basis alone, and R3 would have failed downstream of it. This was verified
+by direct query (`silver.races` grouped by year, plus a field-overlap count against 2021) before
+any gold code was written — not assumed.
+
+**Owner decision (2026-07-19, mid-D1, via direct question — not a modeling call made unilaterally):**
+`gold.wf_features`'s scope (§5.2) and its own history accumulation (i.e., a driver's `n_hist`,
+`fin_h`, `pace_h`, `typ_h` at any given race only look back over scope-qualifying races with
+`year >= 2022`, never earlier) are restricted to `series_id = 1, race_type_id = 1,
+parse_status = 'ok', year >= 2022` — an exact match to what `races_parsed.pkl` ever contained. This
+applies to `gold.wf_features` only; §5.3's current-form views (`gold.driver_form`,
+`gold.driver_type_form`) inherit the same restriction for consistency with §5.2 and because they
+are computed from the same scope-filtered driver-race set.
+
+**Rationale.** The D-gate's stated purpose is to reprove that the new plumbing computes the *same
+model* the audit validated (§6: "what is re-proven is that the new plumbing computes the same
+model") — not to test whether more history improves it. Widening the historical window is a
+legitimate, real future enhancement, but it is a **feature/data change to the frozen config** and
+requires its own walk-forward validation evidence per the frozen-config doctrine (HANDOFF.md) —
+exactly the kind of re-choosing §6 prohibits smuggling in via a data-engineering rewrite. Scoping
+to `year >= 2022` keeps D1 a pure re-prove.
+
+**Post-amendment scope: see `## RESULT — D-gate` below for the build/gate outcome.**
+
 ### 5.3 Current-form views (for the weekly prediction)
 
 `gold.driver_form` — per driver, as of the latest parsed race: n_hist,
@@ -826,9 +865,73 @@ All four are recorded in the RESULT block with the environment versions.
 The gate PASSES ⇔ R0 reproduces the trio, R1 matches per §4.4's note list,
 and R2/R3 pass as stated.
 
-## RESULT — D-gate (to be filled by D1)
+## AMENDMENT (2026-07-19, mid-D1, R0's first run against the FROZEN trio above — resolves §9's
+pre-flagged ambiguity A1)
 
-*(pending)*
+**R0 ran as specified: `walkforward.RACES` ← the anchor pkl, `pl_specs={'fpts': ['fin', 'pace',
+'typed', 'start']}` (the literal §6 reference, and the *only* variant matching HANDOFF.md's frozen
+production config — `fepace` is explicitly not a production feature). Result: backtest **0.413**,
+non-SS **0.476** (both exact), 2026-OOS **0.447** — 0.002 off the published 0.449.**
+
+**Root cause (confirmed, not assumed).** A direct diagnostic re-ran the anchor through all five of
+`step4_models.py`'s `SPECS` variants (`fp`, `fpt`, `fpts`, `prior_all`, `sameday`):
+
+| spec | features | backtest | non-SS | 2026-OOS |
+|---|---|---|---|---|
+| `fpts` | fin, pace, typed, start | 0.413 | 0.476 | 0.447 |
+| `prior_all` | fin, pace, typed, start, fepace | 0.413 | 0.476 | **0.449** |
+| `sameday` | + practice | 0.414 | 0.476 | 0.452 |
+
+`prior_all` (5-feature, includes `fepace`) reproduces the published trio **exactly** on all three
+legs; `fpts` matches on backtest/non-SS (143 and ~90 races — large samples, the `fepace` feature's
+marginal effect on ranking decisions washes out) but diverges enough on the 20-race 2026-OOS slice
+to cross a rounding boundary (0.4473 vs 0.4487). This is exactly the mechanism §9's A1 flagged in
+advance: "the audit report's prose attributes 0.476/0.449 to the four-feature model, but
+`step4_models.py`'s printed non-SS/2026 tables listed the `prior_all`/`sameday` columns." The
+originally-published "0.449" was generated from `prior_all`, not `fpts` — a reporting artifact in
+the original audit, not a property of the frozen production model, and not a plumbing or
+data-integrity defect in this rebuild.
+
+**Owner decision (2026-07-19, mid-D1, via direct question):** `fpts` (4-feature, matching HANDOFF's
+frozen config exactly) remains the D-gate's reference model — unchanged from §6's literal text.
+The D-gate's expected 2026-OOS figure is corrected from 0.449 to **0.447**, matching what the
+actually-frozen model produces on the anchor. The published-trio references elsewhere in this repo
+(HANDOFF.md, README.md, the audit report) describe the mixed-provenance `prior_all`-tainted number;
+they are not amended by this D-gate finding (out of scope for D1 — a documentation cleanup, not a
+gate blocker) but future citations of "the 2026 OOS figure" should use 0.447 for the model that is
+actually in production.
+
+**Rationale.** `fepace` is provably unused in production (frozen config trains on `pace_med85`-based
+features only; report §7 calls fixed-effects pace a dead end; C1's AMENDMENT above independently
+confirms it's environment-nonreproducible on top of being unused) — validating the D-gate against a
+model that silently includes it would defeat the purpose of "re-prove, don't re-choose": the model
+being re-proven must be the one HANDOFF documents as frozen, not whichever variant happened to print
+the biggest number in an old report table.
+
+**Post-amendment R0: PASS** (0.413 / 0.476 / 0.447, all three legs exact against the corrected trio).
+R1–R3 proceed against this corrected trio. Full result in `## RESULT — D-gate` below.
+
+## RESULT — D-gate (2026-07-19, D1)
+
+**PASS** (post-amendment; both amendments above are load-bearing for these numbers).
+
+- **R0** (legacy path, anchor data): backtest **0.413**, non-SS **0.476**, 2026-OOS **0.447** —
+  exact match to the amendment-corrected trio. PASS.
+- **R1** (legacy engine, silver data): identical trio (0.413/0.476/0.447). **0 of 163** scored
+  races (either window) showed any `rho_PL_fpts` delta vs R0 at all — not just zero
+  *unexpected* deltas. Consistent with the heads-up carried from C1: `fepace` is the sole
+  silver-vs-anchor deviation and isn't part of the `fpts` feature spec. C-gate re-checked as part
+  of this run: PASS, identical to C1 (1 clean, 162 PASS-with-note, 0 FAIL). PASS.
+- **R2** (gold SQL vs replay): 5,316 eligible (race, driver) pairs compared across
+  `n_hist`/`fin_h`/`pace_h`/`typ_h`/`start_feat`/`has_pace`/`finish` — **0 mismatches**. PASS.
+- **R3** (engine on gold): identical trio (0.413/0.476/0.447). **0 near-tie exceptions, 0 genuine
+  rank disagreements, 0 races with `|Δrho| > 1e-6`** across every scored race in both windows —
+  the gold-sourced engine's predicted-rank vector equals R1's exactly, race for race. PASS.
+- Full detail (including the diagnostic table underlying Amendment 2): `report/GOLD_REPROOF.md`
+  (committed).
+- Environment: python 3.13.5, numpy 2.1.3, scipy 1.15.3, duckdb 1.4.0, pyarrow 19.0.0.
+
+Gold is unblocked for D2 (scoring/benchmark consumers, cutover, section 7.3).
 
 ---
 

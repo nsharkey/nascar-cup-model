@@ -277,6 +277,13 @@ def build_warehouse():
         if os.path.exists(path):
             con.execute(f"CREATE OR REPLACE VIEW silver.{table_name} AS SELECT * FROM read_parquet('{path}')")
 
+    # Gold (D1, section 5) -- same rebuildable-from-disk view pattern.
+    gold_dir = os.path.join(REPO_ROOT, 'data', 'gold')
+    for table_name in ('track_typology', 'wf_features', 'driver_form', 'driver_type_form'):
+        path = os.path.join(gold_dir, f'{table_name}.parquet').replace('\\', '/')
+        if os.path.exists(path):
+            con.execute(f"CREATE OR REPLACE VIEW gold.{table_name} AS SELECT * FROM read_parquet('{path}')")
+
     con.close()
 
 

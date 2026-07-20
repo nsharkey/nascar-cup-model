@@ -548,3 +548,85 @@ real join bug caught and fixed): `report/TRACK_REFERENCE.md`.
 
 `src/warehouse.py`'s `build_warehouse()` registers all seven as DuckDB views over their parquet
 files, same rebuildable-from-disk pattern as every other silver table.
+
+## 10. Gold layer — `data/gold/` (medallion rebuild, D1)
+
+Feature-bank tables built by `src/gold_build.py` in DuckDB SQL over `silver.driver_race` /
+`silver.races` — no parity obligation of their own, but `gold.wf_features` transcribes
+`walkforward.run()`'s history mechanics exactly and is re-proven bit-for-bit against a Python
+replay by the D-gate (section 6 of the spec; see `## RESULT — D-gate` and
+`report/GOLD_REPROOF.md` for the full R0–R3 outcome — PASS, zero mismatches).
+
+**Scope amendment (2026-07-19, D1):** `gold.wf_features` and the current-form views are bounded
+to `series_id=1, race_type_id=1, parse_status='ok', year >= 2022` — matching exactly what
+`races_parsed.pkl` ever contained, even though silver itself covers back to 2020. See the spec's
+`## AMENDMENT` block before section 5.3 for the full rationale (unbounded history would give 2022
+drivers real 2020–2021 history the legacy engine never had).
+
+### 10a. `gold.track_typology` — `data/gold/track_typology.parquet`
+
+34 rows, one per track name in `walkforward.MY_TYPE` (imported directly from `src/walkforward.py`
+at build time, not hand-transcribed — the strongest available guarantee of "verbatim", spec
+section 5.1). Columns: `track_name, ttype` (`SS` / `INT` / `SHORT` / `ROAD` / `OTHER`). Any track
+name not present in this table maps to `'UNIQ'` by convention wherever it's joined (never stored
+as a row — the fallback is applied at query time, matching `MY_TYPE.get(track, 'UNIQ')`).
+
+### 10b. `gold.wf_features` — `data/gold/wf_features.parquet`
+
+6,083 rows — one per `(race_id, driver_id)` for every driver in every scope-qualifying race
+(2022–2026, 163 races; row count matches the C-gate anchor's driver-race row count exactly, since
+the scope amendment lines gold up with the anchor's own universe).
+
+| field | type | meaning |
+|---|---|---|
+| `race_id` | int | NASCAR race id (target race). |
+| `driver_id` | int | Driver. |
+| `race_seq` | int | 1-based index of the target race in `(race_date, race_id)` order — the walk-forward clock. |
+| `n_hist` | int | Count of this driver's scope races strictly before `race_seq`. |
+| `fin_h` | double \| null | Half-life-8 recency-weighted mean of prior finishes. `null` iff `n_hist=0`. |
+| `pace_h` | double \| null | Same, over the subsequence of prior races with non-null `pace_med85` — the recency exponent ranks WITHIN that subsequence, not within all prior races (the transcription trap section 5.2 calls out explicitly). `null` if the subsequence is empty. |
+| `typ_h` | double \| null | Shrinkage blend of the typed (same-`ttype`-as-target) weighted mean and `fin_h`: `(m·typed_wmean + 3·fin_h)/(m+3)` if `m>0` else `fin_h`; `null` iff `fin_h` is `null`. `ttype` for both the target and every prior race is each race's OWN track mapped through `gold.track_typology`. |
+| `start_feat` | int | Target race's `start`, falsy (`null` or `0`) mapped to `20`. |
+| `has_pace` | bool | Target race's `pace_med85 IS NOT NULL`. |
+| `finish` | int | Target race's `finish` (backtest label, convenience). |
+
+Half-life 8 and shrinkage constant 3 are frozen config values (`HALF_LIFE`/`SHRINK_K` in
+`gold_build.py`), not derived. Eligibility filtering (burn 15, `n_hist>=5`, `has_pace`, `>=20`
+eligible per race), z-scoring, and PL fitting are NOT computed here — they depend on the per-race
+eligible set and stay in the engine (`walkforward.py`, unedited), per spec section 5.2.
+
+### 10c. Current-form views — `data/gold/driver_form.parquet`, `data/gold/driver_type_form.parquet`
+
+For the weekly prediction (post-cutover, section 5.3) — same weighting, evaluated "as of the
+latest scope race" rather than relative to a specific target race (i.e. every scope race counts
+as history, ranked purely by recency).
+
+| table | rows | grain | columns |
+|---|---:|---|---|
+| `gold.driver_form` | 101 | one per `driver_id` | `n_hist, fin_h, pace_h` — same definitions as `gold.wf_features`, evaluated over ALL of that driver's scope races. |
+| `gold.driver_type_form` | 325 | `(driver_id, ttype)` | `m, typed_wmean` — the building blocks `predict_next.py` combines with the target race's own `ttype` (via `gold.track_typology`) to compute `typ_h` at prediction time. |
+
+### 10d. `src/warehouse.py` extension (D1)
+
+`build_warehouse()` registers all four gold tables as DuckDB views over their parquet files in
+`data/gold/` when present, same rebuildable-from-disk pattern as bronze/silver — deleting
+`nascar.duckdb` never loses information. `gold_build.py` calls `build_warehouse()` twice: once
+before computing (so `silver.*` views are fresh) and once after (so `gold.*` views pick up the
+parquet files just written).
+
+### 10e. D1 finding — the R0 trio's published 2026-OOS figure (2026-07-19)
+
+R0 (section 6) initially reproduced backtest (0.413) and non-SS (0.476) exactly but not 2026-OOS
+(0.447 vs the published 0.449). Root cause, confirmed by re-running the anchor through all five of
+`step4_models.py`'s `SPECS` variants: the published 0.449 was generated from `prior_all` (a
+5-feature spec that includes `fepace`), not `fpts` (the actually-frozen 4-feature production
+model, `[fin, pace, typed, start]`) — exactly the mechanism spec section 9's pre-flagged ambiguity
+A1 anticipated. `fpts` and `prior_all` agree to 3dp on the 143-race backtest and ~90-race non-SS
+slices (large samples wash out `fepace`'s marginal effect) but diverge on the small 20-race
+2026-OOS slice, crossing a rounding boundary. Owner-authorized resolution: `fpts` stays the
+D-gate's reference model (matches HANDOFF's frozen config; `fepace` is confirmed unused in
+production, §9d above); the D-gate's expected 2026-OOS figure is corrected to 0.447. Full detail:
+spec section 6's `## AMENDMENT` block (before `## RESULT — D-gate`) and `report/GOLD_REPROOF.md`.
+Note: HANDOFF.md/README.md's own headline "0.449" citations describe the mixed-provenance figure
+and are unchanged by this finding (a documentation cleanup out of D1's scope, not a gate blocker)
+— new citations of the 2026-OOS figure for the model actually in production should use 0.447.
