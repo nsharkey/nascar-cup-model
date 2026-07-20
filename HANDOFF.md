@@ -25,7 +25,7 @@ on the prior effort's five claims: C2, C3 reproduced (C3 strengthened);
 C1 partial (real but fragile, not significant); C4 method dispute (grid is a
 feature, not a rival); C5 failed (their ~0.38 ceiling broken at 0.413 with
 their own ingredients properly fitted). Backtest 0.413 Spearman, 0.476
-non-superspeedway, 0.449 on 2026 out-of-sample.
+non-superspeedway, 0.447 on 2026 out-of-sample.
 
 **Production config (FROZEN — do not change without a validated reason):**
 pace = `pace_med85`, half-life 8, corrected typology (`MY_TYPE` in
@@ -242,8 +242,9 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   (§5, before 5.3; §6, before `## RESULT — D-gate`), full detail in
   `report/GOLD_REPROOF.md` and `DATA_DICTIONARY.md` §10. **New citations of
   the 2026 out-of-sample figure for the model actually in production should
-  use 0.447, not 0.449** (the header block above and README predate this
-  finding and are unchanged — a documentation cleanup, not a gate blocker).
+  use 0.447, not 0.449** (the header block above and README predated this
+  finding; that documentation cleanup was completed in the 2026-07-19 overnight
+  consolidation — it was never a gate blocker).
 - **2026-07-19 (D2 done, code+dual-run PASS; race-5618 scoring pending on
   NASCAR):** `score_race.py`/`test_score_race.py` (all 10 frozen fixtures
   pass), `market_benchmark.py`, the §5.5 bronze→legacy-cache shim

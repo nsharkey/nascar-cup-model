@@ -18,7 +18,14 @@ typology corrections, out-of-sample 2026 validation, and calibration — is in
 | Prior effort's best (z-sum, typed) | 0.382 |
 | **This model (PL: finish + pace + typed + start)** | **0.413** |
 | — non-superspeedways only | 0.476 |
-| — 2026 out-of-sample (20 races) | 0.449 |
+| — 2026 out-of-sample (20 races) | 0.447 |
+
+*The 2026 out-of-sample figure is the frozen four-feature model
+(`[fin, pace, typed, start]`). An earlier printing of 0.449 came from a
+five-feature variant that adds a non-production column; the two agree to 3 dp
+everywhere except the 20-race 2026 slice, where they cross a rounding boundary
+(0.4473 vs 0.4487). Provenance:
+[`report/GOLD_REPROOF.md`](report/GOLD_REPROOF.md).*
 
 Predictability is structurally uneven: short tracks ρ≈0.52, intermediates ≈0.41,
 road courses ≈0.36, superspeedways ≈0.16 — and at superspeedways the model's
