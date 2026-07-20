@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-20"
   spec_version: 1
-  shape_sig: "d0f4344e0ba4e89e"
+  shape_sig: "79cc2744e5523f2f"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order, run as a live forward test against the closing-line market.
@@ -15,27 +15,25 @@ meta:
     without a pre-registered, walk-forward-gated A/B, and the perishable weekly
     market capture never pauses. Rendered from data, kept here and nowhere else.
   bottom_line: >-
-    Bronze/silver/gold are complete: D1 re-proved 0.413/0.476/0.447 clean and D2's
-    scoring/benchmark consumers are green. Race 5618 is SCORED (rho=0.5458, e8725cf);
-    D2's only remainder is the owner-gated cutover (two clean cycles). Its 3 prices
-    were post-flag and inadmissible, so the market benchmark stands at N=0. L5 is
-    DONE: the odds-source ledger (research/odds_source_evaluation.md) landed and the
-    owner DEFERRED the primary-book binding pending a trial probe. L2's own step-1
-    probe (2026-07-20) hit real walls -- SportsDataIO's trial confirmed a real H2H
-    market type but is scrambled+stale; SportsGameOdds was never key-tested -- so the
-    owner asked for a deeper spike. 'next' is now L6 (comprehensive vendor research,
-    cost-conscious); L2 reduces to "build the fetcher" once L6 recommends and the
-    owner gives GO. E1 fires at the next race weekend, ~1 week out; capture never
-    pauses. F17 remains queued.
+    Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green.
+    Race 5618 SCORED (rho=0.5458) but its prices were post-flag/inadmissible, so the
+    market benchmark is at N=0 (D2's remainder is the owner-gated cutover). L5+L6 DONE:
+    the odds-vendor question is resolved -- no vendor is affordable + real-time-admissible
+    + confirmed-NASCAR + public-repo-ToS-clean (ranked ledger, odds_source_evaluation.md
+    section 9), so the standing answer is STAY MANUAL. Mid-L6 the owner opened a strategic
+    pivot: build our own multi-market model-book (simulation-priced fair odds across all
+    bet types, self-graded by a walk-forward calibration backtest; PL + Bayesian-PL).
+    'next' is F20 -- an adversarial vetting of that pivot (Opus xhigh) deciding whether the
+    beat-the-line benchmark stays, demotes, or drops. L2 blocked pending F20; E1 never pauses.
   handoff_note: >-
-    L6 is 'next' as of 2026-07-20 (owner asked for a deeper spike after L2's probe
-    dead-ended twice). Model: Opus 4.8, thinking on, effort xhigh -- judgment-shaped
-    evaluation work, not Sonnet execution. L6 covers every viable odds vendor, ongoing
-    vs. historical pricing separately (historical can't feed the admissibility-gated
-    market-benchmark statistic), and an explicit cost lens: hobby project, default
-    $0/manual, pay only if it earns its keep. STOP for owner GO before any purchase
-    or primary-book binding. Meanwhile E1 fires at the next race weekend: admissible
-    MANUAL capture, commit+push before the scheduled green flag.
+    F20 is 'next' as of 2026-07-20 -- a design-vetting spike for a major pivot the owner
+    opened during L6 (own multi-market model-book + walk-forward calibration backtest;
+    PL + Bayesian-PL[F10] + Monte-Carlo pricing). Model: Opus 4.8, thinking on, effort
+    xhigh (max for the one fork -- keep, demote, or drop the beat-the-line market
+    benchmark). Judgment-shaped, adversarially vetted; propose/pre-register only -- no
+    production code, no frozen-spec edit, no plan/HANDOFF commit without owner GO. Owner
+    runs it fresh. E1 preempts on a race weekend: admissible MANUAL capture, commit+push
+    before the scheduled green.
 
 phases:
   - key: "A"
@@ -1829,6 +1827,132 @@ sessions:
       measured version of the "motivation" signal F6 §4.2 marked
       unmeasured.
 
+  - id: "F20"
+    phase: "F"
+    title: "Vet the model-book pivot (calibration backtest + PL/Bayesian/sim)"
+    status: "next"
+    model: "Opus 4.8 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    dagger: true
+    wall_clock: "~4-6 hr"
+    ref: null
+    exec_summary: >-
+      Fully vet a major proposed pivot before any build: shift the project's center
+      of gravity from "prove the model beats the sportsbook's closing line" (which
+      needs perishable manual odds capture that recent research showed has no cheap
+      source) toward building our own multi-market "book" -- fair odds for every bet
+      type, self-graded against real results on data we already have. Decide the one
+      big fork (keep, demote, or drop the beat-the-line benchmark), pressure-test the
+      idea adversarially, and hand back a pre-registered design plus a re-sequenced
+      plan. Recommends only; builds nothing.
+    tech_summary: >-
+      Design-vetting spike out of the L6 conversation (odds_source_evaluation.md
+      section 9). Core distinction to nail: calibration (model-vs-reality; free; on the
+      163-race history; a fair book breaks even by construction so yields NO profit
+      signal) != edge (model-vs-market; needs real closing prices; gates roadmap #5).
+      Architecture to specify: two axes -- underlying model (PL frozen baseline /
+      Bayesian-PL = F10 gated A/B / optional ensemble) x pricing layer (Monte-Carlo
+      readout for coherent all-bet-type prices); the full generative race simulator
+      stays F7-NULL unless a trigger fires. Adversarial passes must attack in-sample
+      optimism (frozen config was SELECTED on 2015-2025), metric-shopping, the
+      audit-section-7 underconfidence/recalibration question, whether sim "coherence"
+      masks mis-specification, Bayesian MCMC walk-forward feasibility on DuckDB, and
+      preservation of the validated 0.413/0.476/0.447 equity. Reconcile with doctrine
+      (frozen config untouched without a walk-forward-gated pre-registered A/B); name
+      new specs (calibration-backtest prereg; pricing-layer; new capture schema since
+      book_prices is H2H-shaped) and re-homed items (F2/F10/F11, market specs, L2).
+      Deliverable: a pivot-vetting memo + proposed plan/HANDOFF edits; STOP for GO.
+    deps: ["F7"]
+    status_note: >-
+      2026-07-20: created 'next' out of the L6 spike, at owner request ("this is a huge
+      pivot; i want it fully vetted with a great model and settings"). Runs off phase
+      F's nominal Sonnet tier (dagger) -- judgment-shaped strategy/methodology work,
+      Opus 4.8 xhigh (max for the fork adjudication). deps F7 (Bayesian assessment: F10
+      recommended, generative model NULL + 3 triggers); also reads L6 section 9 and the
+      frozen market/scoring specs. Owner runs it as a fresh session (clean context).
+      Propose/pre-register only; no production code, no frozen-spec edit, no
+      plan/HANDOFF commit without GO. E1 preempts on a race weekend.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model). This is a
+      DEDICATED PLANNING / DESIGN-VETTING session for a major proposed strategic pivot. Propose,
+      adversarially vet, and pre-register only -- build nothing, change no frozen spec or model,
+      bind no decision without owner GO.
+
+      READ FIRST (in full): HANDOFF.md; research/odds_source_evaluation.md section 9 (the L6
+      vendor spike that motivates this pivot -- no affordable/admissible/ToS-clean NASCAR odds
+      vendor exists); specs/market_benchmark_decision_rule.md + specs/scoring_methodology.md (the
+      FROZEN specs this reframes) and specs/README.md (freeze/amendment rules); the F7 Bayesian
+      assessment and the F2/F7/F10/F11 session rows in plan/schedule.yml (F10 Bayesian recommended;
+      F11 conditional; the full-race generative-outcome simulator decided NULL + its 3 re-proposal
+      triggers); report/NASCAR_AUDIT_REPORT.md section 7 (the model's underconfidence finding; the
+      fixed-effects and generative dead-ends).
+
+      THE PIVOT. In an L6 design conversation the owner proposed shifting the project's center of
+      gravity from "prove the frozen PL model beats the sportsbook closing line" (the
+      market-benchmark -- which needs perishable manual odds capture L6 showed has no cheap/
+      automatable source) TOWARD building the project's own multi-market "model book":
+        - Price fair odds for ALL bet types (win, top-5, top-10, H2H, group matchups, ...) from
+          ONE coherent joint finishing-order distribution via a Monte-Carlo pricing/readout layer.
+        - Evaluate it with a WALK-FORWARD calibration / proper-scoring backtest on the existing 163
+          races (Brier, log-loss, calibration curves per market) -- self-graded on real results,
+          needing NO book odds.
+        - Underlying model: PL (frozen baseline) + Bayesian-PL (F10) as a gated A/B upgrade
+          (principled uncertainty + small-sample calibration); optional gated PL+Bayesian ensemble.
+          Full generative race simulator stays F7-NULL unless a trigger fires.
+        - Emit fair odds as a weekly betting aid AND as the capture template that makes any residual
+          manual book-odds capture fast + full-board.
+
+      YOUR JOB -- fully vet this, adversarially, and produce a pre-registered design, before any build:
+
+      1. NAIL THE CORE DISTINCTION AND DECIDE THE FORK. Calibration (model-vs-reality; free; on-hand;
+         a fair book breaks even by construction so it yields NO profit signal) is NOT edge
+         (model-vs-market; needs real closing prices; gates roadmap #5). Adjudicate: does the
+         beat-the-line market-benchmark thread STAY (kept as the #5 gate, fed by lightweight manual
+         capture), get DEMOTED, or get DROPPED (making the L5/L6/L2 odds-capture thread optional)?
+         State exactly what each choice costs and unlocks. This is the single most consequential
+         decision -- pre-register a recommendation with reasoning, then STOP for owner GO on it.
+
+      2. PRESSURE-TEST ADVERSARIALLY (spin up independent refutation passes prompted to REFUTE, not
+         confirm). At minimum attack: (a) can a self-graded calibration backtest be gamed / is it
+         circular / in-sample-optimistic given the frozen config was SELECTED on the 2015-2025 era --
+         and does walk-forward + the 2026-OOS split actually fix it; (b) metric-shopping across many
+         markets/metrics and what pre-registration must lock; (c) the model's known underconfidence
+         (audit section 7) -- what recalibration means and whether it's a model change requiring the
+         walk-forward gate; (d) whether simulation pricing's "coherence" is real or masks
+         mis-specification; (e) computational feasibility of Bayesian-PL walk-forward (MCMC over 163
+         races x weekly refits) on the local DuckDB foundation; (f) whether the pivot quietly
+         abandons the project's hardest-won equity (the validated 0.413/0.476/0.447 result and the
+         anti-self-deception governance) -- and how to preserve it.
+
+      3. RECONCILE WITH DOCTRINE + FROZEN SPECS. Nothing changes the frozen PL config, the frozen
+         sections of the scoring/market specs, or the validated results without a pre-registered,
+         walk-forward-gated A/B. Specify precisely: the NEW specs needed (a calibration-backtest
+         pre-registration; a fair-odds/pricing-layer spec; a new capture schema since book_prices is
+         H2H-shaped); which existing items are re-homed or superseded (F2 pooling, F7/F10/F11, the
+         market-benchmark specs, L2); and what stays untouched.
+
+      4. DESIGN THE ARCHITECTURE precisely: the two axes (underlying model: PL / Bayesian-PL /
+         ensemble; pricing layer: Monte-Carlo readout), the coherence guarantees, the walk-forward
+         protocol, the pre-registered proper-scoring metrics + their decision rules, and how F10
+         plugs in as the downstream A/B gated by the calibration harness.
+
+      5. RE-SEQUENCE THE PLAN. Propose the phased build order (step 1: sim pricing layer +
+         calibration backtest on frozen PL -- free, on existing data, also delivers the fair-odds
+         tool; step 2: F10 Bayesian A/B; step 3: optional ensemble; step 4: generative simulator
+         only on trigger), each item with model+settings + a one-line cost/quality rationale +
+         gates, in the project's sprint-table format; mark the single next actionable item.
+
+      DELIVERABLE: a written pivot-vetting memo (propose-only) -- the fork recommendation, the
+      adversarial findings and how the design survives them, the doctrine reconciliation, the
+      architecture, and the re-sequenced plan -- plus proposed (not applied) plan/HANDOFF edits.
+      STOP for owner GO before any production code, any frozen-section edit, or committing
+      plan/HANDOFF. If a race weekend falls during the session, E1 duties (predict + admissible
+      manual capture before the scheduled green) come first.
+
+      Model: Opus 4.8, thinking on, effort xhigh (use max for the step-1 fork adjudication). On
+      start, verify the running model is claude-opus-4-8 and ASK whether thinking is on and effort
+      is xhigh before substantive work (same self-check L5/L6 used).
+
   - id: "G1"
     phase: "G"
     title: "Pre-register the roadmap-#5 design spec"
@@ -1954,7 +2078,7 @@ sessions:
   - id: "L6"
     phase: "H"
     title: "Comprehensive odds-vendor research spike (ongoing + historical, cost-conscious)"
-    status: "next"
+    status: "done"
     model: "Opus 4.8 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~4-6 hr"
@@ -1987,12 +2111,19 @@ sessions:
       manual is a fully valid outcome.
     deps: ["L5"]
     status_note: >-
-      2026-07-20: promoted to 'next', ahead of L2 (which now depends on this). Owner explicitly
-      asked for something "much more indepth" after this session's ad hoc probing dead-ended twice
-      (SportsDataIO trial scrambled+stale; SportsGameOdds never key-tested), then asked mid-session
-      to also cover historical vs ongoing pricing and to keep cost front-of-mind (hobby project, no
-      big spend, but pay-for-itself is fine). STOP for owner GO on any primary-book binding or spend
-      commitment -- this session recommends, it does not purchase or bind anything.
+      2026-07-20: DONE. Deliverable = research/odds_source_evaluation.md section 9 (comprehensive
+      vendor spike + ranked ledger; propose-only, no endpoint hit, no spec/model touched). Finding:
+      NO vendor is simultaneously hobby-affordable + real-time-admissible + confirmed-NASCAR +
+      public-repo-ToS-clean -- every candidate fails >=1 axis. SportsGameOdds and OddsPapi
+      owner-verified NASCAR-free; SportsDataIO (only documented NASCAR H2H) has a next-day-delayed
+      cheap tier (inadmissible) and a ~$16.5k/yr live tier; OpticOdds=OddsJam ~$5k/mo;
+      OddsMatrix/Sportradar enterprise-only. Recommendation: STAY MANUAL, buy nothing -- admissibility
+      is owned by the T-45 workflow, not the source; H2H depth pinned ~12-15/book (higher than the
+      spec's 5-10), so the benchmark can still reach an adequately-powered verdict. Mid-session the
+      owner opened a strategic pivot (own multi-market model-book + walk-forward calibration backtest;
+      PL + Bayesian-PL[F10] + Monte-Carlo pricing) that sits UPSTREAM of L6's tactical decisions --
+      deferred to F20 (adversarial design-vetting, Opus xhigh). L2 stays blocked pending F20's
+      re-sequencing. No purchase/binding/build; E1 manual capture continues.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, research/odds_source_evaluation.md IN FULL (including section 8, today's

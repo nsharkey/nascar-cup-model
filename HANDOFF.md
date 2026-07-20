@@ -350,23 +350,39 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   vendor-research spike, Opus 4.8 · thinking on · xhigh) is now `next`; **L2**
   demoted to `blocked`, reduced to "build the fetcher" once L6 recommends and the
   owner gives GO. All 10 gates re-verified green after the plan edit.
-- **Next single step (plan `next` = L6):** comprehensive odds-vendor research spike
-  — actually sign up for SportsGameOdds and re-probe; chase a real SportsDataIO
-  number (Replay tool or sales quote, asking for an NFL+NASCAR bundle); resolve
-  L5's uncertain providers (OpticOdds, OddsMatrix, OddsJam) plus a fresh scan; try
-  to pin real per-race H2H depth from public non-scraped sources; price ongoing and
-  historical capture separately (historical can never feed the admissibility-gated
-  market-benchmark statistic, so it's descriptive-only at best); synthesize one
-  recommendation. Default prior is $0/manual — a recommendation to stay manual is a
-  fully valid outcome. STOP for owner GO before any purchase or primary-book
-  binding. Independently, the standing weekly loop (E1) fires at the next Cup
-  race — predict / seal / push before the green flag, and record closing book
-  prices **before the scheduled flag** this time (5618's were post-flag, hence
-  inadmissible), then score after results post. No further gold build/gate
-  engineering is required — D1's gate and D2's dual-run check cover the mechanics;
-  what remains is calendar-gated, not code-gated. One scored race exists (5618);
-  the D2 cutover still needs a **second** scored, *admissibly-priced* race before
-  its two-clean-cycle bar can be assessed.
+- **2026-07-20 (L6 done — odds-vendor spike; owner opened a strategic pivot):**
+  `research/odds_source_evaluation.md` §9 landed (comprehensive vendor spike + a ranked
+  ledger; propose-only, no endpoint hit, no spec/model touched). **Finding:** no vendor is
+  simultaneously hobby-affordable + real-time-admissible + confirmed-NASCAR + public-repo-
+  ToS-clean — every candidate fails ≥1 axis (SportsGameOdds & OddsPapi owner-verified
+  NASCAR-free; SportsDataIO's only affordable tier is next-day-delayed = inadmissible, its
+  live tier ~$16.5k/yr; OpticOdds=OddsJam ~$5k/mo; OddsMatrix/Sportradar enterprise-only).
+  **Standing recommendation: STAY MANUAL** — admissibility is owned by the T-45
+  commit-and-push workflow, not the source; per-race H2H depth was pinned ~12–15/book at
+  close (higher than the spec's 5–10 assumption), so the benchmark can still reach an
+  adequately-powered verdict. **Mid-session the owner opened a strategic pivot:** shift the
+  project's center of gravity from the beat-the-line market benchmark toward the project's
+  own multi-market **model book** — simulation-priced fair odds across all bet types,
+  self-graded by a walk-forward **calibration backtest** on the existing 163 races (needs no
+  book odds), with PL (frozen baseline) + Bayesian-PL (F10) as a gated A/B and Monte-Carlo as
+  the pricing layer. Calibration (model-vs-reality, free) ≠ edge (model-vs-market, needs real
+  prices, gates roadmap #5). Deferred to **F20**, an adversarial design-vetting session
+  (Opus 4.8 · thinking on · xhigh) that decides whether the beat-the-line benchmark **stays,
+  demotes, or drops**. L2 stays blocked pending F20's re-sequencing. No purchase, no binding,
+  no build.
+- **Next single step (plan `next` = F20):** a dedicated, adversarially-vetted **design
+  session for the model-book pivot** (Opus 4.8 · thinking on · xhigh; max for the fork
+  adjudication; owner runs it fresh). It nails calibration-vs-edge, decides the
+  keep/demote/drop fork on the market benchmark, pressure-tests the pivot (in-sample
+  optimism, metric-shopping, underconfidence/recalibration, sim-coherence, Bayesian-MCMC
+  feasibility, preserving the 0.413/0.476/0.447 equity), reconciles with doctrine (frozen
+  config untouched without a walk-forward-gated A/B), names the new specs and re-homed items,
+  and re-sequences the plan — propose/pre-register only, STOP for owner GO before any build.
+  The verbatim kickoff is in `plan/schedule.yml` (session F20) and rendered in `PLAN.md`.
+  Independently, the standing weekly loop (E1) fires at the next Cup race — predict / seal /
+  push before the green flag, record closing prices **before the scheduled flag** (5618's
+  were post-flag → inadmissible), then score after results post. The D2 cutover still needs a
+  **second** scored, *admissibly-priced* race before its two-clean-cycle bar can be assessed.
 
 ## Roadmap (agreed order — do not skip ahead)
 

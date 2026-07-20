@@ -383,3 +383,257 @@ no documented NASCAR H2H coverage to even trial. Recommend:
 per this session's kickoff), no primary book bound, no spec/model touched. Plan/HANDOFF
 edits proposed below, not applied — owner review requested before commit, consistent
 with §7's parallel-session hygiene.
+
+---
+
+## 9. L6 — comprehensive vendor spike (2026-07-20)
+
+**Status:** the deeper, wider spike §6/§8 called for. **Proposes and prices only** — no
+production subscription acquired, no sportsbook endpoint hit, no primary book bound, no
+model/spec touched. Evidence from public vendor/journalism pages, one owner-provided fact
+(the SportsGameOdds league list), the SGO pricing page, and a read-only read of the owner's
+NFL project (`~/Downloads/nflverseanalytics`, decision 163). Produced Opus 4.8, thinking on,
+xhigh. Cost lens (owner, 2026-07-20): **hobby project, default $0/manual; a paid option must
+earn its keep on quantified evidence, not marketing copy.**
+
+Credibility labels as elsewhere: **[V]** primary/authoritative page · **[vendor]** marketing
+claim · **[3p]** third-party report · **[owner]** owner-supplied fact.
+
+### 9.0 Headline — no viable vendor; stay manual
+
+**No odds vendor is viable for this project at hobby scale. Recommendation: continue
+admissible MANUAL capture (E1's workflow), do not automate, do not buy anything.** A
+vendor would have to be all four of these at once, and none is:
+
+1. **Hobby-affordable** (not enterprise/sales-gated at $k/mo),
+2. **Real-time enough to be admissible** — the closing price must be fetched and committed
+   *before the scheduled green flag* (the admissibility amendment); a delayed/next-day feed
+   can never satisfy this,
+3. **Confirmed to actually carry NASCAR odds** (not generic "motorsports"), and
+4. **ToS-clean for committing raw prices into the public repo** — which the admissibility
+   mechanism *requires* (the pre-race public commit is the proof-of-timing).
+
+Every candidate fails ≥1 axis, and among the licensed feeds the failures are effectively
+mutually exclusive: the ones that *have* NASCAR (SportsDataIO, OddsMatrix) are
+enterprise-priced and/or delayed and ToS-restricted; the ones that are *cheap and
+self-serve* (SportsGameOdds, The Odds API, OddsPapi) all **lack NASCAR entirely** — SGO and
+OddsPapi both owner-verified NASCAR-free (2026-07-20).
+**Admissibility was never a *source* problem** — race 5618 failed because prices were
+committed 26 min after the scheduled green, and the T-45 commit-and-push workflow (§4) fixes
+that for free — so the manual DK-viewing path, already authorized under E1, is the only route
+clean on all four axes.
+
+### 9.1 Vendor comparison table
+
+Ongoing = live/current-odds price. Historical = backfill (descriptive-only here — the
+admissibility amendment bars backfilled prices from the market-benchmark statistic forever,
+§9.4). "Admissible?" = can it deliver a pre-scheduled-green closing price at all.
+
+| Vendor | NASCAR odds? | H2H matchups? | Ongoing $ | Historical $ | Real-time / admissible? | Self-serve? | Books | Public-repo ToS | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| **Manual view (DK / FanDuel)** | **Yes** [V] | **Yes** [V] | **$0** | n/a | **Yes** (T-45 workflow) | n/a (human) | the book itself | **Clean** — human viewing = ordinary use; odds logged as facts, no licensor contract | **IN — the floor & the recommendation** |
+| SportsDataIO | Yes [V] | **Yes, documented** [V] | Discovery Lab $99–149/mo **(next-day-delayed)**; live = commercial quote **≈$16.5k/yr** [3p] | separate SKU, sales-gated (2019+) | **No** at hobby tier (delayed); yes only at ~$16.5k/yr | Discovery Lab yes (delayed); live no (sales) | FanDuel (+"more soon") | Bars publishing w/o written consent [V] | **OUT** — cheap tier inadmissible; admissible tier enterprise-priced; ToS |
+| OddsMatrix (EveryMatrix) | Yes — "350+ NASCAR markets incl. driver matchups" [vendor] | Yes [vendor] | enterprise quote | enterprise | (enterprise) | **No** — sales-gated, bookmaker-facing | 150+ | contract-gated | **OUT** — no affordable self-serve door |
+| OpticOdds / OddsJam **API** (same feed) | Unconfirmed (generic "Motorsports"; not documented) | Not documented | **≈$5k/mo** [3p], sales-gated | separate, undisclosed | (would be) | **No** — sales-only, no trial | DK yes; FanDuel unconfirmed | scraped feed, active litigation; contract | **OUT** — price, access, unconfirmed coverage |
+| OddsJam **consumer** tool | NASCAR hub exists; H2H *display* unconfirmed | Unconfirmed | **$100–300/mo** (Screen plans) | — | (human read) | Yes, 7-day trial | DK + FanDuel | personal-use; transcription a gray area | **OUT** — cost with no edge over free DK viewing (single-book binding negates a multi-book screen) |
+| OddsPapi | **No** — no motorsports odds (owner-verified 2026-07-20) | No | usage-based; no-card free tier | free (claimed) | — | Yes (instant key) | DK/FD/Pinnacle among 300+ | bars redistribution "as a standalone product" | **OUT** — no motorsports odds at all, same as SGO |
+| SportsGameOdds | **No** [V][owner] | No | free / $99/mo | $299/mo Pro | — | Yes | DK/FD (paid tiers) | bars redistribution, no carve-out [V] | **OUT** — zero motorsport in the league list |
+| The Odds API | **No** [V] | No | free / $30–249/mo | 10× multiplier | — | Yes | many | permits illustrative quotes | **OUT** — no NASCAR at any tier |
+| Sportradar | **No odds** (NASCAR product = timing/scoring/settlement; Odds API omits NASCAR) [V] | No | ≈$10k+/mo [3p] | — | — | No (sales; 30-day trial) | 140+ | contract | **OUT** — no NASCAR *odds*; enterprise |
+| Unabated | **No** (NASCAR not in sport list) [V] | No | $3,000/mo | — | — | Yes (API) | many | — | **OUT** — no NASCAR |
+| Genius Sports / LSports | enterprise, NASCAR-H2H unconfirmed | unconfirmed | enterprise quote | enterprise | — | No (sales) | — | contract | **OUT** — enterprise-only |
+
+### 9.1a Ranked — closest-to-viable first (all are currently OUT)
+
+The ranking is "least far from viable for *this hobby project*," weighting confirmed-NASCAR
+coverage, admissibility, cost, self-serve access, and public-repo ToS. It is the order in
+which to revisit if a revisit trigger (§9.7 item 6) ever fires — **not** a buy list.
+
+1. **SportsDataIO** — the strongest coverage by far (only vendor with documented NASCAR H2H +
+   the full market suite) and it has a self-serve tier. OUT only because the affordable tier is
+   next-day-delayed (inadmissible) and the admissible tier is ~$16.5k/yr, plus a publish-consent
+   ToS. **Revisit first**: a real-time *NASCAR-only* sales quote (+ ask for non-commercial
+   publishing consent, and whether Replay carries the NASCAR odds feed for free depth
+   validation). Also the best (only documented) historical/descriptive option.
+2. **OddsMatrix** — confirmed rich NASCAR coverage (driver matchups, real-time), but pure
+   enterprise B2B: no self-serve, no public price. OUT on access; revisit only under a
+   commercial framing.
+3. **OpticOdds / OddsJam API** — ~$5k/mo, sales-gated, NASCAR H2H undocumented, scraped feed
+   amid active litigation. OUT on cost + access + coverage-confidence + legal risk.
+4. **OddsJam consumer Screen** — self-serve, $100–300/mo, but no edge over *free* DK viewing
+   under single-book binding, and H2H display unconfirmed. OUT on value.
+5. **Sportradar** — enterprise (~$10k+/mo), and its NASCAR product is timing/scoring/settlement
+   data, not an H2H-odds feed. OUT.
+6. **SportsGameOdds · OddsPapi · The Odds API · Unabated · Genius Sports · LSports** (bottom,
+   tied) — **no NASCAR odds at all.** SGO and OddsPapi are both owner-verified NASCAR-free
+   (2026-07-20); the whole cheap/self-serve category is empty of NASCAR. Nothing to revisit.
+
+**What the re-rank exposes:** with OddsPapi confirmed out, the list splits cleanly — every
+vendor that *has* NASCAR (#1–#3) is enterprise-priced, sales-gated, and/or inadmissible, and
+*every* cheap self-serve option (#6) is confirmed to have no NASCAR. There is no longer any
+low-cost door even to probe.
+
+### 9.2 Per-vendor walls (one line each)
+
+- **SportsDataIO** — the *only* vendor with market-name-documented NASCAR H2H (and the full
+  suite). But its one affordable self-serve tier (**Discovery Lab, $99–149/mo**) is
+  **next-day-delayed** → structurally inadmissible (a ~24h-stale line either isn't available
+  pre-race or is far from close, corrupting "beat the *closing* line"); live/admissible odds
+  need the **commercial tier, sales-gated ≈$16.5k/yr** [3p Vendr]; and the ToS bars publishing
+  odds without written consent. Historical is a separate sales-gated SKU (2019+). The **Replay
+  tool** is free + *unscrambled* but a testing replay on the live schedule — not a live feed,
+  not a queryable history. Closing-price-with-timestamp requires the "Plus" line-movement
+  endpoints.
+- **OddsMatrix** — has exactly the data (driver matchups), but bookmaker-facing B2B licensing,
+  no published price, no self-serve; the only door is "request a quote."
+- **OpticOdds = OddsJam** — the same feed (OddsHoldings, acquired by Gambling.com Group),
+  sold twice; ~$5k/mo, sales-gated, no trial, NASCAR driver-matchup market undocumented, feed
+  built by scraping books amid active data-use litigation.
+- **OddsJam consumer Screen** ($100–300/mo, self-serve) — has a NASCAR hub and DK/FanDuel, but
+  couldn't confirm it *displays* driver H2H matchups; and since the benchmark binds **one**
+  book, a multi-book aggregator screen buys nothing over viewing DK's own board for free.
+- **OddsPapi** — RULED OUT: **owner-verified 2026-07-20 that it offers no motorsports odds at
+  all** (like SGO). Cheap and self-serve, but zero NASCAR — the door that looked cheapest to
+  probe is closed.
+- **SportsGameOdds** — RULED OUT: zero motorsport in the `leagueID` authority list
+  (owner-confirmed), plus a redistribution ToS wall.
+- **The Odds API / Unabated / Sportradar-odds** — no NASCAR at all. **Sportradar's** NASCAR
+  product is official timing/scoring/settlement data, not an H2H-matchup odds feed.
+
+### 9.3 Per-race depth (the biggest unpinned number, now pinned) + power
+
+**H2H matchups, single book, at close: ~12–15 (DraftKings-type ~15–25; FanDuel-type ~6–12
+pure 1v1).** Hard anchor [V]: an odds-comparison grid for North Wilkesboro (an *ordinary*
+short-track race) showed **44–50 distinct 1v1 matchup rows as the union across ~10 books**.
+No single book fills every cell, so the per-book figure is a reasoned inference (the no-scrape
+rule blocked counting a single book's own board), but a ~44–50 union can't be reconciled with
+the widest book posting only 5–10. The board is **at/near its fullest at close** (matchups are
+added after qualifying and rarely pulled). **This is higher than `market_benchmark_decision_
+rule.md` §5's 5–10 assumption**, and it upgrades the power outlook:
+
+| Single-book H2H depth | N by end-2026 | N by end-2027 | Terminal outlook |
+|---|---|---|---|
+| 5–10 (old §5 assumption) | ~70–140 | ~220–440 | marginal; UNDERPOWERED risk |
+| **~12 (conservative central)** | **~160** | **~530 → capped at 400 final look** | reaches the final look; ~0.6–0.7 power at true 58% |
+| ~15–20 (DraftKings) | ~200–260 | 660–880 → capped 400 | hits N=400 *during* 2027 |
+
+So at realistic depth the frozen H2H benchmark **crosses N≥200 (NO-EDGE boundary) in early
+2027 and reaches the N≥400 final look mid-2027** — adequately powered to detect a genuine
+sharp edge (~58–60%), not only a blowout. Two riders: (i) only **one** book's ~12–15 counts —
+the union ~40–50 is unusable because the primary-book-binding amendment prohibits a multi-book
+blend; (ii) the single-book count is an inference the **first few weeks of real manual capture
+will pin empirically** — precisely the residual unknown §5 itself flagged, now resolved by
+*doing the capture*, not buying a feed.
+
+**All bet types (owner scope, 2026-07-20): ~150–350 priced non-H2H outcomes per race, one
+book.** The reliably-present-at-close backbone is ~150 [V-anchored on an archived DK Coca-Cola
+600 board]: Race Winner (~38 drivers) + the Top-3/Top-5/Top-10 full-field ladder (~114) +
+Manufacturer (3); group matchups add ~15–50; stage/pole/fastest-lap/laps-led/margin/specials
+are thin/variable/marquee-only. **Holds vary sharply and matter:** Race Winner outright
+**~32%** [V, computed] (very hard to beat — a poor skill test); Top-5/Top-10 yes/no
+**~8–15%**; group matchups **>15%**; **H2H ~5–6%** (the lowest — exactly why it is the frozen
+gate); championship futures ~26%. The model already emits `p_win`, `p_top5`, `p_top10`, and
+the `h2h_prob` matrix, so all of these are *scoreable* — but hand-capturing the full ~150–350
+board before each green flag is **not humanly feasible**, and no automation is viable to do it
+(§9.0). This forces scoping (§9.7).
+
+### 9.4 Ongoing vs historical (priced separately everywhere; historical de-prioritized)
+
+- **Ongoing is the only kind the frozen benchmark can ever use** (admissibility = commit
+  before scheduled green). **Historical/backfill can never feed the statistic** — the
+  admissibility amendment structurally bars it. Its only legitimate role would be a separate,
+  clearly-labeled **descriptive** retrospective calibration.
+- **Historical is a separate, higher-cost product at every vendor that has it:** SportsDataIO
+  (separate sales-gated SKU, 2019+), SGO (bundled only in the $299/mo Pro tier — but SGO has
+  no NASCAR), OddsPapi (free — but no NASCAR, owner-verified). This mirrors the NFL project's decision
+  163 finding (The Odds API historical = a hard **10× multiplier**): NASCAR vendors show the
+  same directional "history costs more / is gated higher," structured as a separate SKU rather
+  than a literal 10×.
+- **Recommendation: do not pursue historical.** It is not cheap anywhere with *confirmed*
+  NASCAR, it is descriptive-only, and its descriptive value is further discounted because the
+  163 backtested races overlap the model's own fitting window (in-sample calibration is weak
+  evidence). Revisit only if a **free, confirmed-NASCAR** source ever appears.
+
+### 9.5 "All bet types" — scope reconciliation (no frozen change)
+
+The owner's direction to analyze **all available bet types**, not just H2H, is well-founded
+(the PL model already emits win/top-5/top-10/H2H probabilities). But it must respect one
+boundary: **the frozen `market_benchmark_decision_rule.md` gate is H2H-only and immutable**
+(H2H was chosen for its lowest hold — the cleanest skill test). "All bet types" therefore
+lives as a **separate analysis layer** — descriptive, or a cleanly pre-registered *successor*
+test (the extension-discipline amendment already permits one, using only picks first graded
+after its own registration date) — **complementing, never rewriting** the H2H gate. It also
+needs a **new capture schema**: the frozen `book_prices.entries` shape (scoring §5.1) is
+H2H-specific (`driver_id_a/b`, `price_a/b`), so storing winner/top-5/top-10 odds is a new
+structure and a new spec — **future design work, not part of L6 or L2.**
+
+### 9.6 The ToS structural finding (why the public-commit requirement favors manual)
+
+The admissibility mechanism *requires committing the raw prices into the public repo* — that
+public commit is the proof-of-timing. Every licensed feed checked (SGO, SportsDataIO,
+OddsPapi, OpticOdds) restricts redistribution/republishing of its data, mostly with **no
+non-commercial/research carve-out**; The Odds API is the lone exception that permits "a handful
+of illustrative quotes" — and it has no NASCAR. So the public-commit requirement **structurally
+favors the manual path**: a human viewing a book's screen and logging the price as a *fact* is
+not a licensee bound by a no-republish clause. Counterintuitively, "just view DK and
+transcribe" is the *most* ToS-defensible route precisely because there is no licensor contract
+— consistent with the A6 posture and the §3 conclusion.
+
+### 9.7 Recommendation to the owner (the GO ask)
+
+1. **Capture method — STAY MANUAL. Do not automate; buy nothing.** No vendor is
+   affordable + admissible + confirmed-NASCAR + public-repo-ToS-clean. Admissibility is owned
+   by the §4 workflow, not the source.
+2. **Primary book — recommend DraftKings** (owner's permanent call; binds only at the first
+   admissible-priced commit naming it). This **updates L5's mild FanDuel lean**: that lean
+   rested on FanDuel being the book a *licensed feed* covered — now moot, since no licensed
+   feed is viable. On the axis that remains, DraftKings offers **~15–25 H2H matchups vs
+   FanDuel's ~6–12** — roughly **2× the depth, N, and power**. FanDuel stays a valid benchmark
+   if preferred, at ~half the accrual.
+3. **Scope of weekly capture (this is where "all bet types" resolves against feasibility):**
+   - **Gate (do this):** the **H2H full board (~12–15)** at the bound book — feasible by hand
+     in a few minutes, admissible via §4, and the frozen pre-registered statistic.
+   - **Descriptive layer (opt-in, later, separate spec):** if pursued, capture the model's
+     other *clean* two-outcome outputs — **top-5 and top-10** — not the full ~150–350 board.
+     The high-hold outright winner market (~32%) is a poor skill test; thin/marquee markets are
+     low value. Needs a new schema + new pre-registration (§9.5).
+   - **Do not** attempt full-board all-market manual capture every week — infeasible, and no
+     automation exists to do it.
+4. **Historical — do not pursue** (§9.4). Descriptive-only, not cheap with confirmed NASCAR,
+   leakage-discounted.
+5. **L2 — "build the fetcher" is not actioned** (no vendor to fetch from). L2 could optionally
+   be repurposed as a **manual-capture *assist*** (a script that surfaces the field's valid
+   matchups and validates/timestamps the pasted entries against admissibility — no vendor
+   fetch, no scrape). That is a smaller, different tool for the owner to decide on separately.
+6. **Revisit triggers** (re-open automation only on one of): (a) a sportsbook publishes a
+   **free official** NASCAR-matchup API with permissive ToS; (b) a **cheap self-serve** vendor
+   **confirms** NASCAR H2H *and* has public-repo-friendly terms (no current candidate — both
+   cheap self-serve aggregators, SGO and OddsPapi, are owner-confirmed NASCAR-free); (c) the
+   project adopts a commercial framing that justifies an enterprise feed's cost.
+
+**Bottom line:** the spike set out to find whether paying for odds automation earns its keep,
+and the honest answer is **no — not at hobby scale, because no vendor clears all four
+gates.** The manual path is not a fallback; it is the *only* option clean on admissibility,
+coverage, cost, and ToS at once — and the newly-pinned depth (~12–15 H2H/book) shows it can
+carry the benchmark to an adequately-powered verdict. Keep doing admissible manual capture on
+the §4 workflow; bind DraftKings for depth when ready; treat "all bet types" as a scoped,
+separate descriptive layer if and when the owner wants it. **No purchase, no binding, and no
+fetcher build is authorized by this spike — awaiting the owner's GO.**
+
+### 9.8 DECISION (owner, 2026-07-20) — superseded upstream by a strategic pivot
+
+The vendor question is **resolved: no viable vendor; stay manual** (§9.0 / §9.7). But before the
+three tactical decisions (stay-manual / DraftKings binding / all-bet-types layer) were called, the
+owner opened a **strategic pivot** that sits *upstream* of them: shift the project's center of
+gravity from the market benchmark ("beat the closing line," which needs the perishable manual odds
+capture this spike showed has no cheap source) toward the project's own **multi-market model book**
+— simulation-priced fair odds across all bet types, self-graded by a walk-forward **calibration
+backtest** on data already in hand, with PL (frozen baseline) + Bayesian-PL (F10) as a gated A/B and
+Monte-Carlo as the pricing layer. Calibration (model-vs-reality, free) ≠ edge (model-vs-market,
+needs real prices, gates roadmap #5).
+
+That pivot is deferred to a dedicated, adversarially-vetted design session — **F20** (Opus 4.8 ·
+thinking on · xhigh) — which decides whether the beat-the-line benchmark **stays, is demoted, or is
+dropped**, and only then are these three decisions (or their replacements) settled. **L6's role is
+complete:** it proved the vendor path is closed, which is itself part of what motivates the pivot.
+No purchase, no binding, no build.

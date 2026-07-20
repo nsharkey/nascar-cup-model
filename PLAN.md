@@ -82,6 +82,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | F17 | SMT broadcast-telemetry feed feasibility + acquisition spike | pending | Fable 5 · thinking on · xhigh | ~4-6 hr | Determine whether NASCAR's rich broadcast telemetry — the SMT data behind the on-air throttle/brake/GPS graphics — can be obtained for this project, and if so how and under what terms. The owner's former-crew-chief contact confirms the data exists on broadcast- and team-related servers, and a peer-reviewed study describes the SMT feeds as public. This heavy research spike settles which of three doors is actually open to a personal research archive: a public fan-facing feed we could fetch the way we already fetch NASCAR's timing data, a licensing or relationship path, or a dead end — deciding the terms-of-use posture first, before any endpoint is touched. Proposes only; builds nothing. | Heavy multi-agent deep-research spike in F6's mold — claims adversarially verified vs fetched primary sources; deliverable research/smt_feed_feasibility.md. Establish with citations: (1) what SMT serves and at what rate — team-grade ~120 Hz (GPS/throttle/brake/steering/ RPM via SMT Team Analytics) vs the fan-facing downsample (NASCAR→Ably pub/sub websocket channels, ~2 Hz per the Ably case study) vs broadcast-graphics ingest. (2) Three access doors, and which is open to a non-commercial personal archive: SMT Team Analytics (credentialed to all Cup/Xfinity teams since 2018 — the crew-chief's access, non-transferable); the NASCAR app / broadcast Ably channels (candidate public/unauth surface — probe for telemetry fields, granularity, history depth); the Bastin & Healey 2024 JDS "public SMT feed" claim (provenance ambiguous — access likely via their RCR collaboration). (3) ToS posture FIRST, extending A6 — NASCAR app / TrackPass terms differ from cf.nascar.com cacher (F6 found cacher uncovered by NDM terms, no bot-block). HARD CONSTRAINTS: probe only genuinely public, unauthenticated surfaces (as for cacher); never circumvent team- or broadcast-credentialed auth; if the only path is credentialed, report a licensing/relationship route, not a scrape. Weigh the crew-chief data-partnership option (inherits his team's terms — flag, don't assume). Output: a door-by-door go/no-go, and if a public surface exists, a scoped capture proposal in the L-series pattern. Fallback if inaccessible: F13 in-house loop data + F15 vendored ratings already cover the need. Proposes only; no endpoint hit before the ToS step clears. |
 | F18 | Personnel-change features A/B (crew chief tenure / ride changes) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~1 hr spec + ~3-5 hr run | Test whether crew-chief continuity — tenure, fresh swaps, interim substitutions — and team tenure carry signal the driver's own form history doesn't. The strongest new model hypothesis from the F16 domain scan: the sport treats crew-chief changes as major events, the data covers the model era perfectly, and no published evidence exists anywhere in either direction. | Pre-register a spec per domain_knowledge_scan.md §4: as-of features from silver.results.crew_chief_id (100% populated 2022+, exactly the model era) — cc_tenure, cc_changed_recent, an interim proxy — plus a team_tenure secondary (team_name/owner_id); strictly-prior-race constructions (no current-race pre-race read needed; if a current-week variant is specced, inherit the pooling spec §3 population check + most-recent-prior fallback). Measured event base: 185 within-season CC changes 2022-2025 (75 revert-within-8 = suspension signature; 2022's counts are wheel-rule-inflated, scan §9.6), 21-30 offseason changes/yr, 5-17 within-season ride changes; a k=5 post-change window marks ~10% of eligible driver-races — DNF-class frequency. The outcome-caused-change confound is recorded pre-data (scan §9.2; the paired A/B measures marginal value over fin correctly). Adopt iff one-sided Wilcoxon p<=alpha_adj (multiplicity extending the roadmap-#4 family convention) AND mean(d)>=+0.005. History-REWEIGHTING after a ride change is explicitly out of scope (F10's machinery lane). A well-run null retires a garage trope. |
 | F19 | Incentive-state analytics (playoff pressure, measured) | pending | Sonnet 5 · thinking on · high | ~2-4 hr | Measure the playoff-desperation lore instead of debating it: does crash risk actually rise near the cutline, do bubble drivers chase stage points, do locked-in drivers coast? Analytics only — and the 2026 format change makes this the wrong year to trust any backtested motivation feature, which is exactly why the descriptive answer comes first. | Per domain_knowledge_scan.md §5: cutline distance from as-of points_position (confirmed post-race official standings — read the PRIOR race's payload, leak-free by construction; scan §9.1), playoff_round / driver_is_in_chase markers (2020+/2017+), stage-aggression from stage_results (via C4). Descriptives 2017-2025 + live 2026 tracking: crash-class DNF rate x cutline proximity in late regular season, stage-point-chasing on the bubble, locked-in-cohort residual degradation. Tier A — never joins feature banks; any M-tier A/B needs its own later spec conditioned on these effects surviving the 2026 Chase break (playoff points + win-and-in abolished; scan §5.3/§9.4). H5's championship-contender flag is NOT here — routed to F3 as a pace-estimate sensitivity (0.3% exposure kills it as a feature). Ordinal-position-vs-derived-points caveat pinned (feed carries no season totals and no penalty deductions; scan §5.2). |
+| F20 | Vet the model-book pivot (calibration backtest + PL/Bayesian/sim) | ⬅ next | Opus 4.8 · thinking on · xhigh † | ~4-6 hr | Fully vet a major proposed pivot before any build: shift the project's center of gravity from "prove the model beats the sportsbook's closing line" (which needs perishable manual odds capture that recent research showed has no cheap source) toward building our own multi-market "book" -- fair odds for every bet type, self-graded against real results on data we already have. Decide the one big fork (keep, demote, or drop the beat-the-line benchmark), pressure-test the idea adversarially, and hand back a pre-registered design plus a re-sequenced plan. Recommends only; builds nothing. | Design-vetting spike out of the L6 conversation (odds_source_evaluation.md section 9). Core distinction to nail: calibration (model-vs-reality; free; on the 163-race history; a fair book breaks even by construction so yields NO profit signal) != edge (model-vs-market; needs real closing prices; gates roadmap #5). Architecture to specify: two axes -- underlying model (PL frozen baseline / Bayesian-PL = F10 gated A/B / optional ensemble) x pricing layer (Monte-Carlo readout for coherent all-bet-type prices); the full generative race simulator stays F7-NULL unless a trigger fires. Adversarial passes must attack in-sample optimism (frozen config was SELECTED on 2015-2025), metric-shopping, the audit-section-7 underconfidence/recalibration question, whether sim "coherence" masks mis-specification, Bayesian MCMC walk-forward feasibility on DuckDB, and preservation of the validated 0.413/0.476/0.447 equity. Reconcile with doctrine (frozen config untouched without a walk-forward-gated pre-registered A/B); name new specs (calibration-backtest prereg; pricing-layer; new capture schema since book_prices is H2H-shaped) and re-homed items (F2/F10/F11, market specs, L2). Deliverable: a pivot-vetting memo + proposed plan/HANDOFF edits; STOP for GO. |
 
 ## Phase G — Causal clean-air pace (gated: market EDGE)
 
@@ -100,7 +101,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | L1 | Local archive mirror + archived-endpoint expansion | pending | Sonnet 5 · thinking on · high | ~1 hr | Back up all source data locally and start saving three extra archived feeds, so nothing is lost if NASCAR stops serving old races. | Extend the src/update_data.py fetch loop to also pull live-pit-data.json, live-flag-data.json, lap-notes.json per race -> data/races/; one-time backfill of ~163 races + fold into the weekly increment. planning/aws_solutions.md L1. |
 | L5 | Odds-source research + book decision (feeds L2) | ✅ done | Opus 4.8 · thinking on · xhigh | ~2-3 hr | Decide where betting odds come from programmatically, and which book to standardize on, instead of reading a phone screen against the green-flag deadline every week. | Research spike. 2026-07-19 finding: The Odds API does NOT cover NASCAR; paid feeds (SportsDataIO/OddsMatrix/OpticOdds) carry H2H matchups but cost; DK's own unofficial JSON (sportsbook.draftkings.com/sites/US-SB/api/v5/ eventgroups/{id}, no auth) is free+exact but ToS-gated. Order, STOP after 2: (1) resolve the scrape ToS posture like A6, hit no endpoint until decided; (2) compare DK-unofficial vs scraper (Apify) vs paid feed, and recommend the primary book to standardize on; stop for GO; (3) on GO, build a fetcher emitting book_prices.entries per scoring spec 5.1. Fixes L2's dead 'licensed odds API' assumption. See memory nascar-odds-source-options. |
-| L6 | Comprehensive odds-vendor research spike (ongoing + historical, cost-conscious) | ⬅ next | Opus 4.8 · thinking on · xhigh | ~4-6 hr | A deeper, wider pass at the odds-vendor question than L2's step-1 probe managed -- this is a hobby project, so the deliverable is an honest cost/benefit picture (paid automation only if it earns its keep), covering every viable vendor, ongoing capture AND historical backfill separately, and real pricing, not just marketing claims. | Supersedes L2's step-1 scope, which hit real walls this session (2026-07-20): SportsDataIO's free trial confirmed "Head To Head Prop" is a real NASCAR market type (BettingMetaData + historical rows) but is structurally useless for current depth/latency (every identifying field scrambled, data frozen since 2026-04-16); SportsGameOdds was never key-tested (zero NASCAR mention anywhere in its docs -- a real negative signal, not proof of absence). Full ledger: research/odds_source_evaluation.md section 8 (6f3cf9a, a82b7ad). This spike goes further: (1) actually sign up for SportsGameOdds and re-probe live; (2) chase a real SportsDataIO number via their Replay tool or an actual sales quote, explicitly asking for an NFL+NASCAR bundle price (owner's other project, ~/Downloads/nflverseanalytics, runs The Odds API for NFL free-tier with an adjudicated ~$150/season upgrade trigger -- read-only context, no edits there); (3) resolve L5's uncertain providers (OpticOdds, OddsMatrix, OddsJam) plus a fresh scan (Sportradar surfaced once, unfollowed); (4) independently estimate real per-race H2H depth from public non-scraped sources -- the single biggest unresolved number driving market_benchmark_decision_rule.md section 5's power calc; (5) price ONGOING and HISTORICAL capture separately (owner-requested) -- mirroring the NFL project's decision 163 (10x backfill multiplier there); only ongoing can ever feed the admissibility-gated market-benchmark statistic, so historical is descriptive-only if pursued at all; (6) synthesize one vendor comparison table; (7) one recommendation: automate vs. stay manual. Cost framing (owner, 2026-07-20): hobby project, default $0, pay only if it demonstrably earns its keep -- staying manual is a fully valid outcome. |
+| L6 | Comprehensive odds-vendor research spike (ongoing + historical, cost-conscious) | ✅ done | Opus 4.8 · thinking on · xhigh | ~4-6 hr | A deeper, wider pass at the odds-vendor question than L2's step-1 probe managed -- this is a hobby project, so the deliverable is an honest cost/benefit picture (paid automation only if it earns its keep), covering every viable vendor, ongoing capture AND historical backfill separately, and real pricing, not just marketing claims. | Supersedes L2's step-1 scope, which hit real walls this session (2026-07-20): SportsDataIO's free trial confirmed "Head To Head Prop" is a real NASCAR market type (BettingMetaData + historical rows) but is structurally useless for current depth/latency (every identifying field scrambled, data frozen since 2026-04-16); SportsGameOdds was never key-tested (zero NASCAR mention anywhere in its docs -- a real negative signal, not proof of absence). Full ledger: research/odds_source_evaluation.md section 8 (6f3cf9a, a82b7ad). This spike goes further: (1) actually sign up for SportsGameOdds and re-probe live; (2) chase a real SportsDataIO number via their Replay tool or an actual sales quote, explicitly asking for an NFL+NASCAR bundle price (owner's other project, ~/Downloads/nflverseanalytics, runs The Odds API for NFL free-tier with an adjudicated ~$150/season upgrade trigger -- read-only context, no edits there); (3) resolve L5's uncertain providers (OpticOdds, OddsMatrix, OddsJam) plus a fresh scan (Sportradar surfaced once, unfollowed); (4) independently estimate real per-race H2H depth from public non-scraped sources -- the single biggest unresolved number driving market_benchmark_decision_rule.md section 5's power calc; (5) price ONGOING and HISTORICAL capture separately (owner-requested) -- mirroring the NFL project's decision 163 (10x backfill multiplier there); only ongoing can ever feed the admissibility-gated market-benchmark statistic, so historical is descriptive-only if pursued at all; (6) synthesize one vendor comparison table; (7) one recommendation: automate vs. stay manual. Cost framing (owner, 2026-07-20): hobby project, default $0, pay only if it demonstrably earns its keep -- staying manual is a fully valid outcome. |
 | L2 | Local closing-odds capture (launchd) | ⛔ blocked | Sonnet 5 · thinking on · high | ~1-2 hr | Automatically record betting prices every race morning from this machine. | Build the fetcher only: emit book_prices.entries per scoring spec 5.1, full board, closing:true, on L5's admissibility-safe workflow (capture ~T-45; the human commits+pushes before the SCHEDULED green). Vendor/book choice comes from L6, not decided here. NO sportsbook scraping -- DK/FanDuel ToS bar automated access. Soft-fails if the Mac is off Saturday. research/odds_source_evaluation.md; planning/aws_solutions.md L2. |
 | L3 | Local weekly pipeline (launchd) | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Make the weekly public prediction post fire automatically from this machine. | launchd detects qualifying off the weekend feed -> update_data.py + predict_next.py -> git commit/push via the existing local SSH key (no cloud credentials — simpler than the AWS version). planning/aws_solutions.md L3. |
 | L4 | Local live-feed poller (pmset + caffeinate) | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Start recording the one race-day stream that is otherwise lost forever, accepting gaps when the laptop is asleep or off. | pmset wake pre-green -> launchd starts poller -> caffeinate held -> poll live-feed.json @5-10 s -> gzip JSONL to data/. Log will have holes on asleep/off race days; no roadmap item consumes it yet. planning/aws_solutions.md L4. |
@@ -118,74 +119,92 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (L6)
+## Handoff — next session (F20)
 
 **Model & settings:** Opus 4.8, thinking on, effort xhigh.
 
-L6 is 'next' as of 2026-07-20 (owner asked for a deeper spike after L2's probe dead-ended twice). Model: Opus 4.8, thinking on, effort xhigh -- judgment-shaped evaluation work, not Sonnet execution. L6 covers every viable odds vendor, ongoing vs. historical pricing separately (historical can't feed the admissibility-gated market-benchmark statistic), and an explicit cost lens: hobby project, default $0/manual, pay only if it earns its keep. STOP for owner GO before any purchase or primary-book binding. Meanwhile E1 fires at the next race weekend: admissible MANUAL capture, commit+push before the scheduled green flag.
+F20 is 'next' as of 2026-07-20 -- a design-vetting spike for a major pivot the owner opened during L6 (own multi-market model-book + walk-forward calibration backtest; PL + Bayesian-PL[F10] + Monte-Carlo pricing). Model: Opus 4.8, thinking on, effort xhigh (max for the one fork -- keep, demote, or drop the beat-the-line market benchmark). Judgment-shaped, adversarially vetted; propose/pre-register only -- no production code, no frozen-spec edit, no plan/HANDOFF commit without owner GO. Owner runs it fresh. E1 preempts on a race weekend: admissible MANUAL capture, commit+push before the scheduled green.
 
 ```
-Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, research/odds_source_evaluation.md IN FULL (including section 8, today's
-partial probe), plan/schedule.yml sessions L5/L6/L2, and specs/scoring_methodology.md 5.1 +
-specs/market_benchmark_decision_rule.md (primary-book binding + admissibility amendments,
-especially the "admissibility of price entries" amendment -- it structurally rules out
-backfilled historical prices from ever counting toward the market-benchmark statistic, which
-bounds what "historical" can mean for this project). This is L6: a comprehensive, owner-
-requested deepening of L2's step-1 odds-vendor research. Propose and price only -- acquire no
-production subscription, hit no sportsbook endpoint, bind no primary book, change no model or
-frozen spec.
+Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model). This is a
+DEDICATED PLANNING / DESIGN-VETTING session for a major proposed strategic pivot. Propose,
+adversarially vet, and pre-register only -- build nothing, change no frozen spec or model,
+bind no decision without owner GO.
 
-Framing (read before starting): this is a hobby project. Default to the free/manual path
-unless a paid option earns its keep with concrete, quantified evidence -- not marketing copy,
-not "it would be nice to automate." A final recommendation to keep doing admissible MANUAL
-capture (E1's existing workflow) is a completely valid, successful outcome of this spike; do
-not let the fact that a session was spent researching create pressure to recommend spending
-money. If something does look worth paying for, say exactly why in terms the owner can weigh
-(reliability against a repeat of race 5618's late/inadmissible manual entry; real quantified
-depth/latency the free path can't match; etc).
+READ FIRST (in full): HANDOFF.md; research/odds_source_evaluation.md section 9 (the L6
+vendor spike that motivates this pivot -- no affordable/admissible/ToS-clean NASCAR odds
+vendor exists); specs/market_benchmark_decision_rule.md + specs/scoring_methodology.md (the
+FROZEN specs this reframes) and specs/README.md (freeze/amendment rules); the F7 Bayesian
+assessment and the F2/F7/F10/F11 session rows in plan/schedule.yml (F10 Bayesian recommended;
+F11 conditional; the full-race generative-outcome simulator decided NULL + its 3 re-proposal
+triggers); report/NASCAR_AUDIT_REPORT.md section 7 (the model's underconfidence finding; the
+fixed-effects and generative dead-ends).
 
-Cover, in order:
-1. SportsGameOdds -- actually sign up (free tier; ask the owner for the API key the same way
-   this session did) and run a real probe: NASCAR leagueID, H2H matchup market presence,
-   depth/race, which books, latency. Resolve this rather than inferring from docs.
-2. SportsDataIO -- go past the free trial (already proven scrambled + stale this session, do
-   not just re-run the same probe). Either get Replay-tool access to real unscrambled
-   historical NASCAR data (ask the owner to point at it from their dashboard) or get an actual
-   sales quote for Props/Props Plus, explicitly asking for a combined NFL+NASCAR bundle price
-   (their commercial tier is one custom quote across 13 sports, not per-sport; the owner's
-   other project, ~/Downloads/nflverseanalytics, runs The Odds API for NFL on a free tier with
-   a ~$150/season upgrade trigger already adjudicated there in docs/decisions/163 -- read that
-   repo read-only for context, make zero edits to it).
-3. Resolve L5's uncertain providers: OpticOdds (NASCAR H2H unconfirmed), OddsMatrix (B2B/
-   bookmaker-facing -- find out if self-serve access exists at any price), OddsJam (re-verify
-   ~$5k/mo is current). Do a fresh scan for anything missed -- Sportradar surfaced once in this
-   session's own searches as a NASCAR data partner and was never followed up.
-4. Independently estimate real per-race H2H matchup depth from PUBLIC sources -- betting
-   journalism, archived pages, forum/bettor write-ups citing actual counts -- NOT by hitting
-   any sportsbook endpoint. This is the single biggest number driving
-   market_benchmark_decision_rule.md section 5's power calculation and no session has pinned
-   it yet.
-5. Treat ONGOING (prospective, weekly) and HISTORICAL (backfill) capture as separate questions
-   with separate pricing, the way the owner's NFL project did in its decision 163 (which found
-   a 10x cost multiplier for backfill on The Odds API -- check whether NASCAR vendors have a
-   similar split). Ongoing is what the frozen market-benchmark spec can ever use (admissibility
-   requires committing before the race's SCHEDULED start -- backfilled data can never satisfy
-   that). So price historical data too, but be explicit that its only legitimate role here
-   would be a separate, clearly-labeled DESCRIPTIVE check (e.g. retrospective calibration
-   against real closing lines for the 163+ already-backtested races) -- never a market-
-   benchmark input, and only worth pursuing if it's cheap or free.
-6. Synthesize one comparison table: vendor x ongoing-price x historical-price x confirmed-
-   NASCAR-H2H x depth-evidence x books-covered x latency x ToS-posture.
-7. One clear recommendation: automate vs. stay manual; if automate, which vendor + tier +
-   book, with the actual dollar figure and what it buys. STOP for owner GO before any purchase,
-   any primary-book binding, or any fetcher build (L2 remains the separate session that builds
-   it, on this spike's outcome).
+THE PIVOT. In an L6 design conversation the owner proposed shifting the project's center of
+gravity from "prove the frozen PL model beats the sportsbook closing line" (the
+market-benchmark -- which needs perishable manual odds capture L6 showed has no cheap/
+automatable source) TOWARD building the project's own multi-market "model book":
+  - Price fair odds for ALL bet types (win, top-5, top-10, H2H, group matchups, ...) from
+    ONE coherent joint finishing-order distribution via a Monte-Carlo pricing/readout layer.
+  - Evaluate it with a WALK-FORWARD calibration / proper-scoring backtest on the existing 163
+    races (Brier, log-loss, calibration curves per market) -- self-graded on real results,
+    needing NO book odds.
+  - Underlying model: PL (frozen baseline) + Bayesian-PL (F10) as a gated A/B upgrade
+    (principled uncertainty + small-sample calibration); optional gated PL+Bayesian ensemble.
+    Full generative race simulator stays F7-NULL unless a trigger fires.
+  - Emit fair odds as a weekly betting aid AND as the capture template that makes any residual
+    manual book-odds capture fast + full-board.
 
-Model: Opus 4.8, thinking on, effort xhigh. On start, verify the running model is
-claude-opus-4-8 and ASK whether thinking is on and effort is xhigh before substantive work
-(same self-check L5 used). If a race weekend falls during this session, E1 duties (predict +
-admissible manual odds capture) come first.
+YOUR JOB -- fully vet this, adversarially, and produce a pre-registered design, before any build:
+
+1. NAIL THE CORE DISTINCTION AND DECIDE THE FORK. Calibration (model-vs-reality; free; on-hand;
+   a fair book breaks even by construction so it yields NO profit signal) is NOT edge
+   (model-vs-market; needs real closing prices; gates roadmap #5). Adjudicate: does the
+   beat-the-line market-benchmark thread STAY (kept as the #5 gate, fed by lightweight manual
+   capture), get DEMOTED, or get DROPPED (making the L5/L6/L2 odds-capture thread optional)?
+   State exactly what each choice costs and unlocks. This is the single most consequential
+   decision -- pre-register a recommendation with reasoning, then STOP for owner GO on it.
+
+2. PRESSURE-TEST ADVERSARIALLY (spin up independent refutation passes prompted to REFUTE, not
+   confirm). At minimum attack: (a) can a self-graded calibration backtest be gamed / is it
+   circular / in-sample-optimistic given the frozen config was SELECTED on the 2015-2025 era --
+   and does walk-forward + the 2026-OOS split actually fix it; (b) metric-shopping across many
+   markets/metrics and what pre-registration must lock; (c) the model's known underconfidence
+   (audit section 7) -- what recalibration means and whether it's a model change requiring the
+   walk-forward gate; (d) whether simulation pricing's "coherence" is real or masks
+   mis-specification; (e) computational feasibility of Bayesian-PL walk-forward (MCMC over 163
+   races x weekly refits) on the local DuckDB foundation; (f) whether the pivot quietly
+   abandons the project's hardest-won equity (the validated 0.413/0.476/0.447 result and the
+   anti-self-deception governance) -- and how to preserve it.
+
+3. RECONCILE WITH DOCTRINE + FROZEN SPECS. Nothing changes the frozen PL config, the frozen
+   sections of the scoring/market specs, or the validated results without a pre-registered,
+   walk-forward-gated A/B. Specify precisely: the NEW specs needed (a calibration-backtest
+   pre-registration; a fair-odds/pricing-layer spec; a new capture schema since book_prices is
+   H2H-shaped); which existing items are re-homed or superseded (F2 pooling, F7/F10/F11, the
+   market-benchmark specs, L2); and what stays untouched.
+
+4. DESIGN THE ARCHITECTURE precisely: the two axes (underlying model: PL / Bayesian-PL /
+   ensemble; pricing layer: Monte-Carlo readout), the coherence guarantees, the walk-forward
+   protocol, the pre-registered proper-scoring metrics + their decision rules, and how F10
+   plugs in as the downstream A/B gated by the calibration harness.
+
+5. RE-SEQUENCE THE PLAN. Propose the phased build order (step 1: sim pricing layer +
+   calibration backtest on frozen PL -- free, on existing data, also delivers the fair-odds
+   tool; step 2: F10 Bayesian A/B; step 3: optional ensemble; step 4: generative simulator
+   only on trigger), each item with model+settings + a one-line cost/quality rationale +
+   gates, in the project's sprint-table format; mark the single next actionable item.
+
+DELIVERABLE: a written pivot-vetting memo (propose-only) -- the fork recommendation, the
+adversarial findings and how the design survives them, the doctrine reconciliation, the
+architecture, and the re-sequenced plan -- plus proposed (not applied) plan/HANDOFF edits.
+STOP for owner GO before any production code, any frozen-section edit, or committing
+plan/HANDOFF. If a race weekend falls during the session, E1 duties (predict + admissible
+manual capture before the scheduled green) come first.
+
+Model: Opus 4.8, thinking on, effort xhigh (use max for the step-1 fork adjudication). On
+start, verify the running model is claude-opus-4-8 and ASK whether thinking is on and effort
+is xhigh before substantive work (same self-check L5/L6 used).
 ```
 
-**Bottom line:** Bronze/silver/gold are complete: D1 re-proved 0.413/0.476/0.447 clean and D2's scoring/benchmark consumers are green. Race 5618 is SCORED (rho=0.5458, e8725cf); D2's only remainder is the owner-gated cutover (two clean cycles). Its 3 prices were post-flag and inadmissible, so the market benchmark stands at N=0. L5 is DONE: the odds-source ledger (research/odds_source_evaluation.md) landed and the owner DEFERRED the primary-book binding pending a trial probe. L2's own step-1 probe (2026-07-20) hit real walls -- SportsDataIO's trial confirmed a real H2H market type but is scrambled+stale; SportsGameOdds was never key-tested -- so the owner asked for a deeper spike. 'next' is now L6 (comprehensive vendor research, cost-conscious); L2 reduces to "build the fetcher" once L6 recommends and the owner gives GO. E1 fires at the next race weekend, ~1 week out; capture never pauses. F17 remains queued.
+**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but its prices were post-flag/inadmissible, so the market benchmark is at N=0 (D2's remainder is the owner-gated cutover). L5+L6 DONE: the odds-vendor question is resolved -- no vendor is affordable + real-time-admissible + confirmed-NASCAR + public-repo-ToS-clean (ranked ledger, odds_source_evaluation.md section 9), so the standing answer is STAY MANUAL. Mid-L6 the owner opened a strategic pivot: build our own multi-market model-book (simulation-priced fair odds across all bet types, self-graded by a walk-forward calibration backtest; PL + Bayesian-PL). 'next' is F20 -- an adversarial vetting of that pivot (Opus xhigh) deciding whether the beat-the-line benchmark stays, demotes, or drops. L2 blocked pending F20; E1 never pauses.
