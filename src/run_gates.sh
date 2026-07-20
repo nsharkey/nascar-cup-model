@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # run_gates.sh -- one-command health check for the NASCAR Cup model repo.
 #
-# Runs all 8 repository gates with the correct interpreter and working
+# Runs all 10 repository gates with the correct interpreter and working
 # directory, prints a pass/fail summary table, and exits nonzero if any gate
 # is red. This is the repeatable form of the manual baseline sweep documented
 # in every overnight report; see GATES.md for the full contract.
