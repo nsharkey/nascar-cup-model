@@ -1940,7 +1940,7 @@ sessions:
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-4 hr"
-    ref: null
+    ref: "c598605"
     exec_summary: >-
       Measure the playoff-desperation lore instead of debating it: does
       crash risk actually rise near the cutline, do bubble drivers chase
