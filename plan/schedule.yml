@@ -3,7 +3,7 @@
 # the drift gate (src/test_report_plan.py) fails CI if you do. Format: PLAN_FORMAT.md.
 meta:
   plan_name: "NASCAR Cup Model"
-  as_of: "2026-07-19"
+  as_of: "2026-07-20"
   spec_version: 1
   shape_sig: "75e269310eebe75b"
   standfirst: >-
@@ -15,27 +15,26 @@ meta:
     without a pre-registered, walk-forward-gated A/B, and the perishable weekly
     market capture never pauses. Rendered from data, kept here and nowhere else.
   bottom_line: >-
-    Bronze (B1-B4) and silver (C1-C3) are complete. Gold is now complete too:
-    D1's feature bank re-proved 0.413/0.476/0.447 clean, and D2 built the
-    scoring/benchmark consumers, the bronze compat shim, and the gold views --
-    all tested green, plus a real (not simulated) section 7.3 dual-run PASS
-    against race 5618. What's left is calendar-gated, not engineering-gated:
-    score race 5618 once NASCAR posts results, then revisit cutover. E1 (the
-    standing weekly loop) is 'next' since no build session is otherwise
-    ready. The perishable weekly capture never pauses -- race 5618's
-    prediction and 3 DraftKings matchups are logged (provenance-inadmissible
-    for the benchmark stat; see D2's status_note). Governance is complete and
-    all four backlog-building spikes are done — F16 (domain knowledge,
-    c94f7e7) landed C4/F18/F19 plus F3/F9 tightenings and flagged the 2026
-    Chase-format break; F17 (SMT broadcast-telemetry, owner-prioritized,
-    Fable · xhigh) remains queued.
+    Bronze/silver/gold are complete: D1 re-proved 0.413/0.476/0.447 clean and D2's
+    scoring/benchmark consumers are green. Race 5618 is now SCORED -- the forward
+    test's first point (rho=0.5458, e8725cf); D2's only remainder is the owner-gated
+    cutover (two clean cycles). Its 3 DraftKings prices were post-flag and inadmissible,
+    so the market benchmark still stands at N=0. With the next race ~1 week out, 'next'
+    is L5 (odds-source + primary-book decision) -- the highest-leverage startable session,
+    since the backlog is bottlenecked on admissible priced races. E1 (the perishable
+    weekly loop) is 'pending' and fires at the next race weekend; capture never pauses.
+    Governance is complete and all four backlog-building spikes are done; F17 (SMT
+    broadcast-telemetry, owner-prioritized, Fable · xhigh) remains queued.
   handoff_note: >-
-    E1 is 'next' as of 2026-07-19 (D2) -- D2's own remainder (score race
-    5618) is gated on NASCAR posting results, not a build session, so it
-    rides along inside E1's kickoff as a leftover step rather than getting
-    its own slot. Once a second scored race exists, re-evaluate F1's and
-    cutover's gates. Doctrine stands: preserve validated results, RE-PROVE on
-    the new foundation rather than re-choose, never pause the weekly capture.
+    L5 is 'next' as of 2026-07-20 (owner decision). Race 5618 is scored, so D2's
+    leftover no longer rides inside E1's kickoff; E1 is demoted to 'pending'
+    (recurring) and fires at the next race weekend, ~1 week out -- record its
+    closing prices BEFORE the green flag (5618's were late and inadmissible). L5
+    works the odds-source/primary-book bottleneck in the gap, ToS-gated (stop
+    after step 2). Once a second scored AND admissibly-priced race exists,
+    re-evaluate F1's >=8-scored gate and the D2 cutover. Doctrine stands:
+    preserve validated results, RE-PROVE on the new foundation rather than
+    re-choose, never pause the weekly capture.
 
 phases:
   - key: "A"
@@ -860,16 +859,15 @@ sessions:
       needs two clean weekly cycles per section 7.3 step 5.
     deps: ["D1"]
     status_note: >-
-      2026-07-19: half-done, not blocked -- every piece of code is built, tested, and
-      (where testable without a finished race) proven correct; what remains is waiting
-      on NASCAR to post race 5618's results, then re-running three commands
-      (bronze_fetch.py --update -> --sync-legacy-cache 5618 -> score_race.py 5618) and
-      letting the weekly protocol accumulate a second scored, priced race. No further
-      gold build/gate engineering is required -- D1's gate and this session's dual-run
-      check already cover the mechanics. Full detail: specs/medallion_architecture.md
-      `## RESULT — D2`, DATA_DICTIONARY.md section 11. Deliberately left with no plan
-      item marked 'next' -- what remains is calendar-gated (waiting on a race), not a
-      schedulable build session.
+      2026-07-20: still half-done, but its calendar-gated scoring step is now DONE --
+      race 5618 posted results and was scored per the frozen spec (rho=0.5458, e8725cf;
+      bronze_fetch.py --update -> --sync-legacy-cache 5618 -> score_race.py 5618). What
+      remains of D2 is ONLY the owner-gated cutover (step 4, re-point predict_next.py),
+      which needs TWO clean weekly cycles per section 7.3 step 5 and a second scored,
+      *admissibly-priced* race -- 5618's 3 book prices were post-flag and inadmissible
+      for the market benchmark, so the benchmark still stands at N=0. No gold
+      build/gate engineering remains. Full detail: specs/medallion_architecture.md
+      `## RESULT — D2`, DATA_DICTIONARY.md section 11.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then specs/medallion_architecture.md sections 5.5 and 7.3
@@ -909,7 +907,7 @@ sessions:
   - id: "E1"
     phase: "E"
     title: "Weekly pre-race: predict + commit + push + record odds"
-    status: "next"
+    status: "pending"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~15-30 min (recurring)"
@@ -923,12 +921,14 @@ sessions:
       market-spec full-board amendment. Perishable; never paused for the rebuild.
     deps: []
     status_note: >-
-      2026-07-19: promoted to 'next' -- D2 left no build session ready to pick up
-      (its own remainder is calendar-gated, see D2's status_note), and E1 is the
-      one item that's always eligible whenever a race weekend arrives. Also check,
-      each time this runs, whether race 5618 has posted results yet -- if so, run
-      bronze_fetch.py --update -> --sync-legacy-cache 5618 -> score_race.py 5618
-      first (D2's leftover step) before this week's new prediction.
+      2026-07-20: demoted 'next' -> 'pending' (recurring). D2's leftover scoring step
+      is DONE -- race 5618 scored (rho=0.5458, e8725cf), so E1's only pending trigger
+      now is the next race weekend, ~1 week out. It stays the perishable priority and
+      fires the moment qualifying posts. Lesson banked from 5618: record the closing
+      book prices BEFORE the green flag (5618's were committed post-flag and were ruled
+      inadmissible for the market benchmark). 'next' is held meanwhile by L5 (a
+      startable build/research session) per the owner's 2026-07-20 decision to work the
+      odds-source bottleneck while the race is a week away.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md first, confirm with `git log --oneline -4` and `git status`.
@@ -1940,7 +1940,7 @@ sessions:
   - id: "L5"
     phase: "H"
     title: "Odds-source research + book decision (feeds L2)"
-    status: "pending"
+    status: "next"
     model: "Opus 4.8 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~2-3 hr"
@@ -1960,7 +1960,39 @@ sessions:
       emitting book_prices.entries per scoring spec 5.1. Fixes L2's dead 'licensed
       odds API' assumption. See memory nascar-odds-source-options.
     deps: []
-    status_note: "no licensed API covers NASCAR H2H, so L2's source is undecided; primary-book choice is OPEN (owner did NOT designate DK — tonight's manual capture just used it); manual DK capture continues as anecdotal interim"
+    status_note: >-
+      2026-07-20: promoted to 'next' (owner decision) -- the entire forward-looking
+      backlog is bottlenecked on N=0 admissible priced races, and the next race is ~1
+      week out, so this is the highest-leverage startable session in the gap. No
+      licensed API covers NASCAR H2H, so L2's source is undecided; primary-book choice
+      is OPEN (owner did NOT designate DK -- the manual capture just used it); manual DK
+      capture continues as the anecdotal interim. Runs ToS-gated: STOP after step 2, hit
+      no endpoint until the posture (A6) is resolved. See memory nascar-odds-source-options.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, plan/schedule.yml session L5, and
+      specs/market_benchmark_decision_rule.md (the primary-book-binding + admissibility
+      amendments), then resume. This is session L5: research where H2H matchup odds can
+      come from programmatically and RECOMMEND a primary sportsbook + an admissibility-safe
+      capture route. Propose only; acquire nothing.
+
+      Context: the whole backlog is bottlenecked on N=0 admissible priced races; race 5618's
+      manual DK prices were post-flag and inadmissible. Admissibility requires primary-book
+      binding (market_benchmark_decision_rule.md §primary-book) and a commit before the
+      scheduled green flag. Prior finding (memory nascar-odds-source-options): The Odds API
+      does NOT cover NASCAR; DK's unofficial JSON is free+exact but ToS-gated; primary-book
+      choice is still OPEN.
+
+      Do, and STOP after step 2 for an owner GO: (1) resolve the scrape/ToS posture (coordinate
+      with A6) -- hit NO endpoint until it is decided; (2) compare DK-unofficial vs scraper vs
+      paid feed, and recommend the primary book + capture method + a recording workflow that
+      keeps prices admissible. Produce an evidence ledger.
+
+      Scope boundary: DO NOT hit any gated/authenticated odds endpoint; DO NOT implement capture
+      (that is L2, a separate session); DO NOT change any model or spec. Exit criteria: a written
+      recommendation putting the primary-book decision to the owner, with an admissibility-safe
+      route. Model: Opus 4.8, thinking on, effort xhigh. On start, verify the running model is
+      claude-opus-4-8 and ASK whether thinking is on and effort is xhigh before substantive work.
   - id: "H1"
     phase: "H"
     title: "S1 closing-odds capture (AWS — FROZEN)"
