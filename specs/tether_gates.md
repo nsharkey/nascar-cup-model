@@ -214,8 +214,90 @@ Missing → RED.
 
 ---
 
-## RESULT — tether gates (to be filled by M4, on build)
+## RESULT — tether gates (M4, 2026-07-20)
 
-*(dated build outcome: the three gates wired into `run_gates.sh`/`GATES.md`, each
-verified red-on-violation, the demote formalized in the same commit, all gates
-green. Filled by M4, not M1.)*
+**Built, all three gates verified red-on-injected-violation, demote formalized in the same
+commit, tree clean, 14/14 gates green.** `src/gate_benchmark_liveness.py` (Gate A),
+`src/gate_calibration_not_edge.py` (Gate B), `src/gate_five_market_gated.py` (Gate C) — all
+three implement this spec verbatim. Wired into `src/run_gates.sh` (after M2's
+`gate_pricing.py`, conda interpreter) and `GATES.md` as gates 12/13/14 (numbers assigned at
+wiring time, per `GATES.md`'s own numbering authority — not hard-coded as "gate 11/12/13").
+
+**Gate A (liveness, state-dependent).** Reuses `market_benchmark.py`'s own
+`load_all_predictions`/`load_snapshot`/`find_primary_book`/`graded_picks_for_race`/
+`reconstruct_and_decide` verbatim — never recomputes admissibility. Today's run: 1 sealed
+prediction (race 5618), primary book `draftkings` (bound at commit `5af852cce4`);
+`P_scored_nonSS=1`, `K_adm=0` (the one non-SS scored race's book prices were post-flag,
+inadmissible — this repo's own documented capture lapse), `capture_debt=1`. `TOL_DEBT=2`,
+so **GREEN** — exactly the spec's own predicted "Current state 2026-07-20" line. 0
+unresolvable races today. `predictions_active=True` (race 5618 is within `LIVE_WINDOW_DAYS=45`
+of the run date), confirming the RED branch is reachable, not vacuously always-green.
+
+**Gate B (hermetic).** Both positive sentinels present verbatim (whitespace-normalized,
+markdown-bold-stripped match — spec prose is hand-wrapped at ~80–100 cols, so a literal
+single-line substring check would spuriously miss sentinels split across physical lines by
+word-wrap): HANDOFF's doctrine line, and `calibration_backtest.md`'s two non-substitution
+phrases. Negative scan (EDGE-token × CALIBRATION-token × no SEPARATION-phrase, per-line,
+quote-stripped) over the current doc set D (23 files): **0 violations.**
+
+**Gate C (hermetic).** `clean_air_causal_pace.md` section 0 (FROZEN, read-only — never
+edited) references `market_benchmark_decision_rule.md`, contains `EDGE`, and contains
+sentinel 4 ("UNDERPOWERED does not unlock"); contains zero CALIBRATION-tokens and no
+`calibration_backtest` reference. `calibration_backtest.md` section 3's sentinel-3 clause
+present. Negative scan (#5-token × UNLOCK-token × CALIBRATION-token × no SEPARATION-phrase)
+over D: **0 violations.**
+
+**Red-on-injected-violation proof (spec's "Wiring + verification" point 2), all three
+confirmed before shipping:**
+- **Gate A:** an in-memory synthetic test (never touching real `predictions/` files, per
+  doctrine's "no post-hoc predictions" — this exercises the gate's own code path only)
+  monkeypatched `market_benchmark.load_snapshot`/`score_race._green_flag_utc` to add three
+  extra resolvable, non-SS, zero-admissible-pick scored predictions on top of the real state,
+  pushing `capture_debt` to 4 > `TOL_DEBT=2`. Confirmed RED.
+- **Gate B:** a scratch file on the scan path (`specs/`) with one unquoted line asserting
+  that the model's calibration means it out-performs the sportsbook — the same pattern the
+  spec's own "we're calibrated so we beat the book" example describes — removed immediately
+  after. Confirmed RED, correct file:line reported.
+- **Gate C:** (a) a scratch file on the scan path with one unquoted line — the forbidden
+  "calibration unlocks roadmap #5" inference stated as fact — removed immediately after;
+  confirmed RED via the negative scan. (b) A calibration token injected
+  into a **copy** of `clean_air_causal_pace.md` section 0 (in-memory mutation of the extracted
+  section text, written to a `tempfile`, never touching the real frozen file); confirmed RED
+  via `check_clean_air_section0`, and the real file re-verified to still produce 0 failures
+  immediately after (frozen file integrity confirmed untouched).
+
+**One genuine implementation-bridging finding, resolved (not escalated) — the same class of
+choice C1/D1/M2/M3 resolved directly rather than stopping for owner input.** The negative
+scan's literal reading (any line with an EDGE-token and a CALIBRATION-token and no
+SEPARATION-phrase) false-positives on **this very spec's own defining prose** at both
+raw-physical-line and blank-line-delimited-paragraph granularity, in three places: the Gate B
+"Claim encoded" paragraph above (which describes, in order to forbid, the exact edge-from-
+calibration assertion pattern); the Gate B worked example of a line that fails the scan; and
+this spec's own Wiring-and-verification instructions for injecting that same example line to
+prove Gate B goes red. All three *mention* the forbidden pattern as an illustration rather than
+*asserting* it, but a mechanical per-line scan cannot tell mention from assertion by itself —
+verified computationally against the live corpus (both granularities) before choosing a fix,
+since this spec's own §"RED iff" text asserts as fact that this spec carries a
+SEPARATION-phrase and passes, which is the acceptance bar the implementation must actually
+meet. **Fix:** text inside straight double-quote pairs is stripped before token-matching each
+line — a quoted phrase is mentioned (a worked example, an injection-test string) not asserted.
+Verified: 0 false positives anywhere in D with the fix (down from 3), and the fix costs nothing against a
+real violation — an actual bare, unquoted assertion is never inside quotes, so detection power
+is unchanged (confirmed by the red-on-injection proofs above, none of which use quotes).
+`CALIBRATION_TOKENS`/`SEPARATION_PHRASES`/`doc_files`/`strip_quotes`/`normalize` live in
+`gate_calibration_not_edge.py` and are imported by `gate_five_market_gated.py` (not
+redefined) so gates B and C's shared token lists can never drift apart — the spec's own
+cross-reference "C from gate B" is implemented as a literal Python import, not a second copy.
+
+**Demote formalized in the same commit.** `HANDOFF.md`'s doctrine paragraph and
+`plan/schedule.yml`'s `bottom_line` now describe the market benchmark as **sovereign and
+gate-protected** (mechanically, via gates 12–14 — not just by prose) with the model-book pivot
+as a **co-equal parallel thread**, never a replacement. `plan/schedule.yml`: M4 → done; `next`
+re-evaluated to **C4** (silver breadth extension #2 — the only ready, dependency-free,
+non-owner-led item; M5 stays blocked on F10, F10/F1/F2 stay gated on ≥8 scored non-SS forward
+races, G2 stays gated on market EDGE).
+
+**No frozen-spec edit outside this RESULT block; `clean_air_causal_pace.md` read-only,
+never edited; no change to `predict_next.py` / `walkforward.py` / `scores_log.csv`.** Gate
+surface: 14/14 green before (11/11 inherited) and after. Environment: conda Python 3.13.5
+(matches every other medallion gate).

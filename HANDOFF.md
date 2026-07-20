@@ -85,11 +85,14 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   Calibration is model-vs-reality (free; a fair book breaks even by construction,
   so it yields zero profit signal and can never establish an edge); the
   closing-line benchmark is model-vs-market and remains the sole thing that can
-  unlock roadmap #5. The model-book pivot (F20 — DEMOTE + tether) runs the
-  diagnostic pricing/calibration thread as a co-equal parallel focus, while the
-  market benchmark stays the sole external check and is mechanically tethered by
-  three gates (`specs/tether_gates.md`) so it cannot erode. See
-  `research/pivot_model_book_vetting.md`.
+  unlock roadmap #5. The market benchmark is **sovereign and gate-protected**:
+  the model-book pivot (F20 — DEMOTE + tether) runs the diagnostic
+  pricing/calibration thread as a **co-equal parallel thread**, never a
+  replacement, and the benchmark's sovereignty is enforced mechanically, not by
+  prose — three tether gates (`specs/tether_gates.md`, shipped M4, `GATES.md`
+  gates 12–14) keep weekly odds capture alive, forbid any document from claiming
+  calibration establishes an edge, and forbid roadmap #5 from ever being
+  re-pointed at a calibration verdict. See `research/pivot_model_book_vetting.md`.
 
 ## Current status (update this section every session)
 

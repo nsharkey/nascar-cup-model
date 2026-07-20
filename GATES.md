@@ -1,9 +1,10 @@
 # GATES.md — the repo's health surface (how to run every gate)
 
-This repo is guarded by **11 gates**. They are the standing proof that the
+This repo is guarded by **14 gates**. They are the standing proof that the
 medallion foundation still reproduces the validated model, that the frozen
-specs still bind the code, and that the plan/docs have not drifted. Run them
-whenever you touch anything, and always before a push.
+specs still bind the code, that the market benchmark stays alive under the
+model-book DEMOTE, and that the plan/docs have not drifted. Run them whenever
+you touch anything, and always before a push.
 
 ## One command
 
@@ -11,7 +12,7 @@ whenever you touch anything, and always before a push.
 src/run_gates.sh
 ```
 
-Runs all 11 gates with the correct interpreter and working directory, prints a
+Runs all 14 gates with the correct interpreter and working directory, prints a
 pass/fail summary table, and exits:
 
 - `0` — all green
@@ -31,7 +32,7 @@ most common way to get a spurious red:
 | Interpreter | Version | Has | Used by |
 |---|---|---|---|
 | `.venv/bin/python` | 3.14.x | PyYAML | the **plan** gate only (`test_report_plan.py`) |
-| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 10** gates (all medallion / model gates) |
+| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 13** gates (all medallion / model / tether gates) |
 
 - The plan gate reads `plan/schedule.yml`; it needs PyYAML but **not** the
   scientific stack.
@@ -71,6 +72,9 @@ Gates run **sequentially on purpose**: seven of them open the shared
 | 9 | `test_stand_down.py` | conda | Doctrine's superspeedway stand-down set {Daytona, Talladega, Atlanta} == `walkforward.MY_TYPE`'s SS set == the tracks `predict_next` flags `stand_down` (`tt=='SS'`) | `HANDOFF.md` doctrine, `walkforward.py` (frozen) |
 | 10 | `test_medallion_invariants.py` | conda | Bronze has no `failed` terminal state; silver has exactly one winner and no duplicate driver per (series, race) on both `driver_race` and `results`; checkers self-validate against injected corruption | `specs/medallion_architecture.md` §2.9, silver structure |
 | 11 | `gate_pricing.py` | conda | Pricing layer: §4 coherence invariants (internal self-consistency only, not correctness), §5.4 committed-fixture reprove (bit-exact, numpy version recorded), §6 faithful-read (priced win/top5/top10/h2h reproduce every committed prediction JSON's own numbers within MC error) | `specs/pricing_layer.md` §§4, 5.4, 6 (frozen) |
+| 12 | `gate_benchmark_liveness.py` | conda | **Gate A (liveness, state-dependent):** the market benchmark is still alive under the model-book DEMOTE -- reuses `market_benchmark.py`'s own functions verbatim; prints N/K/verdict/last-admissible-priced-race/capture-debt; RED iff predictions are active and capture-debt (scored non-SS races with no admissible priced pick) exceeds 2. **May legitimately red** when capture is genuinely behind -- that is its job, unlike every other gate here | `specs/tether_gates.md` Gate A (frozen) |
+| 13 | `gate_calibration_not_edge.py` | conda | **Gate B (hermetic):** no document asserts an edge on the strength of calibration evidence -- doctrine sentinels present verbatim + a token co-occurrence scan (EDGE-token + CALIBRATION-token + no SEPARATION-phrase) over README/HANDOFF/specs/report | `specs/tether_gates.md` Gate B (frozen) |
+| 14 | `gate_five_market_gated.py` | conda | **Gate C (hermetic):** roadmap #5's execution gate reads only the market benchmark, never calibration -- asserts `clean_air_causal_pace.md` §0's market-gate text + no calibration token, plus a #5-token + UNLOCK-token + CALIBRATION-token co-occurrence scan | `specs/tether_gates.md` Gate C (frozen) |
 
 ## Notes
 
@@ -89,3 +93,16 @@ Gates run **sequentially on purpose**: seven of them open the shared
   build time, and 10 runs its checkers against injected corruption on every
   invocation. Add more of these when a prose-only claim is cleanly and
   passingly encodable (each must also be verified to go red on drift).
+- Gates 12–14 are the **tether gates** (`specs/tether_gates.md`) that ship the
+  model-book DEMOTE: 13 (B) and 14 (C) are hermetic prose→gate scans in the
+  gates-7–10 idiom (B and C share their CALIBRATION-token and
+  SEPARATION-phrase lists via a single import, so the two can never drift
+  apart); 12 (A) is different in kind — a **liveness** gate that reconstructs
+  live benchmark state (predictions + git history + the local race-schedule
+  cache) and may legitimately go red if weekly odds capture falls behind,
+  which is its entire purpose. Gate B's negative scan strips text inside
+  straight double-quote pairs before token-matching each line — quoted text
+  in this repo's specs is a worked example (e.g. the literal injection string
+  used to prove Gate B goes red on a violation), not an assertion, and a scan
+  that can't tell the two apart would go permanently red on its own defining
+  spec (verified against the live corpus before shipping).

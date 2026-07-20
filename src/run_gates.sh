@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # run_gates.sh -- one-command health check for the NASCAR Cup model repo.
 #
-# Runs all 10 repository gates with the correct interpreter and working
+# Runs all 14 repository gates with the correct interpreter and working
 # directory, prints a pass/fail summary table, and exits nonzero if any gate
 # is red. This is the repeatable form of the manual baseline sweep documented
 # in every overnight report; see GATES.md for the full contract.
@@ -10,7 +10,7 @@
 #   - test_report_plan.py needs the .venv interpreter (Python 3.14.x, PyYAML) --
 #     it is the only gate that imports yaml and it does NOT need the medallion
 #     scientific stack.
-#   - the other 7 gates need the Anaconda interpreter (Python 3.13.x with
+#   - the other 13 gates need the Anaconda interpreter (Python 3.13.x with
 #     duckdb / numpy / scipy / pyarrow) and must run from src/.
 #
 # All gates run from src/ (this script's directory); paths inside the gates
@@ -66,6 +66,9 @@ GATES=(
   "conda|test_stand_down.py|superspeedway stand-down list"
   "conda|test_medallion_invariants.py|bronze/silver data invariants"
   "conda|gate_pricing.py|pricing layer: coherence + fixture reprove + faithful-read"
+  "conda|gate_benchmark_liveness.py|Gate A: benchmark liveness (state-dependent, capture debt)"
+  "conda|gate_calibration_not_edge.py|Gate B: calibration-is-not-edge (hermetic)"
+  "conda|gate_five_market_gated.py|Gate C: roadmap-#5 stays market-gated (hermetic)"
 )
 
 LOGDIR="$(mktemp -d)"

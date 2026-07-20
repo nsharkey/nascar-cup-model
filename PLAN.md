@@ -37,7 +37,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | C1 | Silver driver-race table (behavior-preserving) | ✅ done | Sonnet 5 · thinking on · high | ~90 min | Rebuilt the cleaned per-driver-per-race table the model uses. It matches today's numbers exactly on every field except one long-known-unused diagnostic (fepace), which differed only at floating-point noise level due to a numerics-library difference between machines — confirmed harmless, owner-authorized a narrow documented exception, gate passed. Nothing about the validated model changed. | silver_build.py + gate_silver.py built per spec sections 3.1-3.3/4; warehouse.py extended with load_race_records() (full per-race index records) and silver.races/silver.driver_race DuckDB views over parquet. --full build: 601 Cup/Xfinity/Truck race_type_id=1 races parsed ok, 22,463 driver_race rows. Gate vs the 163-race anchor (sha b41e697d2c0f...): 6,083 rows / 92,386 field comparisons; every column bit-identical except fepace (the sole np.linalg.lstsq-derived field), which differed at ULP scale (~1e-15 rel) on 162/163 races — confirmed reproducible, confirmed isolated to fepace, confirmed a BLAS/LAPACK cross-environment artifact (not parser/plumbing, not a NASCAR data revision -- the frozen §4.3's two anticipated causes). Escalated to the owner mid-session; owner authorized a dated §4 amendment exempting fepace via math.isclose(rel_tol=1e-9, abs_tol=1e-12), unused-in-production field, every other column unaffected. Gate re-run: PASS (1 clean, 162 PASS-with-note, 0 fail). report/SILVER_REGRESSION.md committed (full per-race detail); RESULT -- C-gate filled; DATA_DICTIONARY §9 added. |
 | C2 | Silver lap / pit / flag tables | ✅ done | Sonnet 5 · thinking on · high | ~2 hr | Built cleaned tables for the richer data we've never used — lap-by-lap, pit stops, cautions, practice, and live-final snapshots — so it's ready when the model wants it. Nearly a million rows total across the eight new tables; pit stops now know which driver made them 99.3% of the time. | silver_build.py's build_silver_breadth() builds spec section 3.4's 8 tables (results, laps, lap_flags, flag_events, pit_stops, lap_notes, practice_runs, live_final) in DuckDB SQL directly over bronze json.gz, one read_json(..., columns={...}) call per race per feed (explicit schema avoids cross-season type-drift DuckDB's auto-detection hit at full-archive scale). 934/1,166 races had >=1 relevant feed; 34,816/4,223,220/122,807/6,494/113,423/32,311/ 71,913/33,694 rows respectively. Section-3.4 dedupe applied per table (a handful of real same-key conflicts traced to drivers entered in two cars for one event -- genuine data, not bugs). pit_stops.driver_id: 112,596 resolved by car_number join, 2 by name fallback, 825 unresolved (race-5580 weekend_race-null gap + Cup crossover drivers in a lower-series race's shared live-pit-data feed -- both documented). Independent breadth_v{N} build-state fingerprint alongside driver_race's own. C-gate re-run: still PASS (1 clean, 162 pass-with-note, 0 fail) -- silver.driver_race untouched. warehouse.py views + DATA_DICTIONARY §9e + report/SILVER_BREADTH.md. |
 | C3 | Track reference tables from vendored audit | ✅ done | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize the vendored track audit into queryable reference tables — physical facts, crosswalk, and quarantined analyst priors — so every silver/gold table can join on track configuration. Proposed by the F5 derivation spike (26dff0c); reference tables only, no model change. | Build silver.track_dim (43 configs: physical facts + parsed banking + era bounds + hp750_2026 flag; the ten 1-10 analyst priors excluded by design), silver.track_xwalk (crosswalk verbatim + a race_track join view), silver.track_priors (10 priors long-form, score_type/evidence labels carried so they can never be silently used as measurements), silver.rules_era (6 era keys 2015->2026) + the §2.3 leakage-free derived features (config_age, config/era race number, era_key, hp750_2026). All per research/track_audit_derivation.md §2. Package files untouched (the test_track_audit.py hash gate stays green); extend that gate with re-derivation checks (row counts, banking parse, dim-xwalk integrity). |
-| C4 | Silver breadth extension #2 (caution segments / stages / leaders) | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize four structured race-level objects the weekend feed has carried for years but silver never read — caution segments with cause labels (back to 2017, two years deeper than the flag feed), per-stage results, leader segments, and playoff-round markers. Cheap, additive, and it widens the data floor for the track-profile and incentive work. Proposed by the F16 domain scan. | Per domain_knowledge_scan.md §3.2/§10.1: build silver.caution_segments (2017+, ~98% of Cup races: start/end lap, reason taxonomy Debris/Accident/..., comment, beneficiary_car_number = lucky dog, flag_state), silver.stage_results (2020+: per-stage finishing order + stage_points), silver.race_leaders (2017+: start/end-lap segments per car) from bronze weekend-feed weekend_race[0]; add playoff_round (2020+) and stage_4_laps to silver.races. C2 conventions verbatim (snake_case, series_id/race_id keys, dedupe rules, independent breadth-style build fingerprint); additive-only — the frozen C-gate must re-run green. The 2020-2022-only relics (infractions/pit_reports) explicitly out of scope. Extends F3's caution metrics to 2017+ results-grade depth (below live-flag-data's 2019 floor) and feeds F19's stage/playoff inputs. |
+| C4 | Silver breadth extension #2 (caution segments / stages / leaders) | ⬅ next | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize four structured race-level objects the weekend feed has carried for years but silver never read — caution segments with cause labels (back to 2017, two years deeper than the flag feed), per-stage results, leader segments, and playoff-round markers. Cheap, additive, and it widens the data floor for the track-profile and incentive work. Proposed by the F16 domain scan. | Per domain_knowledge_scan.md §3.2/§10.1: build silver.caution_segments (2017+, ~98% of Cup races: start/end lap, reason taxonomy Debris/Accident/..., comment, beneficiary_car_number = lucky dog, flag_state), silver.stage_results (2020+: per-stage finishing order + stage_points), silver.race_leaders (2017+: start/end-lap segments per car) from bronze weekend-feed weekend_race[0]; add playoff_round (2020+) and stage_4_laps to silver.races. C2 conventions verbatim (snake_case, series_id/race_id keys, dedupe rules, independent breadth-style build fingerprint); additive-only — the frozen C-gate must re-run green. The 2020-2022-only relics (infractions/pit_reports) explicitly out of scope. Extends F3's caution metrics to 2017+ results-grade depth (below live-flag-data's 2019 floor) and feeds F19's stage/playoff inputs. |
 
 ## Phase D — Gold — model & analytics surface
 
@@ -93,7 +93,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | M1 | Pricing + calibration pre-registration + tether-gate design | ✅ done | Opus 4.8 · thinking on · xhigh | ~4-6 hr | Wrote the rulebook before any code: what gets priced, the one number that decides anything, and the gates that keep the external benchmark alive. Three pre-registration specs authored and the plan re-sequenced onto the model-book pivot; no production or pricing code. | Authored specs/pricing_layer.md (diagnostic Monte-Carlo readout: order-derived markets only; analytic-where-exact -- win=softmax, H2H=sigma(du), group best-of and manufacturer analytic, top-N/joint via one pinned Gumbel block; coherence=internal-only, NOT correctness; pinned seed/N/PCG64/numpy/conda-3.13 + committed fixture + add-half floor + MC-reliability rule; faithful-read gate reproducing predict_next's p_win/p_top5/p_top10/h2h within MC error). specs/calibration_backtest.md (ONE locked primary cell = H2H Brier skill score vs an as-of Bradley-Terry marginal baseline, pooled non-SS, FORWARD stream only; 163=in-sample dev smoke barred from decision + recal-fitting, 2026=peeked; dual pooled+per-type with a launder ban; ported race-count floor + race-clustered bootstrap; sealed non-citable secondary family + Bonferroni; power triage; non-SS tail arms F7-C T1, SS confirms stand-down). specs/tether_gates.md (gate A benchmark-liveness, gate B calibration-is-not-edge, gate C #5-stays-market-gated). Plan re-sequenced: phase M + M1-M5, F10 re-homed as pivot step 2, F20 done, L2 moot. All gates green before + after. |
 | M2 | Build the diagnostic pricer + faithful-read gate + capture-assist template | ✅ done | Sonnet 5 · thinking on · high | ~3-5 hr | Turned the model's existing simulation into a labeled fair-odds readout across order-derived markets that also speeds up the weekly manual capture, and proved mechanically that it changes nothing the frozen model already publishes. | Implemented specs/pricing_layer.md verbatim: src/pricing_layer.py (analytic win/H2H/group-best-of/manufacturer softmax; one pinned Gumbel block for top-N/joint/group-count; add-half + eps floors; MC-reliability exclude-or-raise-N; fair American odds), src/fixtures/pricing_fixture.json (two committed sub-fixtures -- race 5618's real 37-driver vector, and a synthetic 5-driver toy field exercising manufacturer/group/set/SS-flag/tail-flag paths; numpy 2.1.3/scipy 1.15.3/python 3.13.5 recorded), src/gate_pricing.py (section-4 coherence + section-5.4 fixture reprove [bit-exact] + section-6 faithful-read [1,443 marginals vs race 5618's JSON, all within tolerance]), src/capture_template.py (section 7). Wired into run_gates.sh/GATES.md as the repo's 11th gate; confirmed red on an injected doubled-utility defect (6,000+ mismatches). Zero new deps; predict_next.py / walkforward.py untouched; the H2H pick rule feeding the benchmark is unchanged (ITT continuity). Full RESULT block filled in the spec. |
 | M3 | Run the walk-forward calibration backtest (frozen PL) | ✅ done | Sonnet 5 · thinking on · xhigh | ~2-4 hr | Grade the model's probabilities honestly against real results per the pre-registered rules, and report where they are trustworthy and where they are not -- free, on data we already have, needing no book odds. | Implement specs/calibration_backtest.md: src/calibration_backtest.py runs the frozen walk-forward (collect_preds; baseline-replication assert first), builds the as-of Bradley-Terry marginal baseline, prices each race via pricing_layer, and grades every market on all three strata (163 in-sample dev-only, 2026 peeked, the forward stream). Computes the ONE primary H2H Brier-skill-score verdict on the forward stream (race-clustered bootstrap, K>=20), the sealed secondary family (Bonferroni), and dual pooled+per-type reliability with the launder ban; publishes the power triage and the C-trigger split (non-SS tail arms F7-C T1, SS confirms stand-down). report/CALIBRATION_BACKTEST.md + RESULT block. Numbers must be right -- escalate to Opus on any judgment call. No frozen-model change; no scores_log touch. |
-| M4 | Ship the 3 tether gates + formalize the demote | ⬅ next | Sonnet 5 · thinking on · high | ~2-3 hr | Make "the benchmark stays sovereign" a machine-checked fact, not a promise -- and formalize the demote in the same commit that ships its protection. | Implement specs/tether_gates.md: src/gate_benchmark_liveness.py (prints N/K/verdict/last-admissible-priced-race every run_gates.sh; RED if predictions are active and capture-debt > 2 non-SS races), src/gate_calibration_not_edge.py (prose->gate: doctrine sentinel present + no edge-from-calibration substitution claim), src/gate_five_market_gated.py (clean_air section 0 reads the MARKET verdict, never calibration). Wire all three into run_gates.sh + GATES.md; verify each goes red on an injected violation. Formalize the demote in the SAME commit (standfirst/bottom_line/HANDOFF: benchmark sovereign-and-gate-protected, model-book co-equal). clean_air_causal_pace.md is FROZEN and only read. |
+| M4 | Ship the 3 tether gates + formalize the demote | ✅ done | Sonnet 5 · thinking on · high | ~2-3 hr | Made "the benchmark stays sovereign" a machine-checked fact, not a promise -- and formalized the demote in the same session that shipped its protection. | Implemented specs/tether_gates.md verbatim: src/gate_benchmark_liveness.py (Gate A, state-dependent -- reuses market_benchmark.py's own functions verbatim; prints P_scored_nonSS/K_adm/N/verdict/last-admissible-priced-race/capture_debt; RED iff predictions_active and capture_debt>TOL_DEBT=2; today: P_scored_nonSS=1, K_adm=0, capture_debt=1<=2, GREEN), src/gate_calibration_not_edge.py (Gate B, hermetic -- doctrine sentinels present verbatim + a per-line EDGE-token x CALIBRATION-token x no-SEPARATION-phrase scan over README/HANDOFF/specs/report), src/gate_five_market_gated.py (Gate C, hermetic -- clean_air_causal_pace.md section 0 asserted market-gated + calibration-free, plus a #5-token x UNLOCK-token x CALIBRATION-token x no-SEPARATION-phrase scan; imports Gate B's token lists so they can never drift apart). Wired into run_gates.sh (after gate_pricing.py) and GATES.md as gates 12-14 (numbers assigned at wiring time per GATES.md's own numbering authority). All three confirmed RED on an injected violation before shipping (Gate A: synthetic extra unpaired non-SS scored predictions pushing capture_debt to 4; Gate B: an unquoted "calibrated therefore beats the book" line; Gate C: an unquoted "calibration unlocks roadmap #5" line, and separately a calibration token injected into a COPY of clean_air section 0, the real FROZEN file never touched). Formalized the demote in the same commit: HANDOFF.md's doctrine paragraph and this plan's bottom_line now describe the benchmark as sovereign-and-gate-protected with the model-book as a co-equal parallel thread. 14/14 gates green before and after. |
 | M5 | Optional PL+Bayesian ensemble A/B | ⛔ blocked | Sonnet 5 · thinking on · xhigh | TBD | Blend the frozen PL and the Bayesian-PL (F10) only if the blend earns its keep on the same walk-forward gate every model change must pass. Step 3 of the pivot's underlying-model axis. | Short pre-registered spec + A/B: a gated ensemble of the frozen PL baseline and F10's dynamic-skill Bayesian-PL, adopted only on the program-wide rho-Wilcoxon gate (mean(d)>=+0.005, alpha per the multiplicity precedent); the calibration harness (M3) is an additional secondary eval surface, never a replacement gate. Blocked on F10's outcome -- if F10 nulls, M5's prior drops sharply and letting it die unrun is a valid outcome. Underlying-model axis step 3 (memo section 4). |
 
 ## Phase G — Causal clean-air pace (gated: market EDGE)
@@ -131,68 +131,59 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (M4)
+## Handoff — next session (C4)
 
 **Model & settings:** Sonnet 5, thinking on, effort high.
 
-M3 is 'next' as of 2026-07-20 -- run the walk-forward calibration backtest per specs/calibration_backtest.md, consuming M2's pricer. Model: Sonnet 5, thinking on, effort xhigh (numbers must be right; judgment was spent in M1). Zero design judgment -- genuine ambiguity means STOP and flag (as C1/D1/M2 did). No frozen-spec edit; no change to predict_next.py / walkforward.py / scores_log.csv. Forward stream is N=1 today, so the primary verdict will be UNDERPOWERED -- the correct, pre-registered outcome, not a failure. E1 preempts on a race weekend (predict + admissible capture, commit+push before the scheduled green).
+C4 is 'next' as of 2026-07-20 -- silver breadth extension #2 per research/domain_knowledge_scan.md sections 3.2/10.1: materialize silver.caution_segments (2017+), silver.stage_results (2020+), silver.race_leaders (2017+), add playoff_round (2020+) + stage_4_laps to silver.races. Model: Sonnet 5, thinking on, effort high (mechanical reference- table build, same tier as C2/C3). Zero design judgment -- C2's conventions apply verbatim; genuine ambiguity means STOP and flag. Additive-only; the frozen C-gate (gate_silver.py) must stay green. E1 preempts on a race weekend (predict + admissible capture, commit+push before the scheduled green).
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, then specs/tether_gates.md IN FULL -- it is the execution
-contract for this session and pre-resolves every design choice (the sentinel
-strings M1 already planted, each gate's pinned RED condition, the token lists for
-gates B/C). Also skim GATES.md (the existing 11-gate registry + the two-
-interpreter split) and specs/calibration_backtest.md's RESULT block (M3, just
-done -- confirms the sentinels the gates read are already in place and unchanged).
+Read HANDOFF.md, then research/domain_knowledge_scan.md sections 3.2 (race-level
+fields) and 10.1 (the C4 proposal row) IN FULL -- that is the execution contract
+for this session, alongside specs/medallion_architecture.md section 3 (common
+silver rules) and src/silver_build.py's existing build_silver_breadth() (C2) as
+the pattern to extend.
 
-BUILD session M4 -- the three tether gates + formalize the demote, per
-specs/tether_gates.md's "Wiring + verification" section. Zero design judgment:
-every choice is pre-resolved; genuine ambiguity means STOP and flag (as
-C1/D1/M2/M3 did), not choose.
-1. src/gate_benchmark_liveness.py (Gate A): reuse market_benchmark.py's own
-   functions (load_all_predictions, load_snapshot, find_primary_book,
-   graded_picks_for_race, reconstruct_and_decide) verbatim -- never recompute
-   admissibility by a different rule. Print N, K, verdict, last admissible priced
-   race, capture_debt = P_scored_nonSS - K_adm. RED iff predictions_active (a
-   committed prediction within LIVE_WINDOW_DAYS=45) AND capture_debt > TOL_DEBT=2.
-   Unresolvable races are excluded from both counts and flagged, never counted as
-   debt.
-2. src/gate_calibration_not_edge.py (Gate B): hermetic static scan over
-   {README.md, HANDOFF.md, specs/*.md, report/*.md}. Assert the two positive
-   sentinels present verbatim (doctrine line in HANDOFF; the two non-substitution
-   phrases in calibration_backtest.md section 0). RED iff any line has an
-   EDGE-token AND a CALIBRATION-token with no SEPARATION-phrase (the three token
-   lists are given verbatim in the spec).
-3. src/gate_five_market_gated.py (Gate C): hermetic static scan. Assert
-   clean_air_causal_pace.md section 0 references market_benchmark_decision_rule.md
-   + "EDGE" + "UNDERPOWERED does not unlock", and contains NO calibration token in
-   that section. RED iff any line has a #5-token AND an UNLOCK-token AND a
-   CALIBRATION-token with no SEPARATION-phrase. Assert calibration_backtest.md
-   section 3's sentinel-3 clause is present.
-4. Wire all three into src/run_gates.sh (conda interpreter, after gate_pricing.py)
-   and GATES.md (numbers assigned at wiring time, never hard-coded -- GATES.md is
-   the numbering authority); note Gate A is state-dependent (may legitimately red
-   on real capture debt) while B/C are hermetic. CONFIRM each goes red on an
-   injected violation (spec section "Wiring + verification" point 2 gives the
-   exact injection for each) before declaring done -- record the proof in the M4
-   report.
-5. Formalize the demote in the SAME commit: update plan/schedule.yml's
-   standfirst/bottom_line and HANDOFF so the benchmark is described as
-   sovereign-and-gate-protected with the model-book as a co-equal parallel
-   thread.
-6. Fill "## RESULT -- tether gates" (dated) in the spec. Run the full gate
-   surface (all green, gate A green because capture is not yet behind); update
-   plan/schedule.yml (M4 -> done; re-evaluate 'next'); re-render via
-   python src/report_plan.py; commit; leave the tree clean.
+BUILD session C4 -- silver breadth extension #2. Zero design judgment: every
+choice is pre-resolved in the scan's §10.1 row; genuine ambiguity means STOP and
+flag (as C1/C2/D1/M2/M3/M4 did), not choose.
+1. In src/silver_build.py, extend the C2 breadth pattern with four new/extended
+   objects, all read from bronze weekend-feed weekend_race[0] exactly like the
+   existing C2 tables:
+   - silver.caution_segments (2017+, ~98% of Cup races): start/end lap, reason
+     taxonomy (Debris/Accident/...), comment, beneficiary_car_number (lucky dog),
+     flag_state.
+   - silver.stage_results (2020+, the staged points races only -- 2017-2019 rows
+     are legitimately empty, a schema floor, not a bug): per-stage finishing
+     order + stage_points.
+   - silver.race_leaders (2017+, ~100% coverage): start/end-lap leader segments
+     per car.
+   - playoff_round (2020+, 10 playoff races/season; legitimately 0 in 2017-2019
+     and 0 so far in 2026 since the playoffs haven't started) and stage_4_laps
+     (rare, Coca-Cola 600 only) added as columns onto silver.races.
+2. Apply C2's conventions verbatim: snake_case names, series_id/race_id keys, the
+   dedupe rule (drop exact duplicates silently; keep-first + COUNT for
+   same-key-different-value conflicts), unparseable/missing feed -> race simply
+   absent from that table (not an error), the independent breadth-style build
+   fingerprint (bump parser_v{N} only if parse logic changed).
+3. Additive-only: silver.driver_race must not change, and the frozen C-gate
+   (gate_silver.py) must re-run green on a --full build.
+4. Emit a short build-report section (row counts per new table/column, any parse
+   anomalies -- note stage_results' expected 2017-2019 emptiness explicitly so
+   it isn't mistaken for a bug). Extend warehouse.py views + DATA_DICTIONARY.md
+   for the new objects.
+5. Update plan/schedule.yml (C4 -> done; re-evaluate the single 'next') and
+   re-render via python src/report_plan.py; run the full gate surface (all
+   green); commit; leave the tree clean.
 HARD CONSTRAINTS: no change to predict_next.py / walkforward.py / scores_log.csv;
-clean_air_causal_pace.md is FROZEN and only read, never edited; no frozen-spec
-edit elsewhere (only the RESULT block is filled). If a race weekend falls, E1
-duties (predict + admissible capture before the scheduled green) come first.
+none of this feeds the frozen model (reference/analytics tables only, same
+doctrine as C3). If today is a race weekend, E1 duties (predict + admissible
+capture before the scheduled green) come first.
 
 Model: Sonnet 5, thinking on, effort high. On start, confirm the running model +
 settings match before substantive work; escalate to Opus on any genuine judgment
 call rather than guessing.
 ```
 
-**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0. L5+L6 DONE -- no affordable + real-time-admissible + confirmed-NASCAR + ToS-clean odds vendor exists, so STAY MANUAL; L2 moot. F20 vetted the model-book pivot (6 adversarial passes); owner chose DEMOTE + tether. M1 pre-registered the pivot (3 specs). M2 (this session) built the diagnostic pricer: src/pricing_layer.py + a committed fixture + src/gate_pricing.py (coherence/fixture-reprove/faithful-read, the repo's 11th gate, confirmed red-on-defect) + the capture-assist template. 'next' is M3 -- run the calibration backtest (will be UNDERPOWERED at forward N=1, by design). M4 (tether gates) remains co-startable off M1. E1 never pauses; the market benchmark stays the sole external check and sole roadmap-#5 gate.
+**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0, capture_debt=1. L5+L6 DONE -- STAY MANUAL; L2 moot. F20 vetted the model-book pivot; owner chose DEMOTE + tether. M1-M3 pre-registered, built, and ran the calibration backtest (UNDERPOWERED at K=1, as pre-registered). M4 (this session) shipped the three tether gates (GATES.md 12-14, each confirmed red-on-injected-violation) and formalized the demote: the market benchmark is now **sovereign and gate-protected**, the model-book a co-equal parallel thread. 14/14 gates green. 'next' is C4 (silver breadth extension #2, cheap/additive/no deps). M5/F10/F1/F2 stay gated on >=8 scored non-SS races; G2 stays gated on market EDGE. E1 never pauses; the benchmark stays the sole roadmap-#5 gate -- now mechanically enforced, not just prose.
