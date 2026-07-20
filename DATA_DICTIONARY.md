@@ -686,6 +686,40 @@ Note: HANDOFF.md/README.md's own headline "0.449" citations describe the mixed-p
 and are unchanged by this finding (a documentation cleanup out of D1's scope, not a gate blocker)
 — new citations of the 2026-OOS figure for the model actually in production should use 0.447.
 
+### 10f. Track profiles — `data/gold/*.parquet` (medallion rebuild, F3)
+
+Ten empirical track/DFS-betting metrics built by `src/track_profiles_build.py` per
+`specs/track_profiles.md` / `research/track_audit_derivation.md` section 3. Analytics/reference
+tier — build-graph-isolated from `gold.wf_features` (gate-enforced, `src/gate_track_profiles.py`);
+never feeds `walkforward.py`/`predict_next.py`. Full detail: `report/TRACK_PROFILES.md`.
+
+| table | rows | grain | governance |
+|---|---:|---|---|
+| `gold.track_profiles` | 130 | `(track_id, era_key)` | full-sample; analytics/DFS/betting reference ONLY |
+| `gold.track_profiles_asof` | 329 | `(track_id, era_key, race_id, race_seq)` | walk-forward (computed from races strictly before each race); the only variant that could ever be feature-eligible, and only via its own future gated A/B |
+
+Both tables carry, per metric (`tds_core`, `tds_dispersion`, `tpp`, `pdi`, `pdi_v1`, `rvs`, `pis`,
+`pit_stop_duration`, `penalty_rate`, `qis`, `sfs`, `sfs_nonmodal_top5_share`, `dci_laps_led_hhi`,
+`dci_fastest_laps_hhi`, `fvs_simple_sd`, `fvs_simple_top10_deep_start`, `fvs_model`,
+`ars_a_crash_dnf_rate`, `ars_a_mech_dnf_rate`, `ars_b_common_cause_mean_cars`,
+`ars_c_major_loss_tail_p`, `ars_caution_accident_share`, `ars_lucky_dog_rate`,
+`ars_b_make_clustering_index`): `<metric>_value` (the displayed, shrinkage-blended value),
+`<metric>_track_raw`, `<metric>_family_raw`, `<metric>_n_races`, `<metric>_n_events`,
+`<metric>_below_floor` (bool — true means `value` equals `family_raw` exactly, per-metric floors
+in `specs/track_profiles.md` §1.4). Plus `primary_family`, `tpp_descriptive_association_only`
+(always true), `rvs_lane_approximate` (always true), and (championship-race cells only)
+`tds_core_full_field`/`tds_core_excl_contenders`/`tds_contender_sensitivity_delta`/
+`n_championship_races` (the H5 sensitivity check, F16).
+
+Shrinkage: `weight = n_races / (n_races + 5)` toward the `(primary_family, era_key)` pooled value
+at the same time cutoff — fixed a priori, never tuned on outcomes (spec §1.5). Depth: results-grade
+metrics (DCI laps_led, FVS-simple, ARS-a DNF rate, ARS caution-accident-share/lucky-dog) extend to
+2017+ via `silver.results`/`silver.caution_segments`; live-data metrics (TDS/TPP/PDI/RVS/PIS/SFS/
+ARS-b/ARS-c/DCI fastest-laps/make-clustering) are pinned `>=2022` per their own derivation-doc
+subsection; QIS/FVS-model use `gold.wf_features`' 2022+ scope (FVS-model replays the frozen PL
+engine's own mechanics, tagged with `race_id`, via a new function that imports `pl_fit`/`wmean`/
+`znan` from `walkforward.py` unmodified — `walkforward.py` itself is not edited).
+
 ---
 
 ## 11. Scoring and market-benchmark consumers — `src/score_race.py`, `src/market_benchmark.py` (medallion rebuild, D2)

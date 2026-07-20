@@ -583,6 +583,54 @@ included in its own row's aggregates (strict `<`, not `<=`).
 
 ---
 
+## AMENDMENT (2026-07-20, mid-build, made before any RVS value was computed — the data this
+amendment's rule adjudicates does not yet exist, so this is a permitted pre-data amendment per
+specs/README.md, not a protocol violation)
+
+**§2.5 RVS's active-pit-cycle exclusion is implemented via lap-count proximity, not a
+race-elapsed-time window.** As originally written, §2.5 said the screen would use "`silver.
+pit_stops`' own `pit_out_race_time` within the restart window." Implementing that literally
+requires treating `pit_stops.pit_out_race_time` and `silver.flag_events.elapsed_time` as the
+same race-clock unit with no independent verification that they are (a cross-feed assumption
+this session did not want to ship unverified), and requires picking an arbitrary time-width for
+"the restart window" (lap duration varies by track, so a fixed-seconds width would itself be an
+unregistered choice). The actual implementation instead excludes a driver-restart observation
+when that driver has any `silver.pit_stops` row with `lap_count` within 3 laps of the restart
+lap (`abs(restart_lap - pit_lap) <= 3`) — simpler, uses only fields already in the same table
+family, and screens the same wave-around/active-pit-cycle contamination the original wording
+targeted. Every other part of §2.5 (restart definition, `L+3` delta, row/lane labeling) is
+unchanged.
+
+## AMENDMENT (2026-07-20, mid-build, made before any RVS value was computed — pre-data, permitted)
+
+**§1.7's restart definition is sourced from `silver.lap_flags` alone, not `silver.flag_events`.**
+A spot-check while implementing RVS found that `flag_events.lap_number` and `lap_flags.
+flag_state` genuinely disagree on some races about whether a caution occurred in a given lap
+window at all (race 5287: `flag_events` shows a caution starting at lap 20 and clearing at lap
+30; `lap_flags` shows every lap 15–32 as green, flag_state=1, no caution recorded at all) — not
+a stable off-by-one that could be corrected with a fixed offset, a real cross-feed data
+disagreement (plausibly two different upstream collection systems for the same event).
+Restart detection (and the RVS position window built on it) now reads `silver.lap_flags`
+exclusively: a restart lap = any `laps_completed` where `flag_state` transitions `2 → 1` at
+consecutive lap numbers. This is the same table already used for position tracking, so restart
+detection and position windows can never disagree about which laps are green. `silver.
+flag_events` is unaffected elsewhere (not used by any other metric in this spec).
+
+## AMENDMENT (2026-07-20, mid-build, made before any output table was finalized — pre-data,
+permitted)
+
+**`gold.track_profiles_asof`'s displayed `race_seq` column is a track/era-LOCAL ordinal
+(by `race_date`, across the union of every metric's own eligible races at that cell), not any
+single metric's own scope-relative sequence from §1.6.** §1.6 is unchanged for *internal*
+purposes: each metric's as-of blend still decides "strictly before this race" using that
+metric's own eligible-universe ordering (a results-grade metric's internal race_seq and a
+live-data metric's internal race_seq for the same `race_id` are still different integers, and
+the blend computation is unaffected by this amendment). What changed is only which number is
+*displayed* in the output row's `race_seq` field — a single shared column across all ~20
+per-metric sub-columns needs one consistent value for human orientation ("this is the 3rd race
+run at this track/era"), and no single metric's internal sequence is privileged to be that
+value. This is a display/labeling clarification, not a change to any metric's computation.
+
 ## AMENDMENT LOG
 
 None yet — this spec is frozen as of first commit. Per `specs/README.md`,
@@ -593,7 +641,23 @@ provides for one below, to be filled after the build) or a dated
 kill/keep decision, so no amendment should ever be needed against a
 decision rule the way the model-A/B specs need one).
 
-## RESULT — F3
+## RESULT — F3 (2026-07-20)
 
-*(filled in after the build; see `report/TRACK_PROFILES.md` for full
-detail once written)*
+Built. `gold.track_profiles` (130 rows, `(track_id, era_key)`) and `gold.track_profiles_asof`
+(329 rows, `(track_id, era_key, race_id)`), all ten metrics plus the three F16 additions
+(caution-cause taxonomy, K7 make-clustering, H5 contender-exclusion sensitivity). New gate
+`src/gate_track_profiles.py` **PASS**; full repository gate surface **15/15 green** (14
+inherited + this session's new gate), C-gate and D-gate unaffected. Two dated pre-data
+amendments recorded above (RVS pit-cycle screen mechanics; restart detection sourced from
+`silver.lap_flags` alone after a genuine cross-feed disagreement was found in `silver.
+flag_events`) plus one display-only clarification (`track_profiles_asof.race_seq` is a
+track/era-local ordinal). 80-87% of track/era cells are `below_floor` for most live-data
+metrics — the correct, expected consequence of the a priori `min_races=5` floor against the
+genuinely small per-track sample sizes documented in section 3.0, not a defect. Sanity checks
+(not gated, see the report): FVS-model independently reproduces the audit's known SS-
+unpredictability finding (Drafting superspeedway family mean rho 0.042 vs 0.48-0.64 elsewhere);
+K7 make-clustering shows a real same-make adjacency signal at Daytona/Talladega (index 0.95-1.36);
+H5's contender exclusion moves TDS_core by 0.0002-0.0009 sec/lap at championship cells (negligible,
+as predicted); PDI v1/v2 diverge (r=0.296), confirming v1's flagged coverage risk. No frozen spec,
+`walkforward.py`, or `predict_next.py` touched; vendored `research/track_audit/` untouched. Full
+detail: `report/TRACK_PROFILES.md`.
