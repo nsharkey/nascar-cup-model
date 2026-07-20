@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-19"
   spec_version: 1
-  shape_sig: "a1afba9f53ee58ab"
+  shape_sig: "75e269310eebe75b"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order, run as a live forward test against the closing-line market.
@@ -25,9 +25,10 @@ meta:
     ready. The perishable weekly capture never pauses -- race 5618's
     prediction and 3 DraftKings matchups are logged (provenance-inadmissible
     for the benchmark stat; see D2's status_note). Governance is complete and
-    the backlog-building spikes are done; two feasibility/hypothesis spikes are
-    newly queued — F16 (domain knowledge) and F17 (SMT broadcast-telemetry,
-    owner-prioritized, Fable · xhigh).
+    all four backlog-building spikes are done — F16 (domain knowledge,
+    c94f7e7) landed C4/F18/F19 plus F3/F9 tightenings and flagged the 2026
+    Chase-format break; F17 (SMT broadcast-telemetry, owner-prioritized,
+    Fable · xhigh) remains queued.
   handoff_note: >-
     E1 is 'next' as of 2026-07-19 (D2) -- D2's own remainder (score race
     5618) is gated on NASCAR posting results, not a build session, so it
@@ -93,16 +94,18 @@ phases:
       specs frozen and carried over, each adopted only on its own walk-forward
       gate; nothing enters the frozen model without one. Two families: the
       roadmap-#4 A/Bs (F1 DNF then F2 pooling, serial; gated on >=8 scored
-      races) and the track-audit / external-scan follow-ups (F3/F4, F8-F17).
-      Analytics and reference sessions (F3/F4/F13/F14) never touch the frozen
-      model. The three research spikes are done and folded into the session
-      rows: F5 (26dff0c) scoped the track-audit derivations (C3, F3/F4,
-      F8/F9); F6 (6d5e18e) scanned external NASCAR work (F12-F16, A6, the
-      F3/F4 tightenings); F7 (b4c00d7) assessed Bayesian formulations (F10
-      recommended, F11 conditional, and the generative-outcome model decided
-      NULL — re-proposable only on one of three triggers recorded in the
-      assessment §6). Per-session rows carry the exact gates, deps, and
-      provenance.
+      races) and the track-audit / external-scan follow-ups (F3/F4, F8-F19).
+      Analytics and reference sessions (F3/F4/F13/F14/F19) never touch the
+      frozen model. The four research spikes are done and folded into the
+      session rows: F5 (26dff0c) scoped the track-audit derivations (C3,
+      F3/F4, F8/F9); F6 (6d5e18e) scanned external NASCAR work (F12-F16, A6,
+      the F3/F4 tightenings); F7 (b4c00d7) assessed Bayesian formulations
+      (F10 recommended, F11 conditional, and the generative-outcome model
+      decided NULL — re-proposable only on one of three triggers recorded in
+      the assessment §6); F16 (c94f7e7) swept the sport's own domain
+      knowledge against a verified in-feed inventory (C4, F18, F19, F3/F9
+      tightenings, the 2026 Chase-format break handed to F9). Per-session
+      rows carry the exact gates, deps, and provenance.
   - key: "G"
     num: "VII"
     title: "Causal clean-air pace (gated: market EDGE)"
@@ -694,6 +697,40 @@ sessions:
          'next' since silver is then complete) and re-render via
          python src/report_plan.py; commit; leave the tree clean.
       If today is a race weekend, E1 duties (prediction + odds capture) first.
+  - id: "C4"
+    phase: "C"
+    title: "Silver breadth extension #2 (caution segments / stages / leaders)"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~1-2 hr"
+    ref: null
+    exec_summary: >-
+      Materialize four structured race-level objects the weekend feed has
+      carried for years but silver never read — caution segments with cause
+      labels (back to 2017, two years deeper than the flag feed), per-stage
+      results, leader segments, and playoff-round markers. Cheap, additive,
+      and it widens the data floor for the track-profile and incentive work.
+      Proposed by the F16 domain scan.
+    tech_summary: >-
+      Per domain_knowledge_scan.md §3.2/§10.1: build silver.caution_segments
+      (2017+, ~98% of Cup races: start/end lap, reason taxonomy
+      Debris/Accident/..., comment, beneficiary_car_number = lucky dog,
+      flag_state), silver.stage_results (2020+: per-stage finishing order +
+      stage_points), silver.race_leaders (2017+: start/end-lap segments per
+      car) from bronze weekend-feed weekend_race[0]; add playoff_round (2020+)
+      and stage_4_laps to silver.races. C2 conventions verbatim (snake_case,
+      series_id/race_id keys, dedupe rules, independent breadth-style build
+      fingerprint); additive-only — the frozen C-gate must re-run green. The
+      2020-2022-only relics (infractions/pit_reports) explicitly out of scope.
+      Extends F3's caution metrics to 2017+ results-grade depth (below
+      live-flag-data's 2019 floor) and feeds F19's stage/playoff inputs.
+    deps: []
+    status_note: >-
+      Proposed by F16 (c94f7e7, scan §10.1). Runnable now — bronze already
+      holds everything; reference tables only, no gate beyond
+      C-gate-stays-green. Preferred prerequisite for F19 and for F3's
+      caution-taxonomy tightening.
 
   - id: "D1"
     phase: "D"
@@ -998,8 +1035,14 @@ sessions:
       anything causal to specs/clean_air_causal_pace.md. Loop-metric-adjacent
       definitions (passes, green-flag restrictions, ARP variants) pinned per
       external_knowledge_scan.md §7.3 and shared with F13 rather than
-      re-chosen. Vendored priors untouched (source vs derived); reference
-      output — no model change without a gated A/B.
+      re-chosen. F16 additions (domain_knowledge_scan.md §10.4): caution-cause
+      taxonomy + lucky-dog beneficiary from C4's caution_segments extend
+      ARS/caution metrics to 2017+ results-grade depth; ARS-b gains a
+      make-clustering component (draft-alliance correlation at SS,
+      analytics-only); championship-race cells carry an H5
+      contender-exclusion sensitivity check. Vendored priors untouched
+      (source vs derived); reference output — no model change without a
+      gated A/B.
     deps: ["C2", "D1"]
     status_note: "audit follow-up (research/track_audit/INTEGRATION.md); needs silver lap/pit/flag (C2) + gold (D1)"
   - id: "F4"
@@ -1318,6 +1361,12 @@ sessions:
       audit-recommended partial coefficient reset at era breaks — as candidate PL
       features on gold; adopt iff walk-forward Wilcoxon p<=0.0167 AND mean
       delta-rho>=+0.005. MY_TYPE untouched; analytics until the gate passes.
+      F16 addition (domain_knowledge_scan.md §7): the 2026 Chase format break
+      (playoff points + win-and-in abolished, win = 55 pts; confirmed
+      in-feed via playoff_points_earned going to zero) is a FORMAT-era
+      boundary silver.rules_era's package eras do not encode — this spec
+      must decide whether format eras become a second era key or an explicit
+      non-goal.
     deps: ["C3", "D1", "D2"]
     status_note: "gated on C3 + D1 + D2 (scoring consumer that produces scored races) + >=8 scored races + own spec; but the 2026 hp750 era break is LIVE in the current forward test — most time-relevant of the F5 net-new ideas (catalog #7). D2 dep added 2026-07-19 — a frozen-model A/B inherits the roadmap-#4 >=8-scored-races gate, unmeetable until D2 is live"
   - id: "F10"
@@ -1518,46 +1567,57 @@ sessions:
   - id: "F16"
     phase: "F"
     title: "NASCAR domain-knowledge scan (hypothesis-generation spike)"
-    status: "pending"
+    status: "done"
     model: "Fable 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
-    wall_clock: "~3-5 hr"
-    ref: null
+    wall_clock: "~2.5 hr"
+    ref: "c94f7e7"
     exec_summary: >-
-      The complement to F6: not "how does everyone model NASCAR" but "what
-      does the sport itself know that our feature set ignores" — crew chief
-      changes, playoff desperation, tire allocations, draft alliances — each
-      idea kept only if a measurable, leakage-safe proxy exists in data we
-      already hold. F6's strict verification standard structurally filtered
-      domain lore out; this spike admits it as hypotheses with explicit
-      credibility discounting.
+      The complement to F6, delivered: swept what the sport itself knows that
+      the feature set ignores — crew chiefs, playoff incentives, tires, draft
+      alliances — as credibility-discounted hypotheses, each kept only with a
+      measurable leak-free proxy in held data, and verified the entire
+      unconsumed-field inventory against the real archive. Headlines: the
+      crew-chief data covers the model era perfectly and changes are frequent
+      enough to test; the playoff-desperation signal is measurable but
+      NASCAR's 2026 format change just abolished the mechanism a backtest
+      would validate it on; tire-allocation and pit-box hopes are verified
+      dead ends. Three sessions proposed and folded in; built nothing.
     tech_summary: >-
-      Deliverable research/domain_knowledge_scan.md in F6's format (credibility,
-      mechanism, proxy fields, leakage + event-frequency power check, governance
-      tier, overlap, candidate session). Sweeps: (1) people/org changes — crew
-      chief tenure/swaps and ride changes from the weekend feed's
-      crew_chief_id/team transitions (new ground vs F2's org-form pooling);
-      (2) incentive states — playoff bubble math from points_position /
-      playoff_points_earned / playoff_round (the measurable version of the
-      "motivation" signal F6 marked unmeasured; sharpens track-audit H5);
-      (3) equipment/tires — Goodyear per-race compound/allocation advances
-      (verify archival depth), pit_box (partially answers track-audit H7
-      in-feed), manufacturer draft-alliance correlation at SS from our lap
-      data; (4) rules/format eras — inventory only, defer to F9; (5) race-craft
-      meta — inventory and defer to F3/G1 owners, add nothing. Includes the
-      in-feed inventory of ~30 unconsumed weekend-feed result-row/race-level
-      fields (verified present in bronze 2026-07-19: crew_chief_fullname/id,
-      owner_id, sponsor, pit_box, points_position, points_delta,
-      playoff_points_earned, playoff_round, infractions, inspection_complete,
-      pit_reports, race_purse). Proposes only; expected payoff MED for model
-      features (low-frequency events rarely clear +0.005), HIGH for
-      analytics/DFS and for replacing pundit lore with measured answers.
+      Deliverable research/domain_knowledge_scan.md (c94f7e7). In-feed
+      inventory verified vs bronze/silver, not trusted: 39 result-row fields,
+      model consumes 9; crew_chief_id 100% populated 2022+ (185 within-season
+      changes 2022-2025, 75 interim/suspension-pattern — the 2022 wheel-rule
+      4-race CC suspensions and their 2023 repeal explain the trend);
+      points_position confirmed post-race official standings (points_delta
+      reconciles 96% of transitions); owner_id survives the SHR->Haas Factory
+      rename that team_name breaks (recorded as F2 alias-variant input).
+      Verified dead/era-limited (correcting the kickoff's assumed list):
+      pit_box 13/392 races (track-audit H7 terminally unanswered in-feed),
+      winnings/race_purse/attendance all-zero, points_delta dead 2023+,
+      infractions/pit_reports 2020-2022 relics. The 2026 Chase format break
+      confirmed externally AND in our own feed (playoff_points_earned=0 on
+      all 880 rows of 2026 vs 65-85/season 2019-2025): playoff points and
+      win-and-in abolished — a format-era input handed to F9, and the reason
+      bubble-feature backtests span a dead regime (scan §5.3). Proposals
+      folded: C4 (silver breadth #2 — caution_segments 2017+ with cause
+      taxonomy + lucky-dog beneficiary, stage_results, race_leaders,
+      playoff_round, stage_4_laps), F18 (personnel-change A/B, ~10%
+      eligible-row exposure = DNF-class power), F19 (incentive-state
+      analytics, Tier A, format-robust descriptives first), F3/F9
+      tightenings. Draft alliances -> F3 ARS-b make-clustering (SS
+      stand-down kills the model path). No-session records: tire allocation
+      (ToS-blocked source, behavior already F3's), sponsor/hometown/margin
+      fields, championship-contender feature (0.3% exposure; H5 -> F3
+      covariate sensitivity note).
     deps: []
     status_note: >-
-      Proposed 2026-07-19 in the F6 close-out discussion (owner-accepted).
-      Ungated, runnable now, independent of the rebuild; sources admitted as
-      hypothesis generators with credibility discounting — the A/B gate, not
-      source verification, is where rigor lands.
+      DONE 2026-07-19 (c94f7e7). All proposals folded same close-out per the
+      F5/F6/F7 precedent: C4/F18/F19 added, F3/F9 tech summaries tightened,
+      E1 stays 'next'. Expected-payoff prior confirmed: MED for model
+      features (the +0.005 floor binds on low-frequency events), HIGH for
+      analytics and for replacing garage lore with measured answers — the
+      verified inventory itself is the headline asset.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read README.md, PLAN.md (Phase F), research/external_knowledge_scan.md (esp. §4.2
@@ -1690,6 +1750,82 @@ sessions:
       dictionary of the fields it carries; if not, say so plainly and record that
       F13 (in-house loop data) + F15 (vendored ratings) remain the fallback.
       Proposes only; builds nothing; commit the report and leave the tree clean.
+  - id: "F18"
+    phase: "F"
+    title: "Personnel-change features A/B (crew chief tenure / ride changes)"
+    status: "blocked"
+    model: "Sonnet 5 · thinking on · xhigh"
+    settings: {thinking: true, effort: "xhigh"}
+    wall_clock: "~1 hr spec + ~3-5 hr run"
+    ref: null
+    exec_summary: >-
+      Test whether crew-chief continuity — tenure, fresh swaps, interim
+      substitutions — and team tenure carry signal the driver's own form
+      history doesn't. The strongest new model hypothesis from the F16
+      domain scan: the sport treats crew-chief changes as major events, the
+      data covers the model era perfectly, and no published evidence exists
+      anywhere in either direction.
+    tech_summary: >-
+      Pre-register a spec per domain_knowledge_scan.md §4: as-of features
+      from silver.results.crew_chief_id (100% populated 2022+, exactly the
+      model era) — cc_tenure, cc_changed_recent, an interim proxy — plus a
+      team_tenure secondary (team_name/owner_id); strictly-prior-race
+      constructions (no current-race pre-race read needed; if a
+      current-week variant is specced, inherit the pooling spec §3
+      population check + most-recent-prior fallback). Measured event base:
+      185 within-season CC changes 2022-2025 (75 revert-within-8 =
+      suspension signature; 2022's counts are wheel-rule-inflated, scan
+      §9.6), 21-30 offseason changes/yr, 5-17 within-season ride changes;
+      a k=5 post-change window marks ~10% of eligible driver-races —
+      DNF-class frequency. The outcome-caused-change confound is recorded
+      pre-data (scan §9.2; the paired A/B measures marginal value over fin
+      correctly). Adopt iff one-sided Wilcoxon p<=alpha_adj (multiplicity
+      extending the roadmap-#4 family convention) AND mean(d)>=+0.005.
+      History-REWEIGHTING after a ride change is explicitly out of scope
+      (F10's machinery lane). A well-run null retires a garage trope.
+    deps: ["D1", "D2"]
+    status_note: >-
+      Proposed by F16 (c94f7e7, scan §10.2). Gated: >=8 scored races AND
+      gold live (D1/D2) AND its own pre-registered spec. Feature lever,
+      disjoint from F1 (status), F2 (org form), F10 (recency gain).
+  - id: "F19"
+    phase: "F"
+    title: "Incentive-state analytics (playoff pressure, measured)"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~2-4 hr"
+    ref: null
+    exec_summary: >-
+      Measure the playoff-desperation lore instead of debating it: does
+      crash risk actually rise near the cutline, do bubble drivers chase
+      stage points, do locked-in drivers coast? Analytics only — and the
+      2026 format change makes this the wrong year to trust any backtested
+      motivation feature, which is exactly why the descriptive answer comes
+      first.
+    tech_summary: >-
+      Per domain_knowledge_scan.md §5: cutline distance from as-of
+      points_position (confirmed post-race official standings — read the
+      PRIOR race's payload, leak-free by construction; scan §9.1),
+      playoff_round / driver_is_in_chase markers (2020+/2017+),
+      stage-aggression from stage_results (via C4). Descriptives 2017-2025
+      + live 2026 tracking: crash-class DNF rate x cutline proximity in
+      late regular season, stage-point-chasing on the bubble,
+      locked-in-cohort residual degradation. Tier A — never joins feature
+      banks; any M-tier A/B needs its own later spec conditioned on these
+      effects surviving the 2026 Chase break (playoff points + win-and-in
+      abolished; scan §5.3/§9.4). H5's championship-contender flag is NOT
+      here — routed to F3 as a pace-estimate sensitivity (0.3% exposure
+      kills it as a feature). Ordinal-position-vs-derived-points caveat
+      pinned (feed carries no season totals and no penalty deductions;
+      scan §5.2).
+    deps: ["C2"]
+    status_note: >-
+      Proposed by F16 (c94f7e7, scan §10.3). C2 met; C4 preferred first
+      (stage_results/playoff_round land in silver there). Otherwise
+      ungated — analytics tier, frozen model untouched; doubles as the
+      measured version of the "motivation" signal F6 §4.2 marked
+      unmeasured.
 
   - id: "G1"
     phase: "G"
