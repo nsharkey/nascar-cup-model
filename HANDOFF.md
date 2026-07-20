@@ -218,16 +218,37 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   `DATA_DICTIONARY.md` §9 added. Odds capture for race 5618 deferred to the
   owner (paste-when-ready, per HANDOFF's weekly protocol step 3) — prediction
   #1 itself was already sealed/pushed pre-race (E2).
-- **Next single step:** `D1` in the plan — gold features + re-point engine +
-  re-prove 0.413/0.476/0.449 (Sonnet, xhigh; the frozen D-gate, §6). C2
-  (silver breadth) remains equally unblocked and startable, just not on the
-  gate-critical path to gold — see D1's `status_note` in `plan/schedule.yml`
-  for why it's the pick. Heads-up carried from C1: D1's R1 step already
-  anticipates PASS-with-note races (per-race rho deltas reported
-  individually) — C1's 162 are all the fepace-only environment exception,
-  and fepace isn't a production feature, so R1 should reproduce R0 exactly
-  for all of them; a nonzero delta there would be new information, not an
-  expected pass-through.
+- **2026-07-19 (D1 done, PASS):** `gold_build.py` + `gate_gold.py` built;
+  `warehouse.py` extended with `gold.*` views. Gold feature bank
+  (`gold.track_typology`, `gold.wf_features`, `gold.driver_form`,
+  `gold.driver_type_form`) built per spec §5, scoped to `year >= 2022` per a
+  dated amendment (silver covers 2020+, but `races_parsed.pkl` never did —
+  confirmed 72 pre-2022 Cup/points/`ok` races with ~90–97% driver overlap
+  into early 2022, which would have broken the D-gate's "identical `n_hist`"
+  check for a data-window reason, not a plumbing one; flagged and
+  owner-authorized *before* any gold code was written). D-gate (§6) ran
+  R0→R1→R2→R3, all PASS with zero mismatches anywhere: R1 showed zero
+  `rho_PL_fpts` deltas vs R0 across all 163 scored races (not just zero
+  *unexpected* ones); R2 compared 5,316 eligible (race, driver) pairs with
+  zero mismatches; R3 showed zero rank/near-tie/rho exceptions. R0's first
+  run also surfaced a second dated finding: the published 2026-OOS figure
+  (0.449) traces to a 5-feature model variant (`prior_all`, includes the
+  non-production `fepace` column) rather than the frozen 4-feature `fpts`
+  model — exactly the ambiguity spec §9's A1 had pre-flagged. Confirmed via
+  a diagnostic across all of `step4_models.py`'s `SPECS` variants;
+  owner-authorized correction to **0.447** for the actually-frozen model
+  (HANDOFF's frozen config is unchanged — this corrects a mispublished
+  number, not the model). Both findings are dated amendments in the spec
+  (§5, before 5.3; §6, before `## RESULT — D-gate`), full detail in
+  `report/GOLD_REPROOF.md` and `DATA_DICTIONARY.md` §10. **New citations of
+  the 2026 out-of-sample figure for the model actually in production should
+  use 0.447, not 0.449** (the header block above and README predate this
+  finding and are unchanged — a documentation cleanup, not a gate blocker).
+- **Next single step:** `D2` in the plan — gold scoring + benchmark
+  consumers, scores race #1 (Sonnet, xhigh; §5.5/§7.3). Fully unblocked —
+  D1's D-gate passed clean. Note §7.3's dual-run cutover check needs a real
+  race weekend, so D2 may only partially complete cutover even if the code
+  lands clean this session.
 
 ## Roadmap (agreed order — do not skip ahead)
 

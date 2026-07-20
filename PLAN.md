@@ -44,8 +44,8 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| D1 | Gold features + re-point engine + re-prove 0.413 | ⬅ next | Sonnet 5 · thinking on · xhigh | ~4-6 hr (incl. re-validation) | Rebuild the model's inputs on the new foundation and re-confirm it still hits the validated accuracy — the checkpoint that lets us keep standing on the 0.413 result. | Walk-forward feature banks (recency-weighted finish/pace/typed histories, grid) as gold tables in SQL; re-point the engine to gold; hard gate: reproduce 0.413 / 0.476 non-SS / 0.449 2026 before gold replaces the pkl path. |
-| D2 | Gold scoring + benchmark consumers (scores race #1) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~3-5 hr | Move scoring and the market-edge test onto the new foundation and finally score the first race. | Scoring (specs/scoring_methodology.md + amendments) and market_benchmark (amended spec) as gold consumers reading bronze results + sealed predictions; scores prediction #1 (race 5618); absorbs retired R1/R2/R3. |
+| D1 | Gold features + re-point engine + re-prove 0.413 | ✅ done | Sonnet 5 · thinking on · xhigh | ~2.5 hr | Rebuilt the model's inputs on the new foundation and confirmed it still hits the validated accuracy — R0-R3 all passed cleanly, with zero mismatches anywhere. Two mid-session findings, both escalated and owner-resolved before any code was tuned: gold's history window had to be capped to the years the old model ever actually saw, and the published 2026 out-of-sample number turns out to have come from a slightly different (never-productionized) model variant than advertised -- corrected to 0.447, model behavior itself unchanged. | gold_build.py: gold.track_typology (MY_TYPE imported verbatim), gold.wf_features (walk-forward feature bank in SQL, transcribing walkforward.run's history mechanics incl. the pace_h/typ_h subsequence- indexing trap), driver_form/driver_type_form current-form views -- scoped to year>=2022 per a dated spec amendment (silver covers 2020+, but races_parsed.pkl never did; confirmed 72 pre-2022 Cup/points/ok races with ~90-97% driver overlap into early 2022, which would have broken R2's "identical n_hist" for a data-window reason, not a plumbing one). gate_gold.py: silver_to_races_list() adapter (section 5.4) + R0->R1->R2->R3. R0 first run reproduced backtest/non-SS (0.413/0.476) but not 2026-OOS (0.447 vs published 0.449) -- root-caused via a diagnostic across all of step4_models.py's SPECS variants: the published 0.449 traces to prior_all (5-feature, includes the non-production fepace column), not fpts (the actually-frozen 4-feature model) -- exactly section 9's pre-flagged ambiguity A1. Owner-authorized: fpts stays the reference model, expected OOS corrected to 0.447. Re-run: R0/R1/R3 all reproduce 0.413/0.476/0.447 exactly; R1 shows zero rho_PL_fpts deltas vs R0 (not just zero unexpected ones) across all 163 scored races; R2 compared 5,316 eligible (race,driver) pairs with zero mismatches; R3 shows zero rank/near-tie/rho exceptions. report/GOLD_REPROOF.md committed; RESULT -- D-gate filled; DATA_DICTIONARY.md section 10 added. |
+| D2 | Gold scoring + benchmark consumers (scores race #1) | ⬅ next | Sonnet 5 · thinking on · xhigh | ~3-5 hr | Move scoring and the market-edge test onto the new foundation and finally score the first race. | Scoring (specs/scoring_methodology.md + amendments) and market_benchmark (amended spec) as gold consumers reading bronze results + sealed predictions; scores prediction #1 (race 5618); absorbs retired R1/R2/R3. |
 
 ## Phase E — Forward test (RUNNING — perishable capture)
 
@@ -113,7 +113,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (D1)
+## Handoff — next session (D2)
 
 **Model & settings:** Sonnet 5, thinking on, effort xhigh.
 
@@ -121,56 +121,39 @@ D1 is a Sonnet build session (thinking on, xhigh) executing specs/medallion_arch
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, then specs/medallion_architecture.md sections 5 and 6
-IN FULL (gold build design + the FROZEN D-gate) — it is the execution
-contract for this session. Also read the section-4 `## AMENDMENT` block
-and `## RESULT — C-gate` (both just above section 5): C1 found and the
-owner authorized an exception for `fepace` (the only silver.driver_race
-column computed via np.linalg.lstsq) due to a confirmed cross-environment
-BLAS/LAPACK floating-point artifact — every other column is bit-identical.
-fepace is not a production feature, so it should not affect anything
-below, but know the context before reading R1's tolerance language.
+Read HANDOFF.md, then specs/medallion_architecture.md sections 5.5 and 7.3
+IN FULL, plus `## RESULT — D-gate` (D1's outcome, PASSED clean) and the two
+`## AMENDMENT` blocks in section 5/6 for context — neither changes what D2
+touches (scoring/market_benchmark read bronze results + sealed prediction
+JSONs, not gold.wf_features), but know the history before starting.
 
-BUILD session D1 — gold + re-prove, per the spec's section-10 D1 checklist:
-1. Build `gold.track_typology` (§5.1: the MY_TYPE dict from
-   src/walkforward.py, verbatim, unmapped -> 'UNIQ'), `gold.wf_features`
-   (§5.2: the walk-forward feature bank in SQL — n_hist/fin_h/pace_h/
-   typ_h/start_feat/has_pace/finish, transcribing walkforward.run's
-   history mechanics EXACTLY, including the pace_h subsequence-indexing
-   detail called out as "the classic transcription bug — don't make it"),
-   and the current-form views (§5.3) in `src/gold_build.py`.
-2. Build `src/gate_gold.py`: the adapter (§5.4 — silver_to_races_list()
-   reconstructs the pkl-shaped list-of-dicts from silver, reversing the
-   §3.3 null map), then run R0 -> R1 -> R2 -> R3 IN ORDER, stopping at
-   the first failure:
-   - R0 (legacy path, anchor data): expect 0.413 / 0.476 non-SS / 0.449
-     2026-OOS at 3dp. If R0 doesn't reproduce this trio, STOP — that's
-     an environment/data-integrity problem, report to the owner, do not
-     proceed to R1-R3.
-   - R1 (legacy engine, silver data): per-race rho_PL_fpts exactly equal
-     to R0's, except races on the C-gate's PASS-with-note list (deltas
-     reported individually — expected to be all-zero here per the
-     heads-up above, since fepace isn't a model feature).
-   - R2 (gold SQL vs replay): fin_h/pace_h/typ_h/start_feat within
-     1e-9 relative tolerance, identical NULL/eligibility membership,
-     identical n_hist. Any set-membership difference is a FAIL
-     regardless of magnitude.
-   - R3 (engine on gold): predicted-rank vector equals R1's per scored
-     race (permitted exception: utility-pair near-ties < 1e-7, listed
-     individually); |Δrho| ≤ 1e-6 outside listed races; trio equals R1's
-     at 3dp.
-3. **Failure at any level stops the migration for investigation — do
-   not tune anything to make it pass** (§6: that would be re-choosing,
-   a protocol violation). On PASS: commit `report/GOLD_REPROOF.md`
-   (all four runs, environment versions) and fill `## RESULT — D-gate`
-   (dated) in the spec. On FAIL: report fully, stop, do not proceed to
-   D2.
-Zero design judgment calls: if the spec is genuinely ambiguous
-anywhere, STOP and flag it rather than choosing — exactly as C1 did
-for the fepace finding. If today is a race weekend, E1 duties
-(prediction + odds capture) come first. Update plan/schedule.yml
-(D1 -> done or blocked per outcome; re-evaluate the single 'next') and
-re-render via `python src/report_plan.py`; commit; leave the tree clean.
+BUILD session D2 — gold consumers + cutover, per the spec's section-10 D2
+checklist:
+1. `src/score_race.py` + `src/test_score_race.py` per
+   `specs/scoring_methodology.md` (with its amendments), verbatim; wire
+   the §5.5 bronze-fed compatibility shim (extract the latest bronze
+   weekend-feed payload to the frozen read path before scoring — the
+   scorer itself is not modified to know about bronze).
+2. Score race 5618 (prediction #1) and any backlog; `scores_log.csv`
+   born per contract.
+3. `src/market_benchmark.py` per the amended market spec (seed 20260718,
+   full amended look/boundary machinery).
+4. Gold convenience views: `gold.scores`, `gold.predictions` (read-only,
+   over the CSV/JSON artifacts of record — views never write).
+5. Execute §7.3's cutover checklist in order. Step 2 (the dual-run check)
+   spans a real race weekend and cannot fully complete in one session —
+   report honestly what's done vs. still pending the next weekend rather
+   than forcing it. Step 5's "two consecutive clean weekly cycles" is
+   inherently multi-week.
+6. Fill `## RESULT — D2`; update HANDOFF (weekly protocol + repo map +
+   current status); update plan/schedule.yml (D2 -> done/blocked per
+   outcome, re-evaluate the single 'next'); re-render via
+   `python src/report_plan.py`; commit; leave the tree clean.
+Zero design judgment calls: if the spec is genuinely ambiguous anywhere,
+STOP and flag it rather than choosing — D1 hit two such cases this
+session (both in report/GOLD_REPROOF.md) as the working example of what
+that looks like. If today is a race weekend, E1 duties (prediction +
+odds capture) come first.
 ```
 
 **Bottom line:** Bronze is built AND verified (B1-B4 done; 2017 recovered and wired in like any other year). The silver layer is now COMPLETE: parity C1, breadth C2 (8 new lap/pit/flag/practice/live tables), and track reference C3 (7 new tables from the vendored audit package -- track_dim/xwalk/priors/ similarity_prior/rules_era/race_track/race_track_features) are all done; the frozen C-gate re-ran clean after both C2 and C3 (still PASS, silver.driver_race untouched). D1 (gold features + re-point engine + re-prove 0.413/0.476/0.449) is now the single 'next' step and the gate-critical path to gold. The perishable weekly predict+odds capture never pauses — race 5618's prediction and its 3 DraftKings closing matchups are logged. Governance and all three research spikes are complete; nothing they propose enters the frozen model without a gated A/B.
