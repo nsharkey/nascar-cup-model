@@ -1853,7 +1853,7 @@ sessions:
     settings: {thinking: true, effort: "xhigh"}
     dagger: true
     wall_clock: "~4-6 hr"
-    ref: null
+    ref: "1888883"
     exec_summary: >-
       Fully vet a major proposed pivot before any build: shift the project's center
       of gravity from "prove the model beats the sportsbook's closing line" (which
@@ -1984,7 +1984,7 @@ sessions:
     model: "Opus 4.8 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~4-6 hr"
-    ref: null
+    ref: "1888883"
     exec_summary: >-
       Wrote the rulebook before any code: what gets priced, the one number that decides
       anything, and the gates that keep the external benchmark alive. Three
