@@ -29,6 +29,7 @@ session (any model tier) makes zero judgment calls.
 | `team_mfr_pooling.md` | Roadmap #4b: org/manufacturer pooling variants (incl. the `team_name` data-layer prerequisite), same gate form | After #4a's decision is recorded |
 | `medallion_architecture.md` | Bronze/silver/gold rebuild design (added 2026-07-19, plan session B1): C-gate silver regression + D-gate re-prove rules frozen; layouts/protocols stable-amendable per its freeze map | Governs build sessions B2–D2 (plan phases B–D) |
 | `clean_air_causal_pace.md` | Roadmap #5 design (added 2026-07-19, plan session G1): clean-air pace via two natural experiments (restart-reshuffle pit-box IV, pit-cycle offset windows); Stage-A identification gate + Stage-B walk-forward A/B gate frozen; fixed-effects variants prohibited | **G2 — only if the market benchmark returns EDGE** (also needs C2/D1/D2); banked-never-executed is a valid outcome |
+| `track_profiles.md` | F3 track-audit prior calibration (added 2026-07-20, plan session F3): ten empirical track/DFS-betting metrics (TDS/TPP/PDI/ARS/RVS/PIS/QIS/SFS/DCI/FVS) per `research/track_audit_derivation.md` §3; per-metric sample floors + shrinkage fixed a priori; dual full-sample/as-of outputs, build-graph-isolated from `wf_features`; F16 additions (caution-cause taxonomy, make-clustering, H5 sensitivity) | Runs in F3 itself (analytics/reference tier — no gate, no A/B) |
 
 ## Explicitly out of scope (recorded decisions, not oversights)
 
