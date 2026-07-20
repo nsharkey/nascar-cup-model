@@ -558,21 +558,54 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   `predict_next.py`, or `gate_gold.py` touched; vendored
   `research/track_audit/` untouched. Full detail:
   `report/TRACK_SIMILARITY.md`.
-- **Next single step (plan `next` = F13):** driver loop-metric histories
-  (in-house loop data), per `research/external_knowledge_scan.md` §6.1
-  (**Sonnet 5 · thinking on · high**). Promoted off F4's close-out per
-  phase F's own enumerated order (F3/F4/F13/F14/F19); dep (C2) already
-  satisfied. Pre-register a spec, then build as-of driver histories from
-  `silver.laps`/`silver.lap_flags` — Average Running Position (pin one of
-  three circulating definitions), green-flag pass differential, quality
-  passes, fastest-lap share, laps-in-top-15, closers — importing F3's
-  already-pinned loop-metric definitions (`specs/track_profiles.md` §1.7:
-  green-flag lap, pass, durable pass, restart) rather than re-choosing
-  them. NASCAR's own Driver Rating is not imported (same-race circular by
-  construction — finish is a direct formula input); a self-built composite
-  supersedes it. Analytics/reference tier — never touches the frozen model,
-  no `>=8`-scored-races gate. The verbatim kickoff is in
-  `plan/schedule.yml` (session F13) and rendered in `PLAN.md`.
+- **2026-07-20 (F13 done):** driver loop-metric histories — in-house loop
+  data, per `specs/loop_metric_histories.md` (pre-registered first, per
+  `specs/README.md` discipline) and `research/external_knowledge_scan.md`
+  §6.1/§7. `src/loop_metrics_build.py` built `gold.driver_loop_race`
+  (8,949 rows, `(driver_id, race_id)`, raw/same-race audit table, 237 Cup
+  points races 2020–2026 — the natural `silver.lap_flags` data floor) and
+  `gold.driver_loop_history` (8,949 rows, AS-OF — strictly-prior races
+  only, 8,808 with a defined `composite_h`). Six components: Average
+  Running Position (pinned **green-flag-only** — one of three circulating
+  public definitions with no accessible glossary; lead-lap-only rejected
+  as not cleanly derivable from archived data without an unverified
+  cross-driver proxy, all-laps rejected as caution-noise-contaminated),
+  green-flag pass differential, quality passes (pass ending `<=15`),
+  fastest-lap share, laps-in-top-15, and closers (positions gained in the
+  final 10% of the race's own green-flag laps). Green-flag-lap and pass
+  are imported verbatim from `track_profiles_build.py` (F3) — confirmed by
+  the gate's own source-scan, not just by prose; durable pass/restart
+  disclosed as not used by any of the six components (no overlap, not an
+  oversight). A self-built composite (six-component cross-sectional
+  z-score per race, ARP sign-flipped, requires all six non-null) replaces
+  NASCAR's own Driver Rating, circular by construction (finish/win are
+  direct formula inputs). New gate `src/gate_loop_metrics.py` — **PASS**,
+  including a full (not sampled) re-derivation of every row in both
+  tables — the dataset is small enough that an exact full rebuild is
+  cheap, a strictly stronger proof than F3/F4's 40-row spot checks. Full
+  gate surface **17/17 green** (16 inherited + this session's new gate).
+  Zero design-judgment escalations — every choice (ARP definition,
+  denominator convention, tie rule, composite formula, nullability rules)
+  is disclosed with reasoning in the spec. Analytics/reference tier — no
+  gated A/B, `walkforward.py`/`predict_next.py`/`gold_build.py` untouched,
+  nothing joins `gold.wf_features`. Full detail:
+  `report/LOOP_METRIC_HISTORIES.md`.
+- **Next single step (plan `next` = F14):** Next Gen equipment-share
+  decomposition, per `research/external_knowledge_scan.md` §3.6
+  (**Sonnet 5 · thinking on · xhigh**). Promoted off F13's close-out per
+  phase F's own enumerated order (F3/F4/F13/F14/F19); dep (D1) already
+  satisfied. Pre-register a spec, then build a hierarchical driver/team/
+  make variance decomposition on gold walk-forward data (2022+ Next Gen
+  era) per the van Kesteren & Bergkamp (JQAS 2023) rank-ordered-logit
+  template, with their own DNF-exclusion sensitivity check and
+  descriptive-not-forecasting warning imported verbatim, and satisfying
+  §3.2's standing requirement (a per-training-window strong-connectivity
+  diagnostic + an explicit regularization scheme) before estimating any
+  variance component. Descriptive only (Tier A) — never touches the
+  frozen model; its result is direct trigger evidence for or against ever
+  spec'ing F11 (the banked hierarchical-Bayesian-PL lane). The verbatim
+  kickoff is in `plan/schedule.yml` (session F14) and rendered in
+  `PLAN.md`.
   Independently, the standing weekly loop (E1) fires at the next Cup race
   (Brickyard 400, race 5619, 2026-07-26) — predict / seal / push before the
   green flag, record closing prices **before the scheduled flag** (5618's
@@ -618,8 +651,8 @@ research/           vendored external research (track_audit/ — immutable
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate
-GATES.md            the 16-gate health surface + interpreter split;
-                    run `src/run_gates.sh` to prove all 16 green in one command
+GATES.md            the 17-gate health surface + interpreter split;
+                    run `src/run_gates.sh` to prove all 17 green in one command
 DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
                     JSON, CSV contracts, raw cf.nascar.com feeds)
 src/                pipeline: download.py, parse_lib.py, parse.py,
@@ -644,7 +677,9 @@ src/                pipeline: download.py, parse_lib.py, parse.py,
                     report/TRACK_PROFILES.md) -- track_similarity_build.py +
                     gate_track_similarity.py (F4, gold.track_dst/track_dst_edges/
                     track_pltree*, build-graph isolated, gate_gold.py untouched --
-                    Tier A/analytics, report/TRACK_SIMILARITY.md)
+                    Tier A/analytics, report/TRACK_SIMILARITY.md) -- loop_metrics_build.py +
+                    gate_loop_metrics.py (F13, gold.driver_loop_race/driver_loop_history,
+                    build-graph isolated -- Tier A/analytics, report/LOOP_METRIC_HISTORIES.md)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 data/               gitignored medallion foundation (bronze/silver/gold +
