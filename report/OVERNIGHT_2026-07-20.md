@@ -220,4 +220,26 @@ cd /Users/nicholassharkey/Downloads/nascar-cup-model && git push origin main
 
 That publishes `e8725cf`, `3c3c1a2`, `742587c`, `120cd32`, `774b0c2` (score 5618 + gate
 harness + gate_silver determinism + 2 new gates + one doc fix). All 10 gates are green and
-the tree is clean.
+the tree is clean. `git push origin main` sends the whole branch, so it also publishes the
+addendum commits in §9 below.
+
+---
+
+## 9. Addendum — commits made after this report was drafted (Task 7)
+
+Two more local commits landed during the optional prospect step, after §2 was written:
+
+| SHA | One-liner | What / why |
+|-----|-----------|------------|
+| `f543b37` | docs: run_gates.sh header says 10 gates | Doc-currency: the `run_gates.sh` top comment still said "Runs all 8 repository gates" after `120cd32` grew the registry to 10 (surfaced by the prospect code-health scan; my own session's drift). Cosmetic comment only — the "ALL N GATES GREEN" line derives from the array length. `bash -n` clean. |
+| `270aee8` | prospect: ranked next-steps spread for the morning | Optional Task 7. Read-only `/prospect` (Opus 4.8, top judgment tier) → `report/prospect_2026_07_20.md`: 11 ranked spikes (3 transformational, 3 high, 3 moderate, 2 marginal) with paste-ready kickoff prompts. Proposes only; `plan/schedule.yml` untouched. |
+
+**Prospect headline (for the morning):** the ranking's dominant theme is that the entire
+forward-looking backlog is bottlenecked on **N=0 admissible priced races** — so the top items all
+either grow that sample faster (extend to Xfinity/Trucks; automate the weekly loop; the L5 book
+decision) or protect it (a pre-green admissibility self-check to prevent another 5618-style void; and
+fixture-testing the untested `market_benchmark.py` that will decide EDGE/NO-EDGE). Full detail +
+copy-paste prompts in `report/prospect_2026_07_20.md`; reply with item numbers to get a sprint schedule.
+
+The final full `src/run_gates.sh` after all commits: **all 10 green, tree clean.** `git push origin
+main` publishes all eight of tonight's commits (`e8725cf` … `270aee8`) plus this report update.
