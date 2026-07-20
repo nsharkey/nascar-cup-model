@@ -19,26 +19,23 @@ meta:
     Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green.
     Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark
     is at N=0, capture_debt=1. L5+L6 DONE -- STAY MANUAL; L2 moot. F20 vetted the
-    model-book pivot; owner chose DEMOTE + tether. M1-M4 pre-registered, built the
-    pricer, ran the calibration backtest (UNDERPOWERED at K=1, as pre-registered),
-    and shipped the three tether gates (GATES.md 12-14): the market benchmark is now
-    **sovereign and gate-protected**, the model-book a co-equal parallel thread. C4
-    (this session) added silver.caution_segments/stage_results/race_leaders +
-    playoff_round/stage_4_laps on silver.races -- additive reference tables, C-gate
-    still PASS. 14/14 gates green. 'next' is F19 (incentive-state analytics, Tier A
-    -- its preferred prerequisite C4 is now done). M5/F10/F1/F2 stay gated on >=8
-    scored non-SS races; G2 stays gated on market EDGE. E1 never pauses; the
-    benchmark stays the sole roadmap-#5 gate, mechanically enforced.
+    model-book pivot; owner chose DEMOTE + tether. M1-M4 shipped the pricer,
+    calibration backtest, and three tether gates (GATES.md 12-14): the market
+    benchmark is **sovereign and gate-protected**, the model-book a co-equal thread.
+    C4 added silver caution/stage/leader tables + playoff_round. F19 measured the
+    incentive-state lore: cutline-proximity DNF is a null once disaggregated by rank;
+    bubble stage-point spike is real, both directions; locked-in rho decay is a noisy
+    null. 14/14 gates green, no gated surface touched. 'next' is F3 (track-audit
+    calibration -- deps done, H5 routed here). M5/F10/F1/F2 gated on >=8 scored
+    non-SS races; G2 gated on market EDGE. E1 never pauses, the sole #5 gate.
   handoff_note: >-
-    F19 is 'next' as of 2026-07-20 -- incentive-state analytics (playoff pressure,
-    measured) per research/domain_knowledge_scan.md sections 5/10.3. Tier A
-    (analytics only; never joins a feature bank without its own later pre-registered
-    A/B). Descriptive only: crash-class DNF rate vs cutline proximity late in the
-    regular season (2017-2025), bubble drivers' stage-point spikes, locked-in-cohort
-    rho-residual degradation -- plus live 2026 tracking under the new Chase format
-    (playoff points + win-and-in abolished 2026-01-12; 2017-2025 findings are
-    regime-stale for 2026, not assumed to transfer). Model: Sonnet 5, thinking on,
-    effort high. E1 preempts on a race weekend.
+    F3 is 'next' as of 2026-07-20 -- track-audit prior calibration (empirical
+    per-track metrics on gold) per research/track_audit_derivation.md section 3.
+    Pre-register a spec, then build ten empirical metrics (TDS/TPP/PDI/ARS/RVS/PIS/
+    QIS/SFS/DCI/FVS) plus C4-fed additions (caution-cause taxonomy, make-clustering,
+    H5 contender-exclusion check routed from F19). Analytics/reference tier -- never
+    touches the frozen model, no >=8-scored-races gate. Model: Sonnet 5, thinking on,
+    effort xhigh. E1 preempts on a race weekend.
 
 phases:
   - key: "A"
@@ -1087,7 +1084,7 @@ sessions:
   - id: "F3"
     phase: "F"
     title: "Track-audit prior calibration (empirical track profiles on gold)"
-    status: "blocked"
+    status: "next"
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~4-6 hr"
@@ -1119,7 +1116,76 @@ sessions:
       (source vs derived); reference output — no model change without a
       gated A/B.
     deps: ["C2", "D1"]
-    status_note: "audit follow-up (research/track_audit/INTEGRATION.md); needs silver lap/pit/flag (C2) + gold (D1)"
+    status_note: >-
+      Promoted to 'next' 2026-07-20 (F19 close-out): both deps (C2, D1) were
+      already done; this session's C4 lands the caution_segments/stage_results/
+      playoff_round inputs the F16 additions paragraph needs, and F19 explicitly
+      routes H5's contender-exclusion check here rather than building it itself.
+      First-listed among the now-unblocked analytics/reference group
+      (F3/F4/F13/F14 — phase F's own note enumerates them in this order); F13's
+      status_note independently calls itself "complementary to F3's track-grain
+      profiles", i.e. sequenced after it. Audit follow-up
+      (research/track_audit/INTEGRATION.md).
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, specs/README.md (pre-registration discipline), then
+      research/track_audit_derivation.md section 3 (LAYER B: the ten priors ->
+      empirical walk-forward metrics) IN FULL -- that section is this session's
+      execution contract, alongside external_knowledge_scan.md section 7.3 (loop-
+      metric definitions: passes, green-flag restrictions, ARP variants) and
+      domain_knowledge_scan.md section 10.4 (the F16 additions folded in below).
+
+      BUILD session F3 -- track-audit prior calibration. Two-part session: FIRST
+      pre-register a spec (specs/track_profiles.md or similar, following
+      specs/README.md's frozen-once-committed discipline), THEN build against it.
+      Zero design judgment on the frozen model: this is analytics/reference tier
+      (phase F's own note: "Analytics and reference sessions (F3/F4/F13/F14/F19)
+      never touch the frozen model") -- no gated A/B, no walkforward.py/
+      predict_next.py change, no >=8-scored-races gate (that only applies to the
+      roadmap-#4 model A/Bs, not this group).
+
+      1. Pre-register per-metric minimum sample floors (races and
+         events-within-race) a priori -- below the floor, the table reports the
+         family (12 primary_family groups) posterior, not a track-specific number.
+         Grain: (track_id, era_key), per section 3.0's shared machinery.
+      2. Ten metrics, section 3.1-3.10: TDS, TPP, PDI, ARS, RVS, PIS, QIS, SFS,
+         DCI, FVS. Compute each per its own subsection's definition -- do not
+         invent alternatives. Hierarchical shrinkage toward the 12 primary
+         families; shrinkage hyperparameters fixed a priori in the spec, never
+         tuned on outcomes (section 6.4's leakage/circularity guardrail).
+      3. Dual outputs, different governance: gold.track_profiles (full-sample,
+         analytics/DFS/betting reference ONLY -- build-graph-isolated from
+         wf_features, same isolation discipline as the D-gate) and
+         gold.track_profiles_asof (grain adds race_seq, walk-forward: computed
+         from races strictly before each race -- the ONLY variant that could ever
+         be feature-eligible, and only via its own later gated A/B, not this one).
+      4. F16 additions (domain_knowledge_scan.md section 10.4, now buildable since
+         C4 landed caution_segments/stage_results/playoff_round in silver this
+         session): extend ARS/caution metrics to 2017+ results-grade depth using
+         C4's caution-cause taxonomy + lucky-dog beneficiary field; give ARS-b a
+         make-clustering component (draft-alliance correlation at superspeedways,
+         analytics-only, K7 per domain_knowledge_scan.md section 6.3); add an H5
+         contender-exclusion sensitivity check at championship-race cells (does
+         excluding the 4 title contenders change the pace-estimate cell? routed
+         here by F19, NOT a model feature -- 0.3% exposure kills it as one).
+      5. TPP (section 3.2) explicitly excludes anything causal -- defer that to
+         specs/clean_air_causal_pace.md (G1/G2), do not re-litigate identification
+         here. Loop-metric-adjacent definitions (passes, green-flag restrictions,
+         ARP variants) are pinned per external_knowledge_scan.md section 7.3 and
+         SHARED with F13 -- import them, do not re-choose.
+      6. Vendored track_priors (research/track_audit/, C3) stay untouched --
+         source vs derived is a hard line; F3 produces NEW gold tables, never
+         edits the vendored package.
+      7. Output: the spec file, gold_build.py extension (or a sibling module) +
+         a gate proving build-graph isolation (gold.track_profiles never reaches
+         wf_features) + a short report. Update plan/schedule.yml (F3 -> done;
+         re-evaluate the single 'next' among F4/F13/F14, all now also unblocked)
+         and re-render via python src/report_plan.py; run the full gate surface;
+         commit; leave the tree clean.
+      Zero design judgment calls: if section 3's metric definitions are genuinely
+      ambiguous anywhere the spec doesn't resolve, STOP and flag it rather than
+      choosing. If today is a race weekend, E1 duties (predict + admissible
+      capture) come first.
   - id: "F4"
     phase: "F"
     title: "Empirical track similarity vs structural edges (DST)"
@@ -1870,7 +1936,7 @@ sessions:
   - id: "F19"
     phase: "F"
     title: "Incentive-state analytics (playoff pressure, measured)"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-4 hr"
@@ -1900,11 +1966,22 @@ sessions:
       scan §5.2).
     deps: ["C2", "C4"]
     status_note: >-
-      Proposed by F16 (c94f7e7, scan §10.3). C2 met; C4 was the preferred
-      prerequisite (stage_results/playoff_round land in silver there) and is
-      now done (2026-07-20) — promoted to 'next'. Otherwise ungated — analytics
-      tier, frozen model untouched; doubles as the measured version of the
-      "motivation" signal F6 §4.2 marked unmeasured.
+      DONE 2026-07-20. Three findings, report/INCENTIVE_ANALYTICS.md: (a)
+      crash-class DNF rate vs cutline proximity is a clean NULL once
+      disaggregated by rank rather than |distance| (the naive bucketing
+      conflates front-runners with hopeless backmarkers) — the bubble cohort
+      races cleanest, not dirtiest, 2017-2025; (b) bubble stage-point spike
+      confirmed significant and bidirectional (bubble +0.86 vs baseline,
+      p=0.003; locked-in -1.28, p=0.0001; between-cohort p=1.4e-7),
+      2020-2025 — the strongest of the three, a future M-tier A/B candidate
+      pending its own spec; (c) locked-in rho-residual degradation is a
+      noisy, underpowered null (9 season-pairs, Wilcoxon p=1.0). 2026 format
+      break kept unpooled per the kickoff's instruction; playoff_points_earned
+      = 0 independently reconfirmed across all 798 2026 rows. Tier A
+      throughout — no feature bank touched, no gate added. 'next' re-evaluated:
+      F3 promoted (deps C2+D1 both done; directly extended by C4's
+      caution_segments and by this session's H5 routing; file-order-first
+      among the now-unblocked analytics group F3/F4/F13/F14).
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then research/domain_knowledge_scan.md sections 5 (incentive
