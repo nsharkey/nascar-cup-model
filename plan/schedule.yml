@@ -798,7 +798,7 @@ sessions:
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~3-5 hr"
-    ref: "PENDING-COMMIT"
+    ref: "b90a4bf"
     exec_summary: >-
       Moved scoring and the market-edge test onto the new foundation, and proved
       (for real, not simulated) that the new gold-sourced prediction path produces
