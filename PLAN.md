@@ -65,8 +65,8 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | F1 | DNF/status A/B (roadmap #4a, on gold) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~3-6 hr incl. discards | Test whether accounting for HOW a driver dropped out improves predictions — now run on the new foundation. | specs/dnf_status_feature.md (amended) executed against the gold feature layer; adopt iff Wilcoxon p<=0.0167 AND mean delta-rho>=+0.005; gated on >=8 scored races. |
 | F2 | Team/manufacturer pooling A/B (roadmap #4b, on gold) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~3-6 hr | Test teammate and manufacturer form, after the DNF decision — on the new foundation. | specs/team_mfr_pooling.md (amended) on gold; the team_name org key is already clean in silver (no reparse needed); 0.05/6 multiplicity if F1 adopted nothing. |
-| F3 | Track-audit prior calibration (empirical track profiles on gold) | ⬅ next | Sonnet 5 · thinking on · xhigh | ~4-6 hr | Replace the vendored track audit's 1-10 analyst guesses with real measurements from our own lap, pit, and caution data — turning reference priors into calibrated per-track profiles for DFS and betting work. | Pre-register a spec first (specs/README.md discipline) using research/track_audit_derivation.md §3 as the derivation source: the §3 metric definitions with the easy-six (results-grade) / live-data-four split, per-metric sample floors and shrinkage hyperparameters fixed a priori, hierarchical shrinkage toward the package's 12 families. Compute per crosswalk track_id x era from silver laps/pit_stops/flag_events + gold results. Dual outputs: gold.track_profiles (full-sample, analytics-only, build-graph-isolated from wf_features) + gold.track_profiles_asof (walk-forward, feature-eligible only via a gated A/B); FVS/residual metrics pinned to the frozen engine; explicit TPP clean-air exclusion deferring anything causal to specs/clean_air_causal_pace.md. Loop-metric-adjacent definitions (passes, green-flag restrictions, ARP variants) pinned per external_knowledge_scan.md §7.3 and shared with F13 rather than re-chosen. F16 additions (domain_knowledge_scan.md §10.4): caution-cause taxonomy + lucky-dog beneficiary from C4's caution_segments extend ARS/caution metrics to 2017+ results-grade depth; ARS-b gains a make-clustering component (draft-alliance correlation at SS, analytics-only); championship-race cells carry an H5 contender-exclusion sensitivity check. Vendored priors untouched (source vs derived); reference output — no model change without a gated A/B. |
-| F4 | Empirical track similarity vs structural edges (DST) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~3-5 hr | Test whether tracks that look similar on paper actually behave similarly for drivers — replacing the audit's structural guesses with measured skill transfer between tracks. | Pre-register a spec (research/track_audit_derivation.md §4 as source), then compute Driver Skill Transferability: residual = frozen-engine pre-race expected rank replayed from gold (D1); leave-one-season-out CV of driver-residual correlation between track_id/era pairs; family-pair hierarchical pooling with a pre-registered n-floor. Comparison protocol = edge-restricted Spearman + top-3 Jaccard + a named disagreement list vs nascar_track_similarity_edges.csv; structural edges retained as the SOLE donor structure for zero-history configs. Plus a pltree cross-validation (external_knowledge_scan.md §3.9): does model-based recursive partitioning on silver.track_dim physical covariates recover MY_TYPE? Agreement = independent evidence for the frozen pooling key; disagreement feeds the named disagreement list. MY_TYPE untouched — any pooling refinement exits F4 as an A/B candidate, not an adoption. |
+| F3 | Track-audit prior calibration (empirical track profiles on gold) | ✅ done | Sonnet 5 · thinking on · xhigh | ~4-6 hr | Replace the vendored track audit's 1-10 analyst guesses with real measurements from our own lap, pit, and caution data — turning reference priors into calibrated per-track profiles for DFS and betting work. | Pre-register a spec first (specs/README.md discipline) using research/track_audit_derivation.md §3 as the derivation source: the §3 metric definitions with the easy-six (results-grade) / live-data-four split, per-metric sample floors and shrinkage hyperparameters fixed a priori, hierarchical shrinkage toward the package's 12 families. Compute per crosswalk track_id x era from silver laps/pit_stops/flag_events + gold results. Dual outputs: gold.track_profiles (full-sample, analytics-only, build-graph-isolated from wf_features) + gold.track_profiles_asof (walk-forward, feature-eligible only via a gated A/B); FVS/residual metrics pinned to the frozen engine; explicit TPP clean-air exclusion deferring anything causal to specs/clean_air_causal_pace.md. Loop-metric-adjacent definitions (passes, green-flag restrictions, ARP variants) pinned per external_knowledge_scan.md §7.3 and shared with F13 rather than re-chosen. F16 additions (domain_knowledge_scan.md §10.4): caution-cause taxonomy + lucky-dog beneficiary from C4's caution_segments extend ARS/caution metrics to 2017+ results-grade depth; ARS-b gains a make-clustering component (draft-alliance correlation at SS, analytics-only); championship-race cells carry an H5 contender-exclusion sensitivity check. Vendored priors untouched (source vs derived); reference output — no model change without a gated A/B. |
+| F4 | Empirical track similarity vs structural edges (DST) | ⬅ next | Sonnet 5 · thinking on · xhigh | ~3-5 hr | Test whether tracks that look similar on paper actually behave similarly for drivers — replacing the audit's structural guesses with measured skill transfer between tracks. | Pre-register a spec (research/track_audit_derivation.md §4 as source), then compute Driver Skill Transferability: residual = frozen-engine pre-race expected rank replayed from gold (D1); leave-one-season-out CV of driver-residual correlation between track_id/era pairs; family-pair hierarchical pooling with a pre-registered n-floor. Comparison protocol = edge-restricted Spearman + top-3 Jaccard + a named disagreement list vs nascar_track_similarity_edges.csv; structural edges retained as the SOLE donor structure for zero-history configs. Plus a pltree cross-validation (external_knowledge_scan.md §3.9): does model-based recursive partitioning on silver.track_dim physical covariates recover MY_TYPE? Agreement = independent evidence for the frozen pooling key; disagreement feeds the named disagreement list. MY_TYPE untouched — any pooling refinement exits F4 as an A/B candidate, not an adoption. |
 | F5 | Track-audit derivation research spike (what can we derive?) | ✅ done | Fable 5 · thinking on · xhigh | ~3-5 hr | Studied everything the vendored track audit lets us build and mapped each derivation to concrete prediction and simulation features. Found three derivable layers plus a 12-knob simulation surface, and turned them into concrete plan proposals — so the downstream builds are scoped from a complete inventory rather than piecemeal. Report proposes only; no tables built, no frozen spec changed, hash gate green. | Deliverable research/track_audit_derivation.md: (1) full field inventory across all 6 package files, each tagged by evidence class (Verified Fact / Calculated / Strong Inference / Working Hypothesis) and governance tier (freely-usable vs model-gated); (2) LAYER-A join-derivable features usable now via the crosswalk (length/banking/surface/road_course/turns/family/ comparables) -> defines a candidate silver/gold track-dimension table (C3); (3) LAYER-B calibratable metrics — for each of the 10 analyst priors, the leakage-safe walk-forward metric that replaces it and the silver/gold source it needs -> sharpens F3's pre-registered scope; (4) LAYER-C comparability/ similarity derivations -> sharpens F4; (5) SIM parameter map — which track knobs a race simulator needs (position premium, restart volatility, tire-deg curve, pit importance, caution/attrition rates) and which field supplies each, v0-placeholder-from-priors vs calibrated-from-silver; (6) explicit leakage/circularity assessment for anything derived from priors; (7) a ranked catalog where each derivable table/feature becomes a candidate build session. Respects INTEGRATION.md doctrine: source files immutable, derived artifacts separate, nothing feeds the frozen model without its own gated A/B. |
 | F6 | External NASCAR knowledge scan (web research spike) | ✅ done | Fable 5 · thinking on · xhigh | ~2.5 hr | Searched how everyone else models NASCAR — academic papers, betting/DFS analytics, open-source projects, and data sources — with every claim adversarially verified against fetched primary sources. Headline: the strongest transferable idea is changing the model's likelihood (the attrition model, originally proposed for NASCAR, beat standard Plackett-Luce in a walk-forward F1 study), the loop-data metrics everyone uses are derivable from our own archive, and NASCAR's 2025 terms of use got a careful read with a balanced verdict. Proposed five new candidate sessions; built nothing. | Deliverable research/external_knowledge_scan.md (6d5e18e): 103-agent deep-research workflow (21 sources, 99 claims, 25 triple-verified: 23 confirmed 3-0, 2 refuted 0-3) + 7 targeted single-verifier agents on the betting/DFS + data-source claims the budget cut. Verified core: Hunter 2004 estimability trap binds only worth-parameterized extensions (frozen engine is covariate-PL — recorded as a standing spec requirement); attrition/reverse-PL likelihood (Graves 2003 JASA -> Henderson & Kirrane 2018) -> F12; likelihood-level geometric time-weighting folded into F12 conditional on F10; truncated-PL rejected (loses to attrition, misaligned with full-order rho); hierarchical decomposition (van Kesteren & Bergkamp JQAS 2023, constructor 64-88% in F1) -> descriptive F14 as F11 trigger evidence; PL-trees -> F4 addendum; weather null verified (every ELPD delta < SE). Loop-data family (ARP/passes/fastest-laps/closers, 2005+) shown derivable in-house from silver.laps -> F13; same-race Driver Rating circular by construction (finish is a formula input). nascaR.data: Rating column + parquet URLs live-verified, licensing UNRESOLVED (no upstream terms exist) -> F15 owner-gated. NASCAR July-2025 NDM ToS verified via Wayback: scraping + model-development clauses confirmed verbatim, but cf.nascar.com absent from the covered-services list, no ToS link on the feed endpoint, no bot-block -> A6 owner review. F7's four prior-art anchors verified with exact citations (TrueSkill method/domain corrected; reverse-PL predates Graves via Marden 1995). Betting/DFS: H2H market structure + practitioner signals verified as credentialed assertion (zero public backtests anywhere); public DFS baseline confirmed below our 2022 starting point. |
 | F7 | Bayesian modeling assessment (appropriate / better than current?) | ✅ done | Fable 5 · thinking on · xhigh | ~4-6 hr | Assessed three Bayesian formulations against four payoffs (accuracy, calibrated uncertainty, small-sample behavior, interpretability) with compute treated as first-class. Verdicts: B (dynamic state-space skill) = recommend, pre-registered A/B banked; A (hierarchical Bayesian PL) = conditional, banked outline only; C (generative outcome model) = null, recorded with revisit triggers. The recommended path needs no MCMC, no new packages, and minutes of compute. | Deliverable research/bayesian_modeling_assessment.md (b4c00d7). Framing: the current pl_fit(lam=0.5) in walkforward.py is already the MAP estimate of a Gaussian-prior Bayesian PL, so 'go Bayesian' means adding posteriors/ hierarchy/dynamics, not starting over — and posteriors on the current 4 global weights alone buy nothing (likelihood swamps the prior past ~140 races). VERDICTS: (B) dynamic state-space skill — un-freeze the fixed 0.5^(k/8) recency gain via exact scalar Kalman filtering, learned (q,r) as-of via L-BFGS on the Gaussian marginal likelihood — RECOMMEND; the only formulation with a documented accuracy mechanism (the audit's own half-life sensitivity grid), zero new deps, deterministic, minutes/pass; a full two-variant pre-registered A/B is banked in §7, ready to lift (-> F10). (A) hierarchical Bayesian PL (driver/team/mfr/track posteriors, unifying F2 pooling + F3 track work) — CONDITIONAL, bank don't run: not coherent as a static-only model, duplicates F2's question until F1/F2/B are decided; Laplace-first (not MCMC) when it does run; design outline banked in §8 (-> F11, blocked on trigger). (C) generative outcome model (finish jointly with DNF/attrition + cautions) — NULL for now: its bimodal-tail payoff lands on win/top-5/sim surfaces no frozen metric adjudicates (rho and H2H threshold picks can't see it); recorded with three named revisit triggers in the Phase F note (§6: T1 a scored sim/DFS surface adopted, T2 market extends to win/futures pricing, T3 F1 attributes its gain to attrition ordering). Compute/tooling ladder (§3) confirms the recommended path runs in the existing .venv with zero new dependencies. |
@@ -131,72 +131,63 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (F3)
+## Handoff — next session (F4)
 
 **Model & settings:** Sonnet 5, thinking on, effort xhigh.
 
-F3 is 'next' as of 2026-07-20 -- track-audit prior calibration (empirical per-track metrics on gold) per research/track_audit_derivation.md section 3. Pre-register a spec, then build ten empirical metrics (TDS/TPP/PDI/ARS/RVS/PIS/ QIS/SFS/DCI/FVS) plus C4-fed additions (caution-cause taxonomy, make-clustering, H5 contender-exclusion check routed from F19). Analytics/reference tier -- never touches the frozen model, no >=8-scored-races gate. Model: Sonnet 5, thinking on, effort xhigh. E1 preempts on a race weekend.
+F4 is 'next' as of 2026-07-20 -- empirical track similarity vs structural edges (Driver Skill Transferability) per research/track_audit_derivation.md section 4. Pre-register a spec, then compute residual-based track-config similarity (leave- one-season-out CV, frozen-engine residuals replayed on gold -- reuse F3's replay function) and compare against the vendored structural-similarity edges (edge- restricted Spearman + top-3 Jaccard + a named disagreement list), plus a pltree cross-validation of MY_TYPE against silver.track_dim's physical covariates. Analytics/reference tier -- never touches the frozen model, no >=8-scored-races gate. Model: Sonnet 5, thinking on, effort xhigh. E1 preempts on a race weekend.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
 Read HANDOFF.md, specs/README.md (pre-registration discipline), then
-research/track_audit_derivation.md section 3 (LAYER B: the ten priors ->
-empirical walk-forward metrics) IN FULL -- that section is this session's
-execution contract, alongside external_knowledge_scan.md section 7.3 (loop-
-metric definitions: passes, green-flag restrictions, ARP variants) and
-domain_knowledge_scan.md section 10.4 (the F16 additions folded in below).
+research/track_audit_derivation.md section 4 (LAYER C: comparability and
+similarity) IN FULL -- that section is this session's execution contract.
+Also read specs/track_profiles.md (F3, just shipped) section 1.8 and
+report/TRACK_PROFILES.md for the frozen-engine-replay pattern
+(track_profiles_build.replay_frozen_engine, which mirrors
+gate_gold.py's gold_sourced_walk_forward with race_id tagged on) --
+F4 should reuse this rather than re-deriving the same replay machinery,
+and gate_gold.py itself must stay untouched (same discipline F3 followed).
 
-BUILD session F3 -- track-audit prior calibration. Two-part session: FIRST
-pre-register a spec (specs/track_profiles.md or similar, following
-specs/README.md's frozen-once-committed discipline), THEN build against it.
-Zero design judgment on the frozen model: this is analytics/reference tier
-(phase F's own note: "Analytics and reference sessions (F3/F4/F13/F14/F19)
-never touch the frozen model") -- no gated A/B, no walkforward.py/
-predict_next.py change, no >=8-scored-races gate (that only applies to the
-roadmap-#4 model A/Bs, not this group).
+BUILD session F4 -- empirical track similarity vs structural edges (Driver
+Skill Transferability). Zero design judgment on the frozen model: this is
+analytics/reference tier (phase F's own note: "Analytics and reference
+sessions (F3/F4/F13/F14/F19) never touch the frozen model") -- no gated
+A/B, no walkforward.py/predict_next.py change, no >=8-scored-races gate.
 
-1. Pre-register per-metric minimum sample floors (races and
-   events-within-race) a priori -- below the floor, the table reports the
-   family (12 primary_family groups) posterior, not a track-specific number.
-   Grain: (track_id, era_key), per section 3.0's shared machinery.
-2. Ten metrics, section 3.1-3.10: TDS, TPP, PDI, ARS, RVS, PIS, QIS, SFS,
-   DCI, FVS. Compute each per its own subsection's definition -- do not
-   invent alternatives. Hierarchical shrinkage toward the 12 primary
-   families; shrinkage hyperparameters fixed a priori in the spec, never
-   tuned on outcomes (section 6.4's leakage/circularity guardrail).
-3. Dual outputs, different governance: gold.track_profiles (full-sample,
-   analytics/DFS/betting reference ONLY -- build-graph-isolated from
-   wf_features, same isolation discipline as the D-gate) and
-   gold.track_profiles_asof (grain adds race_seq, walk-forward: computed
-   from races strictly before each race -- the ONLY variant that could ever
-   be feature-eligible, and only via its own later gated A/B, not this one).
-4. F16 additions (domain_knowledge_scan.md section 10.4, now buildable since
-   C4 landed caution_segments/stage_results/playoff_round in silver this
-   session): extend ARS/caution metrics to 2017+ results-grade depth using
-   C4's caution-cause taxonomy + lucky-dog beneficiary field; give ARS-b a
-   make-clustering component (draft-alliance correlation at superspeedways,
-   analytics-only, K7 per domain_knowledge_scan.md section 6.3); add an H5
-   contender-exclusion sensitivity check at championship-race cells (does
-   excluding the 4 title contenders change the pace-estimate cell? routed
-   here by F19, NOT a model feature -- 0.3% exposure kills it as one).
-5. TPP (section 3.2) explicitly excludes anything causal -- defer that to
-   specs/clean_air_causal_pace.md (G1/G2), do not re-litigate identification
-   here. Loop-metric-adjacent definitions (passes, green-flag restrictions,
-   ARP variants) are pinned per external_knowledge_scan.md section 7.3 and
-   SHARED with F13 -- import them, do not re-choose.
-6. Vendored track_priors (research/track_audit/, C3) stay untouched --
-   source vs derived is a hard line; F3 produces NEW gold tables, never
-   edits the vendored package.
-7. Output: the spec file, gold_build.py extension (or a sibling module) +
-   a gate proving build-graph isolation (gold.track_profiles never reaches
-   wf_features) + a short report. Update plan/schedule.yml (F3 -> done;
-   re-evaluate the single 'next' among F4/F13/F14, all now also unblocked)
-   and re-render via python src/report_plan.py; run the full gate surface;
-   commit; leave the tree clean.
-Zero design judgment calls: if section 3's metric definitions are genuinely
+1. Pre-register a spec (specs/ following specs/README.md's
+   frozen-once-committed discipline) using research/track_audit_derivation.md
+   section 4 as the derivation source.
+2. Compute Driver Skill Transferability: residual = frozen-engine
+   pre-race expected rank replayed from gold (reuse F3's replay
+   function or mirror it identically); leave-one-season-out CV of
+   driver-residual correlation between track_id/era pairs; family-pair
+   hierarchical pooling with a pre-registered n-floor (mirror F3's
+   K-based shrinkage machinery for consistency unless section 4 dictates
+   otherwise).
+3. Comparison protocol: edge-restricted Spearman + top-3 Jaccard + a
+   named disagreement list vs nascar_track_similarity_edges.csv (silver.
+   track_similarity_prior, C3). Structural edges retained as the SOLE
+   donor structure for zero-history configs (section 4's own rule) --
+   nothing here replaces that role, only adds analytics on top of it.
+4. Plus the pltree cross-validation folded in by F6/9.3
+   (external_knowledge_scan.md section 3.9): does model-based recursive
+   partitioning on silver.track_dim physical covariates recover MY_TYPE?
+   Agreement = independent evidence for the frozen pooling key;
+   disagreement feeds the named disagreement list. MY_TYPE itself is
+   untouched -- any pooling refinement this surfaces exits F4 as a future
+   A/B candidate, never an adoption inside this session.
+5. Vendored track_priors/track_similarity_prior (research/track_audit/,
+   C3) stay untouched -- source vs derived is a hard line.
+6. Output: the spec file, a build module + gate + a short report. Update
+   plan/schedule.yml (F4 -> done; re-evaluate the single 'next' among
+   F13/F14, both now also unblocked, per phase F's own enumerated order)
+   and re-render via python src/report_plan.py; run the full gate
+   surface; commit; leave the tree clean.
+Zero design judgment calls: if section 4's definitions are genuinely
 ambiguous anywhere the spec doesn't resolve, STOP and flag it rather than
 choosing. If today is a race weekend, E1 duties (predict + admissible
 capture) come first.
 ```
 
-**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0, capture_debt=1. L5+L6 DONE -- STAY MANUAL; L2 moot. F20 vetted the model-book pivot; owner chose DEMOTE + tether. M1-M4 shipped the pricer, calibration backtest, and three tether gates (GATES.md 12-14): the market benchmark is **sovereign and gate-protected**, the model-book a co-equal thread. C4 added silver caution/stage/leader tables + playoff_round. F19 measured the incentive-state lore: cutline-proximity DNF is a null once disaggregated by rank; bubble stage-point spike is real, both directions; locked-in rho decay is a noisy null. 14/14 gates green, no gated surface touched. 'next' is F3 (track-audit calibration -- deps done, H5 routed here). M5/F10/F1/F2 gated on >=8 scored non-SS races; G2 gated on market EDGE. E1 never pauses, the sole #5 gate.
+**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0, capture_debt=1. L5+L6 DONE -- STAY MANUAL; L2 moot. F20 vetted the model-book pivot; owner chose DEMOTE + tether. M1-M4 shipped the pricer, calibration backtest, and three tether gates (GATES.md 12-14): the market benchmark is **sovereign and gate-protected**, the model-book a co-equal thread. C4 added silver caution/stage tables + playoff_round. F19 measured incentive- state lore: cutline-proximity DNF is a null once disaggregated by rank; bubble stage-point spike is real; locked-in rho decay is a noisy null. F3 shipped gold.track_profiles/track_profiles_asof (ten empirical metrics + F16 additions), analytics-only, build-graph isolated. 15/15 gates green. 'next' is F4 (track similarity / DST). M5/F10/F1/F2 gated on >=8 scored non-SS races; G2 gated on market EDGE. E1 never pauses, the sole #5 gate.
