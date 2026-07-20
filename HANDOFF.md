@@ -345,6 +345,8 @@ research/           vendored external research (track_audit/ — immutable
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate
+GATES.md            the 8-gate health surface + interpreter split;
+                    run `src/run_gates.sh` to prove all 8 green in one command
 DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
                     JSON, CSV contracts, raw cf.nascar.com feeds)
 src/                pipeline: download.py, parse_lib.py, parse.py,
