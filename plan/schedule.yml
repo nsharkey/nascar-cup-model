@@ -2239,7 +2239,7 @@ sessions:
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-3 hr"
-    ref: null
+    ref: "496170b"
     exec_summary: >-
       Made "the benchmark stays sovereign" a machine-checked fact, not a promise -- and
       formalized the demote in the same session that shipped its protection.
