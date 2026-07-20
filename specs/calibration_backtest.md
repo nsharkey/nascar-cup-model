@@ -408,9 +408,113 @@ stopping has no value.
 
 ---
 
-## RESULT — calibration backtest (to be filled by M3, on run)
+## RESULT — calibration backtest (M3, 2026-07-20)
 
-*(dated run outcome: baseline replication asserted; the primary H2H BSS verdict on
-the forward stream with its K/N and bootstrap bounds; the sealed secondary family;
-the dual pooled + per-type reliability curves; the power triage; the C-trigger
-split; numpy/interpreter environment. Filled by M3, not M1.)*
+**Built, baseline replication PASS, tree clean.** `src/calibration_backtest.py` implements section
+10's checklist: runs the frozen walk-forward with `collect_preds` against `data/anchors/
+races_parsed_anchor_20260719.pkl` (the same frozen anchor `gate_gold.py`'s R0 uses, its functions
+reused verbatim — see the resolved-not-flagged register below for why this reading of "the frozen
+anchor" was taken over the live, weekly-growing `races_parsed.pkl`); asserts baseline replication
+(0.413 / 0.476 / 0.447, exact match to 3dp) **before** reading any calibration number; builds the
+as-of Bradley–Terry marginal baseline (non-SS pairwise-win fraction, `<5` prior non-SS races →
+`s_d=0.5`); prices every IN-SAMPLE/2026-OOS race via `pricing_layer.price_race`; reads the FORWARD
+stream directly from the sealed prediction JSON (`h2h_prob`/`p_win`/`p_top10`, never re-priced, per
+section 1's forward-stream definition and `specs/pricing_layer.md` section 2 point 1); grades all
+three strata. Full detail, every cell, every reliability curve: `report/CALIBRATION_BACKTEST.md`.
+
+**Baseline replication: PASS.** backtest=0.413, non-SS=0.476, 2026-OOS=0.447 — exact match, computed
+against the anchor exactly as `gate_gold.py`'s R0 does (128 scored races collected via `collect_preds`
+for the combined 2022–2026 sweep: 108 pre-2026 + 20 in 2026).
+
+**SECTION 3 — the ONE primary decision.** Forward stream = race 5618 only (**K=1 non-SS forward
+race, N=666 graded H2H pairs** — confirmed honest, not padded). Race-clustered bootstrap
+(`B_CALIB=10000`, `CALIB_SEED=20260720`): point BSS = **0.0010**, one-sided 95% bounds
+`[0.0010, 0.0010]` (degenerate — a single-cluster bootstrap carries no resampling variance by
+construction, correctly signaling "no variance information available at K=1" rather than a false
+precise interval). Per the terminal-only amendment, **every look before K≥60 (or 2028-02-15) is
+UNDERPOWERED by definition** — this look does not attempt, and correctly does not declare,
+CALIBRATED-SKILL or NULL. **VERDICT: UNDERPOWERED** (interim look; terminal look not reached). This
+is the correct, pre-registered outcome at N=1, not a shortfall.
+
+**SECTION 6 — sealed secondary family** (Bonferroni `α_sec=0.05/6≈0.0083`, non-citable, at-most-one
+action, all gated on the section-3 primary being CALIBRATED-SKILL at a terminal look — not reached,
+so **no action is taken from this family today**):
+
+| cell | point | 95% bounds | K | N |
+|---|---|---|---|---|
+| S1 H2H log-loss skill (forward, non-SS) | −0.0021 | degenerate (K=1) | 1 | 666 |
+| S2 top-10 BSS vs climatology `min(10,n)/n` (forward, non-SS) | 0.0420 | degenerate (K=1) | 1 | 37 |
+| S3 H2H reliability slope/intercept (forward, non-SS, descriptive) | slope=2.30, intercept=−0.72 | — | — | — |
+| S4 per-track-type H2H BSS (forward) | SHORT only: 0.0010 (race 5618's own type; no other type has forward data yet; SS: N=0) | — | — | 666 |
+| S5 win BSS vs climatology `1/n` (forward, non-SS, tail market, descriptive) | 0.0120 | — | — | 37 |
+| S6 H2H BSS, 2026-peeked cut (non-SS, pooled) | 0.0528 | `[0.0357, 0.0703]` | 16 | 10,697 |
+
+**Dual pooled + per-track-type reliability (launder ban enforced — SS always reported separately,
+never merged into "pooled"):** IN-SAMPLE (128 races, 2022–2026) pooled non-SS H2H BSS = **0.0307**
+(SS = **−0.0131**, confirming near-zero/no skill at superspeedways, consistent with audit doctrine);
+per-type INT=0.0207, SHORT=0.0347, ROAD=0.0511, OTHER=−0.0130 (n=561, Bristol Dirt only, thin).
+Win pooled non-SS BSS=0.0202; top-10 pooled non-SS BSS=0.1193. 2026-OOS (20-race subset) pooled
+non-SS H2H BSS=0.0528 (matches S6 above by construction), SS=−0.0193. Every reliability curve (10
+equal-mass bins, Murphy reliability/resolution decomposition, fitted line) for every market × stratum
+× type combination is in the full report. **Consistent underconfidence signature** (fitted
+reliability-line slope > 1, intercept < 0) appears in every non-SS H2H cut at every stratum — e.g.
+IN-SAMPLE pooled non-SS slope=1.85, intercept=−0.42 — matching the audit's known finding (says 64%,
+reality 74%) and never contradicted by any cut in this run.
+
+**SECTION 7 — power triage.** Decision-grade scope is pooled non-SS H2H (primary) and top-10 (S2)
+only; win/group markets are never decision-grade in a realistic horizon; SS markets are stand-down,
+never a verdict; per-track-type cells are underpowered per-type. Today: K_forward_nonss=1 against
+the K≥20 interim floor and K≥60 terminal floor — every look returns UNDERPOWERED by construction.
+
+**SECTION 9 — C-trigger split.** Non-SS tail (S5, win): **T1 NOT ARMED** — arming requires "a
+documented finding of systematic miscalibration," which a single race cannot establish; the forward
+win-market numbers are reported for monitoring only, and whether they eventually arm T1 is a
+question for a later, better-powered look. SS: the forward stream has **0 SS pairs** to date (race
+5618 was SHORT); the in-sample/2026-peeked SS cells above are historical/dev-only and would confirm
+the pre-registered stand-down (never route to C) even if poorly calibrated.
+
+**Zero genuine design-judgment escalations were needed.** Two implementation choices were required
+to bridge already-frozen interfaces and are resolved here (full reasoning in the report and the
+script's own docstring), not escalated:
+
+1. **Baseline replication reads `data/anchors/races_parsed_anchor_20260719.pkl`**, the same frozen
+   anchor `gate_gold.py`'s R0 uses (its `load_anchor`/`run_reference`/`headline_trio` are reused
+   verbatim) — not the live `races_parsed.pkl`, which now includes race 5618 itself (scored the day
+   before this session) and would no longer reproduce 0.447 exactly (a 21st 2026 race would enter
+   the mean). The spec's own words, "must reproduce **the frozen anchor**," name this exact artifact.
+2. **`walkforward.run`'s `collect_preds` hook returns `(u, actual, track_type, date)` with no
+   `driver_id`**, but the as-of BT baseline needs driver identity to carry a lifetime record across
+   races. `replay_elig_sequence` reproduces only the eligibility/history bookkeeping (never the PL
+   fit) against the same `RACES` object to recover it — verified byte-for-byte (same count, same
+   date, same length, elig-derived finish vector == `actual`) against all 128 collected races before
+   use. This is the same "faithful side-channel replay" pattern `gate_gold.py`'s own R2/R3 already
+   use to recover per-driver identity from this engine without editing it.
+
+**Also resolved (not flagged), for the record:**
+- A genuine **sign bug was caught and fixed during the build**: `collect_preds`'s `u` is fit on `-X`
+  (walkforward.py's own comment: "w fit on -X, so u aligns with finish position") and correlates
+  *positively* with finish position (higher u = worse), the opposite of `pricing_layer`'s "higher =
+  better" convention (`predict_next.py` computes `util = -(X @ w)`). Confirmed empirically
+  (`spearmanr(u, actual) > 0`, matching the engine's own reported positive `rho_PL_fpts`) before
+  fixing: `u` is negated before every call to `price_race` for IN-SAMPLE/2026-OOS races. The FORWARD
+  stream needed no such fix — it reads the JSON's own already-correctly-signed `utility` field
+  directly (never touches `collect_preds`'s convention at all).
+- H2H pairs are graded whenever `h2h_prob` is defined and finishes differ; `p==0.5` is **not**
+  skipped (unlike the discrete-pick rule in `specs/scoring_methodology.md` section 4) — a proper
+  score handles `p=0.5` natively (it contributes exactly 0.25 to the Brier sum), and the skip rule
+  there exists only because a discrete pick needs a side to take, which this spec's population never
+  requires.
+- S5 (win) has no stated baseline; S2's is given explicitly (`min(10,n)/n`, climatology). S5's is
+  taken as the same form generalized to N=1: `1/n` ("each driver equally likely to win") — the direct
+  analogue of S2's own formula, not an invented statistic.
+- `pricing_layer.score_floor` (`ε=1.25e-5`) is applied to every analytic probability — H2H, win,
+  *and* the as-of BT baseline — before it enters any Brier or log-loss computation, extending section
+  5.2's stated log-loss floor to the baseline symmetrically (a driver with a lifetime of losses can
+  produce `s_d=0.0` exactly, which would blow up a log-loss term unfloored) and to Brier for
+  uniformity. MC-derived top-10 values need no floor (already add-half smoothed).
+- Real `race_id` (the anchor's own `rid` field) and real recovered `driver_id`s are used for
+  `price_race`'s seed/identifiers on IN-SAMPLE/2026-OOS races — no synthetic ids were needed anywhere.
+
+**No frozen-spec edit; no change to `predict_next.py` / `walkforward.py` / `scores_log.csv`.** Gate
+surface: 11/11 green before and after (M3 has no frozen-gate obligation of its own; none added).
+Environment: conda Python 3.13.5, numpy 2.1.3 (matches the pinned pricing-layer environment).

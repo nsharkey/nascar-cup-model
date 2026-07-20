@@ -2100,7 +2100,7 @@ sessions:
   - id: "M3"
     phase: "M"
     title: "Run the walk-forward calibration backtest (frozen PL)"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~2-4 hr"
@@ -2123,12 +2123,21 @@ sessions:
       touch.
     deps: ["M2"]
     status_note: >-
-      unblocked 2026-07-20 -- M2 (the pricer) is done, 11/11 gates green. Decision-grade
-      evidence is the FORWARD stream only, which is N=1 today -- so M3's primary verdict
-      will be UNDERPOWERED until ~one forward season accrues (the pre-registered
-      terminal-only amendment makes this the correct outcome, not a shortfall); the
-      in-sample run is a labeled dev smoke test. Sonnet 5 xhigh (numbers must be right);
-      the judgment was spent in M1.
+      2026-07-20: DONE. Baseline replication PASS (0.413/0.476/0.447, exact, vs the
+      frozen anchor). Primary (section 3): K=1 non-SS forward race (5618), N=666 H2H
+      pairs, point BSS=0.0010, degenerate bootstrap at K=1 -- VERDICT UNDERPOWERED, the
+      pre-registered outcome (K>=60 needed to declare). Sealed secondary S1-S6
+      computed, non-citable, no action taken. IN-SAMPLE (128 races) + 2026-OOS (20
+      races) both show small positive pooled non-SS H2H BSS (0.0307 / 0.0528), SS
+      near-zero/negative, a consistent underconfidence reliability signature matching
+      the audit. F7-C trigger T1 NOT ARMED (N=1 insufficient for a "documented
+      finding"). A sign bug (collect_preds' u is opposite of pricing_layer's
+      higher=better convention) was caught and fixed mid-build; forward stream
+      unaffected. Zero judgment escalations -- two interface-bridging choices resolved
+      and recorded (anchor pkl for baseline reproduction; a faithful eligibility replay
+      recovering driver_id, gate_gold's own R2/R3 pattern). No frozen-spec edit, no
+      engine change. 11/11 gates green. M4 is the single 'next' (already co-startable
+      off M1; UNDERPOWERED does not block it). Full detail: report/CALIBRATION_BACKTEST.md.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, then specs/calibration_backtest.md IN FULL, including the
@@ -2175,7 +2184,7 @@ sessions:
   - id: "M4"
     phase: "M"
     title: "Ship the 3 tether gates + formalize the demote"
-    status: "pending"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-3 hr"
@@ -2195,14 +2204,69 @@ sessions:
       co-equal). clean_air_causal_pace.md is FROZEN and only read.
     deps: ["M1"]
     status_note: >-
-      startable off M1 (done) -- 'pending' because the plan allows one 'next', assigned
-      to M3 (2026-07-20) to continue the pivot's natural M1->M2->M3 chain now that M2 is
-      done. M4 remains co-startable any time (its only dep, M1, is done) if the owner
-      wants to prioritize formalizing the demote ahead of M3. M4 ships "in the same beat
+      2026-07-20: promoted to 'next' -- M3 is done (UNDERPOWERED at N=1, exactly the
+      pre-registered outcome, not a blocker). M4 was already co-startable off M1 (done)
+      and is the natural continuation of the pivot chain. M4 ships "in the same beat
       that demotes" (memo section 1.2), so the demote is NOT formalized until M4's gates
       exist -- until then the standfirst keeps the benchmark sovereign. The sentinels the
       gates read are planted by M1 (HANDOFF doctrine line + the two new specs). Sonnet 5
       high.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, then specs/tether_gates.md IN FULL -- it is the execution
+      contract for this session and pre-resolves every design choice (the sentinel
+      strings M1 already planted, each gate's pinned RED condition, the token lists for
+      gates B/C). Also skim GATES.md (the existing 11-gate registry + the two-
+      interpreter split) and specs/calibration_backtest.md's RESULT block (M3, just
+      done -- confirms the sentinels the gates read are already in place and unchanged).
+
+      BUILD session M4 -- the three tether gates + formalize the demote, per
+      specs/tether_gates.md's "Wiring + verification" section. Zero design judgment:
+      every choice is pre-resolved; genuine ambiguity means STOP and flag (as
+      C1/D1/M2/M3 did), not choose.
+      1. src/gate_benchmark_liveness.py (Gate A): reuse market_benchmark.py's own
+         functions (load_all_predictions, load_snapshot, find_primary_book,
+         graded_picks_for_race, reconstruct_and_decide) verbatim -- never recompute
+         admissibility by a different rule. Print N, K, verdict, last admissible priced
+         race, capture_debt = P_scored_nonSS - K_adm. RED iff predictions_active (a
+         committed prediction within LIVE_WINDOW_DAYS=45) AND capture_debt > TOL_DEBT=2.
+         Unresolvable races are excluded from both counts and flagged, never counted as
+         debt.
+      2. src/gate_calibration_not_edge.py (Gate B): hermetic static scan over
+         {README.md, HANDOFF.md, specs/*.md, report/*.md}. Assert the two positive
+         sentinels present verbatim (doctrine line in HANDOFF; the two non-substitution
+         phrases in calibration_backtest.md section 0). RED iff any line has an
+         EDGE-token AND a CALIBRATION-token with no SEPARATION-phrase (the three token
+         lists are given verbatim in the spec).
+      3. src/gate_five_market_gated.py (Gate C): hermetic static scan. Assert
+         clean_air_causal_pace.md section 0 references market_benchmark_decision_rule.md
+         + "EDGE" + "UNDERPOWERED does not unlock", and contains NO calibration token in
+         that section. RED iff any line has a #5-token AND an UNLOCK-token AND a
+         CALIBRATION-token with no SEPARATION-phrase. Assert calibration_backtest.md
+         section 3's sentinel-3 clause is present.
+      4. Wire all three into src/run_gates.sh (conda interpreter, after gate_pricing.py)
+         and GATES.md (numbers assigned at wiring time, never hard-coded -- GATES.md is
+         the numbering authority); note Gate A is state-dependent (may legitimately red
+         on real capture debt) while B/C are hermetic. CONFIRM each goes red on an
+         injected violation (spec section "Wiring + verification" point 2 gives the
+         exact injection for each) before declaring done -- record the proof in the M4
+         report.
+      5. Formalize the demote in the SAME commit: update plan/schedule.yml's
+         standfirst/bottom_line and HANDOFF so the benchmark is described as
+         sovereign-and-gate-protected with the model-book as a co-equal parallel
+         thread.
+      6. Fill "## RESULT -- tether gates" (dated) in the spec. Run the full gate
+         surface (all green, gate A green because capture is not yet behind); update
+         plan/schedule.yml (M4 -> done; re-evaluate 'next'); re-render via
+         python src/report_plan.py; commit; leave the tree clean.
+      HARD CONSTRAINTS: no change to predict_next.py / walkforward.py / scores_log.csv;
+      clean_air_causal_pace.md is FROZEN and only read, never edited; no frozen-spec
+      edit elsewhere (only the RESULT block is filled). If a race weekend falls, E1
+      duties (predict + admissible capture before the scheduled green) come first.
+
+      Model: Sonnet 5, thinking on, effort high. On start, confirm the running model +
+      settings match before substantive work; escalate to Opus on any genuine judgment
+      call rather than guessing.
   - id: "M5"
     phase: "M"
     title: "Optional PL+Bayesian ensemble A/B"

@@ -423,19 +423,44 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   change to `predict_next.py` / `walkforward.py`; H2H pick rule (ITT continuity)
   untouched. All 11 gates green before (10/10, inherited) and after. Full detail:
   `specs/pricing_layer.md` `## RESULT — pricing layer`.
-- **Next single step (plan `next` = M3):** run the walk-forward calibration
-  backtest per `specs/calibration_backtest.md`, consuming M2's pricer
-  (**Sonnet 5 · thinking on · xhigh**; the judgment was spent in M1). The forward
-  stream is race 5618 only (N=1) today, so the primary H2H BSS verdict will be
-  **UNDERPOWERED** by the pre-registered terminal-only rule — the correct outcome,
-  not a shortfall. The verbatim kickoff is in `plan/schedule.yml` (session M3) and
-  rendered in `PLAN.md`. M4 (ship the 3 tether gates + formalize the demote)
-  remains co-startable off M1 any time the owner wants to prioritize it ahead of
-  M3. Independently, the standing weekly loop (E1) fires at the next Cup race —
-  predict / seal / push before the green flag, record closing prices **before the
-  scheduled flag** (5618's were post-flag → inadmissible), then score after
-  results post. The D2 cutover still needs a **second** scored,
-  *admissibly-priced* race before its two-clean-cycle bar can be assessed.
+- **2026-07-20 (M3 done — calibration backtest run):** `src/calibration_backtest.py`
+  built and run per `specs/calibration_backtest.md` section 10. Baseline
+  replication **PASS** (0.413/0.476/0.447, exact, against the frozen anchor
+  `gate_gold.py`'s R0 uses). Primary decision (section 3): forward stream =
+  race 5618 only, **K=1 non-SS forward race, N=666 H2H pairs**, point BSS=0.0010
+  (degenerate bootstrap bounds at K=1) — **VERDICT: UNDERPOWERED**, exactly the
+  pre-registered outcome at N=1 per the terminal-only amendment (K≥60 needed to
+  declare CALIBRATED-SKILL/NULL). Sealed secondary family (S1–S6) computed and
+  reported, non-citable, no action taken (gated on a terminal CALIBRATED-SKILL
+  primary, not reached). IN-SAMPLE dev smoke test (128 races, 2022–2026) and the
+  2026-OOS peeked cut (20 races) both show a positive, small pooled non-SS H2H
+  BSS (0.0307 and 0.0528 respectively) with SS near-zero/negative as expected
+  (confirms stand-down, not a C-trigger), and a consistent underconfidence
+  reliability signature (fitted slope>1, intercept<0) matching the audit's known
+  finding at every non-SS cut. F7-C trigger T1: **NOT ARMED** (N=1 forward race
+  cannot establish a "documented finding"). A genuine sign bug was caught and
+  fixed mid-build: `walkforward.run`'s `collect_preds` utility is fit on `-X`
+  (higher u = worse finish, the opposite of `pricing_layer`'s "higher=better"
+  convention) — confirmed empirically and negated before pricing IN-SAMPLE/2026
+  races; the FORWARD stream was unaffected (reads the JSON's own already-correct
+  `utility` field). Full detail: `report/CALIBRATION_BACKTEST.md`,
+  `## RESULT — calibration backtest` in the spec. No frozen-spec edit; no change
+  to `predict_next.py`/`walkforward.py`/`scores_log.csv`. Gate surface 11/11
+  green before and after (M3 has no gate obligation of its own).
+- **Next single step (plan `next` = M4):** ship the 3 tether gates + formalize
+  the demote, per `specs/tether_gates.md` (**Sonnet 5 · thinking on · high**).
+  This is the natural continuation of the M1→M2→M3 pivot chain and was already
+  co-startable off M1; M3's UNDERPOWERED (as pre-registered) result does not
+  block it. The verbatim kickoff is in `plan/schedule.yml` (session M4) and
+  rendered in `PLAN.md`. Independently, the standing weekly loop (E1) fires at
+  the next Cup race — predict / seal / push before the green flag, record
+  closing prices **before the scheduled flag** (5618's were post-flag →
+  inadmissible), then score after results post. The D2 cutover still needs a
+  **second** scored, *admissibly-priced* race before its two-clean-cycle bar can
+  be assessed. The calibration backtest (M3) should be re-run periodically as
+  the forward stream accrues non-SS races toward K≥20 (interim, no decision
+  weight) and K≥60 (terminal, decision-grade) — no new session is required to
+  re-run it, just `python3 calibration_backtest.py` from `src/`.
 
 ## Roadmap (agreed order — do not skip ahead)
 
