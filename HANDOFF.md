@@ -287,13 +287,29 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   F18 (personnel-change A/B, gated), F19 (incentive-state analytics,
   Tier A), plus F3/F9 tightenings. Proposes only — no model code, no
   frozen spec touched.
-- **Next single step:** re-run the D2 checklist's scoring step once race 5618
-  posts results: `bronze_fetch.py --update` → `--sync-legacy-cache 5618` →
-  `score_race.py 5618`. No further gold build/gate engineering is required —
-  D1's gate and D2's dual-run check already cover the mechanics; what remains
-  is calendar-gated (waiting on the race), not code-gated. Once a second
-  scored, priced race exists, revisit whether cutover's two-clean-cycle bar
-  is met.
+- **2026-07-20 (E1 / forward-test #1 SCORED — race 5618):** North Wilkesboro
+  (SHORT, 2026-07-19) scored per the frozen `specs/scoring_methodology.md` via
+  the D2 medallion path (`bronze_fetch.py --update` → `--sync-legacy-cache 5618`
+  → `score_race.py 5618`). **rho=0.5458** (n=37 common set), h2h_acc=0.6877 over
+  666 pairs, book_n=3 / book_agree_n=3 / model_beats_book_n=0 on the 3 recorded
+  DraftKings matchups. Hash seal verified (pristine `book_prices` restore matched
+  the sealed sha256); results snapshot frozen to `_wf_scored.json` per the
+  results-finality amendment. The 3 book prices carry the `post-race price entry`
+  note — first committed 23:26 UTC vs the 23:00 scheduled green flag — so they are
+  **inadmissible for the market-benchmark statistic** (that spec's §2), though
+  fully valid for `score_race.py`'s descriptive counts; the market benchmark
+  therefore still has **0 admissible priced races**. `predictions/scores_log.csv`
+  created with its first row. All 8 gates green before and after — scoring touches
+  no gated surface (the anchor pkl and gold views are unchanged; bronze/silver are
+  gitignored foundation).
+- **Next single step:** continue the standing weekly loop (E1) at the next Cup
+  race — predict / seal / push before the green flag, and this time record closing
+  book prices **before** the flag (5618's were post-flag, hence inadmissible). Then
+  score after results post. No further gold build/gate engineering is required —
+  D1's gate and D2's dual-run check cover the mechanics; what remains is
+  calendar-gated, not code-gated. One scored race now exists (5618); the D2 cutover
+  still needs a **second** scored, *admissibly-priced* race before its
+  two-clean-cycle bar can be assessed.
 
 ## Roadmap (agreed order — do not skip ahead)
 
