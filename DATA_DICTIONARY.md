@@ -477,3 +477,49 @@ unaffected and still compares by exact `==`. `fepace` is not used by the
 production model (`walkforward.py`'s frozen feature set is `[fin, pace,
 typed, start]`, `pace=pace_med85`) — see report §7's "proven dead end."
 Full per-race, per-driver diff detail: `report/SILVER_REGRESSION.md`.
+
+### 9e. C2 breadth tables — `data/silver/*.parquet` (medallion rebuild, C2)
+
+Eight tables built by `silver_build.py`'s `build_silver_breadth()` (section 3.4 of the medallion
+spec) — no parity obligation, built in DuckDB SQL directly over bronze `json.gz` files (one file
+per query, explicit `columns=` schema, to avoid cross-season type-drift in DuckDB's JSON
+auto-detection). Every table carries `series_id, race_id`. Common key map applied at extraction:
+`NASCARDriverID→driver_id`, `LapTime→lap_time`, `Lap→lap`, `RunningPos→running_pos`,
+`FlagState→flag_state`, `LapsCompleted→laps_completed`. Dedupe rule: exact-duplicate rows dropped
+silently; same-key-different-value conflicts keep the first row and are counted. Full build
+report (row counts, dedupe/conflict counts, pit-stop resolution stats): `report/SILVER_BREADTH.md`.
+
+| table | grain | source | key columns |
+|---|---|---|---|
+| `silver.results` | driver-race | `weekend-feed` `weekend_race[0].results[]`, flattened verbatim | `(series_id, race_id, driver_id)` |
+| `silver.laps` | driver-lap | `lap-times` `laps[].Laps[]` | `(series_id, race_id, driver_id, lap)` |
+| `silver.lap_flags` | lap | `lap-times` `flags[]` | `(series_id, race_id, laps_completed)` |
+| `silver.flag_events` | event (ordered) | `live-flag-data` (root-level array) | `event_seq` (file order); no smaller natural key than full row content |
+| `silver.pit_stops` | stop (ordered) | `live-pit-data` (root-level array) | `stop_seq` (file order); `driver_id` resolved (see below) |
+| `silver.lap_notes` | note | `lap-notes` (`{"laps": {lap_str: [...]}}`, a map keyed by lap number) | `(series_id, race_id, note_id)` |
+| `silver.practice_runs` | driver-run | `weekend-feed` `weekend_runs[].results[]` | `(series_id, race_id, weekend_run_id, driver_id)` |
+| `silver.live_final` | driver-race (final frame) | `live-feed` `vehicles[]` (latest stored snapshot = the post-race final frame) | `(series_id, race_id, driver_id)` |
+
+Notes:
+
+- `silver.results` is built for **every** race with a stored `weekend-feed`, including races
+  `silver.driver_race` skips (non-Cup, non-points, or parse-failed) — it is a superset by design.
+- `silver.live_final.driver` is a nested object (`driver_id, full_name, first_name, last_name,
+  is_in_chase`) flattened to `driver_id, driver_full_name, driver_first_name, driver_last_name,
+  driver_is_in_chase`. `laps_led` there is a `LIST<STRUCT(start_lap, end_lap)>` (lap ranges led),
+  distinct from `silver.results.laps_led` (an integer count) — same field name, different feed,
+  different shape; not to be confused.
+- `silver.pit_stops.driver_id` resolution (section 3.4): join `vehicle_number` to
+  `silver.results.car_number` (trimmed strings, within race, only if the match is unique); else
+  exact `driver_name == driver_fullname` (within race, only if unique); else `NULL`. 112,596 of
+  113,423 rows (99.3%) resolved by car number, 2 by name, 825 unresolved — see
+  `report/SILVER_BREADTH.md` for the two known unresolved patterns (the race-5580 `weekend_race`
+  null gap, and Cup-crossover drivers appearing in a lower-series race's shared pit-road feed).
+- `src/warehouse.py`'s `build_warehouse()` registers all eight as DuckDB views over their parquet
+  files when present, same rebuildable-from-disk pattern as `silver.races`/`silver.driver_race`.
+- Incremental build state: `data/silver/_breadth_build_state.parquet`, keyed by
+  `(series_id, race_id)`, fingerprint = `sha256("breadth_v{N}|" + joined shas of whichever of the
+  six section-3.4 feeds are currently stored for that race)`. `N` (`BREADTH_VERSION` in
+  `silver_build.py`) is bumped on any section-3.4 transform change, forcing a full rebuild —
+  independent of `silver.driver_race`'s own `PARSER_VERSION`/build state, so a breadth-only logic
+  change never forces an unnecessary re-parse of the frozen parity path (and vice versa).
