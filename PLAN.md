@@ -2,7 +2,7 @@
 
 *As of 2026-07-20 · format v1 · source `plan/schedule.yml`, rendered by `src/report_plan.py` — do not hand-edit.*
 
-The single living plan for a walk-forward Plackett-Luce model of Cup Series finishing order, run as a live forward test against the closing-line market. It spans governance (audit, specs, adversarial review), a bronze/silver/gold data foundation, and a gated backlog of feature, likelihood, causal, and Bayesian experiments — under two invariants: nothing changes the frozen model without a pre-registered, walk-forward-gated A/B, and the perishable weekly market capture never pauses. Rendered from data, kept here and nowhere else.
+The single living plan for a walk-forward Plackett-Luce model of Cup Series finishing order. It spans governance (audit, frozen specs, adversarial review), a bronze/silver/gold foundation, a gated backlog of feature/likelihood/causal/ Bayesian experiments, and a co-equal model-book thread — diagnostic Monte-Carlo pricing plus a pre-registered calibration backtest — under three invariants: the frozen model changes only via a pre-registered walk-forward-gated A/B; the perishable market capture never pauses and stays the sovereign, gate-tethered external judge; calibration is model-quality, never edge.
 
 ## Phase A — Foundation & pre-registration (governance)
 
@@ -59,7 +59,7 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 
 ## Phase F — Feature experiments (gated: >=8 scored, on gold)
 
-*Sonnet 5 · thinking on · xhigh* — The pre-registered feature A/Bs, run against the gold feature layer — specs frozen and carried over, each adopted only on its own walk-forward gate; nothing enters the frozen model without one. Two families: the roadmap-#4 A/Bs (F1 DNF then F2 pooling, serial; gated on >=8 scored races) and the track-audit / external-scan follow-ups (F3/F4, F8-F19). Analytics and reference sessions (F3/F4/F13/F14/F19) never touch the frozen model. The four research spikes are done and folded into the session rows: F5 (26dff0c) scoped the track-audit derivations (C3, F3/F4, F8/F9); F6 (6d5e18e) scanned external NASCAR work (F12-F16, A6, the F3/F4 tightenings); F7 (b4c00d7) assessed Bayesian formulations (F10 recommended, F11 conditional, and the generative-outcome model decided NULL — re-proposable only on one of three triggers recorded in the assessment §6); F16 (c94f7e7) swept the sport's own domain knowledge against a verified in-feed inventory (C4, F18, F19, F3/F9 tightenings, the 2026 Chase-format break handed to F9). Per-session rows carry the exact gates, deps, and provenance.
+*Sonnet 5 · thinking on · xhigh* — The pre-registered feature A/Bs, run against the gold feature layer — specs frozen and carried over, each adopted only on its own walk-forward gate; nothing enters the frozen model without one. Two families: the roadmap-#4 A/Bs (F1 DNF then F2 pooling, serial; gated on >=8 scored races) and the track-audit / external-scan follow-ups (F3/F4, F8-F19). Analytics and reference sessions (F3/F4/F13/F14/F19) never touch the frozen model. The four research spikes are done and folded into the session rows: F5 (26dff0c) scoped track-audit derivations (C3, F3/F4, F8/F9); F6 (6d5e18e) scanned external work (F12-F16, A6); F7 (b4c00d7) assessed Bayesian formulations (F10 recommended, F11 conditional, generative model C decided NULL); F16 (c94f7e7) swept domain knowledge (C4, F18, F19, 2026 Chase-format break to F9). C's trigger T1 is now ARMED by phase M's calibration backtest for non-SS tails only — SS is stand-down, not a C-target; C stays gated until owner election.
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
@@ -82,7 +82,19 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | F17 | SMT broadcast-telemetry feed feasibility + acquisition spike | pending | Fable 5 · thinking on · xhigh | ~4-6 hr | Determine whether NASCAR's rich broadcast telemetry — the SMT data behind the on-air throttle/brake/GPS graphics — can be obtained for this project, and if so how and under what terms. The owner's former-crew-chief contact confirms the data exists on broadcast- and team-related servers, and a peer-reviewed study describes the SMT feeds as public. This heavy research spike settles which of three doors is actually open to a personal research archive: a public fan-facing feed we could fetch the way we already fetch NASCAR's timing data, a licensing or relationship path, or a dead end — deciding the terms-of-use posture first, before any endpoint is touched. Proposes only; builds nothing. | Heavy multi-agent deep-research spike in F6's mold — claims adversarially verified vs fetched primary sources; deliverable research/smt_feed_feasibility.md. Establish with citations: (1) what SMT serves and at what rate — team-grade ~120 Hz (GPS/throttle/brake/steering/ RPM via SMT Team Analytics) vs the fan-facing downsample (NASCAR→Ably pub/sub websocket channels, ~2 Hz per the Ably case study) vs broadcast-graphics ingest. (2) Three access doors, and which is open to a non-commercial personal archive: SMT Team Analytics (credentialed to all Cup/Xfinity teams since 2018 — the crew-chief's access, non-transferable); the NASCAR app / broadcast Ably channels (candidate public/unauth surface — probe for telemetry fields, granularity, history depth); the Bastin & Healey 2024 JDS "public SMT feed" claim (provenance ambiguous — access likely via their RCR collaboration). (3) ToS posture FIRST, extending A6 — NASCAR app / TrackPass terms differ from cf.nascar.com cacher (F6 found cacher uncovered by NDM terms, no bot-block). HARD CONSTRAINTS: probe only genuinely public, unauthenticated surfaces (as for cacher); never circumvent team- or broadcast-credentialed auth; if the only path is credentialed, report a licensing/relationship route, not a scrape. Weigh the crew-chief data-partnership option (inherits his team's terms — flag, don't assume). Output: a door-by-door go/no-go, and if a public surface exists, a scoped capture proposal in the L-series pattern. Fallback if inaccessible: F13 in-house loop data + F15 vendored ratings already cover the need. Proposes only; no endpoint hit before the ToS step clears. |
 | F18 | Personnel-change features A/B (crew chief tenure / ride changes) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~1 hr spec + ~3-5 hr run | Test whether crew-chief continuity — tenure, fresh swaps, interim substitutions — and team tenure carry signal the driver's own form history doesn't. The strongest new model hypothesis from the F16 domain scan: the sport treats crew-chief changes as major events, the data covers the model era perfectly, and no published evidence exists anywhere in either direction. | Pre-register a spec per domain_knowledge_scan.md §4: as-of features from silver.results.crew_chief_id (100% populated 2022+, exactly the model era) — cc_tenure, cc_changed_recent, an interim proxy — plus a team_tenure secondary (team_name/owner_id); strictly-prior-race constructions (no current-race pre-race read needed; if a current-week variant is specced, inherit the pooling spec §3 population check + most-recent-prior fallback). Measured event base: 185 within-season CC changes 2022-2025 (75 revert-within-8 = suspension signature; 2022's counts are wheel-rule-inflated, scan §9.6), 21-30 offseason changes/yr, 5-17 within-season ride changes; a k=5 post-change window marks ~10% of eligible driver-races — DNF-class frequency. The outcome-caused-change confound is recorded pre-data (scan §9.2; the paired A/B measures marginal value over fin correctly). Adopt iff one-sided Wilcoxon p<=alpha_adj (multiplicity extending the roadmap-#4 family convention) AND mean(d)>=+0.005. History-REWEIGHTING after a ride change is explicitly out of scope (F10's machinery lane). A well-run null retires a garage trope. |
 | F19 | Incentive-state analytics (playoff pressure, measured) | pending | Sonnet 5 · thinking on · high | ~2-4 hr | Measure the playoff-desperation lore instead of debating it: does crash risk actually rise near the cutline, do bubble drivers chase stage points, do locked-in drivers coast? Analytics only — and the 2026 format change makes this the wrong year to trust any backtested motivation feature, which is exactly why the descriptive answer comes first. | Per domain_knowledge_scan.md §5: cutline distance from as-of points_position (confirmed post-race official standings — read the PRIOR race's payload, leak-free by construction; scan §9.1), playoff_round / driver_is_in_chase markers (2020+/2017+), stage-aggression from stage_results (via C4). Descriptives 2017-2025 + live 2026 tracking: crash-class DNF rate x cutline proximity in late regular season, stage-point-chasing on the bubble, locked-in-cohort residual degradation. Tier A — never joins feature banks; any M-tier A/B needs its own later spec conditioned on these effects surviving the 2026 Chase break (playoff points + win-and-in abolished; scan §5.3/§9.4). H5's championship-contender flag is NOT here — routed to F3 as a pace-estimate sensitivity (0.3% exposure kills it as a feature). Ordinal-position-vs-derived-points caveat pinned (feed carries no season totals and no penalty deductions; scan §5.2). |
-| F20 | Vet the model-book pivot (calibration backtest + PL/Bayesian/sim) | ⬅ next | Opus 4.8 · thinking on · xhigh † | ~4-6 hr | Fully vet a major proposed pivot before any build: shift the project's center of gravity from "prove the model beats the sportsbook's closing line" (which needs perishable manual odds capture that recent research showed has no cheap source) toward building our own multi-market "book" -- fair odds for every bet type, self-graded against real results on data we already have. Decide the one big fork (keep, demote, or drop the beat-the-line benchmark), pressure-test the idea adversarially, and hand back a pre-registered design plus a re-sequenced plan. Recommends only; builds nothing. | Design-vetting spike out of the L6 conversation (odds_source_evaluation.md section 9). Core distinction to nail: calibration (model-vs-reality; free; on the 163-race history; a fair book breaks even by construction so yields NO profit signal) != edge (model-vs-market; needs real closing prices; gates roadmap #5). Architecture to specify: two axes -- underlying model (PL frozen baseline / Bayesian-PL = F10 gated A/B / optional ensemble) x pricing layer (Monte-Carlo readout for coherent all-bet-type prices); the full generative race simulator stays F7-NULL unless a trigger fires. Adversarial passes must attack in-sample optimism (frozen config was SELECTED on 2015-2025), metric-shopping, the audit-section-7 underconfidence/recalibration question, whether sim "coherence" masks mis-specification, Bayesian MCMC walk-forward feasibility on DuckDB, and preservation of the validated 0.413/0.476/0.447 equity. Reconcile with doctrine (frozen config untouched without a walk-forward-gated pre-registered A/B); name new specs (calibration-backtest prereg; pricing-layer; new capture schema since book_prices is H2H-shaped) and re-homed items (F2/F10/F11, market specs, L2). Deliverable: a pivot-vetting memo + proposed plan/HANDOFF edits; STOP for GO. |
+| F20 | Vet the model-book pivot (calibration backtest + PL/Bayesian/sim) | ✅ done | Opus 4.8 · thinking on · xhigh † | ~4-6 hr | Fully vet a major proposed pivot before any build: shift the project's center of gravity from "prove the model beats the sportsbook's closing line" (which needs perishable manual odds capture that recent research showed has no cheap source) toward building our own multi-market "book" -- fair odds for every bet type, self-graded against real results on data we already have. Decide the one big fork (keep, demote, or drop the beat-the-line benchmark), pressure-test the idea adversarially, and hand back a pre-registered design plus a re-sequenced plan. Recommends only; builds nothing. | Design-vetting spike out of the L6 conversation (odds_source_evaluation.md section 9). Core distinction to nail: calibration (model-vs-reality; free; on the 163-race history; a fair book breaks even by construction so yields NO profit signal) != edge (model-vs-market; needs real closing prices; gates roadmap #5). Architecture to specify: two axes -- underlying model (PL frozen baseline / Bayesian-PL = F10 gated A/B / optional ensemble) x pricing layer (Monte-Carlo readout for coherent all-bet-type prices); the full generative race simulator stays F7-NULL unless a trigger fires. Adversarial passes must attack in-sample optimism (frozen config was SELECTED on 2015-2025), metric-shopping, the audit-section-7 underconfidence/recalibration question, whether sim "coherence" masks mis-specification, Bayesian MCMC walk-forward feasibility on DuckDB, and preservation of the validated 0.413/0.476/0.447 equity. Reconcile with doctrine (frozen config untouched without a walk-forward-gated pre-registered A/B); name new specs (calibration-backtest prereg; pricing-layer; new capture schema since book_prices is H2H-shaped) and re-homed items (F2/F10/F11, market specs, L2). Deliverable: a pivot-vetting memo + proposed plan/HANDOFF edits; STOP for GO. |
+
+## Phase M — Model book (multi-market pricing + calibration)
+
+*Opus 4.8 (spec) / Sonnet 5 (build) · thinking on · xhigh* — The DEMOTE+tether pivot (F20 memo, owner GO 2026-07-20): a diagnostic Monte-Carlo pricer over order-derived markets + a pre-registered calibration backtest, with the market benchmark mechanically tethered so it stays sovereign. Pricing is a PL-faithful readout (coherence = internal consistency only, NOT correctness); calibration is model-quality, never edge, never a #5 unlock. Decision-grade evidence is the forward stream only; the 163-race backtest is an in-sample dev smoke test. Specs frozen in M1 (pricing_layer, calibration_backtest, tether_gates); builds are Sonnet, gated. Recalibration and the generative simulator (F7-C) stay separate/gated. The benchmark never drops; E1 capture never pauses.
+
+| # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
+|---|---------|--------|------------------|------------|-------------------|-------------------|
+| M1 | Pricing + calibration pre-registration + tether-gate design | ✅ done | Opus 4.8 · thinking on · xhigh | ~4-6 hr | Wrote the rulebook before any code: what gets priced, the one number that decides anything, and the gates that keep the external benchmark alive. Three pre-registration specs authored and the plan re-sequenced onto the model-book pivot; no production or pricing code. | Authored specs/pricing_layer.md (diagnostic Monte-Carlo readout: order-derived markets only; analytic-where-exact -- win=softmax, H2H=sigma(du), group best-of and manufacturer analytic, top-N/joint via one pinned Gumbel block; coherence=internal-only, NOT correctness; pinned seed/N/PCG64/numpy/conda-3.13 + committed fixture + add-half floor + MC-reliability rule; faithful-read gate reproducing predict_next's p_win/p_top5/p_top10/h2h within MC error). specs/calibration_backtest.md (ONE locked primary cell = H2H Brier skill score vs an as-of Bradley-Terry marginal baseline, pooled non-SS, FORWARD stream only; 163=in-sample dev smoke barred from decision + recal-fitting, 2026=peeked; dual pooled+per-type with a launder ban; ported race-count floor + race-clustered bootstrap; sealed non-citable secondary family + Bonferroni; power triage; non-SS tail arms F7-C T1, SS confirms stand-down). specs/tether_gates.md (gate A benchmark-liveness, gate B calibration-is-not-edge, gate C #5-stays-market-gated). Plan re-sequenced: phase M + M1-M5, F10 re-homed as pivot step 2, F20 done, L2 moot. All gates green before + after. |
+| M2 | Build the diagnostic pricer + faithful-read gate + capture-assist template | ⬅ next | Sonnet 5 · thinking on · high | ~3-5 hr | Turn the model's existing simulation into a labeled fair-odds readout across order-derived markets that also speeds up the weekly manual capture -- and prove it changes nothing the frozen model already publishes. | Implement specs/pricing_layer.md verbatim: src/pricing_layer.py (analytic win/H2H/group-best-of/manufacturer + one pinned Gumbel block for top-N/joint; add-half floor; MC-reliability exclude-or-raise-N; fair American odds), src/fixtures/pricing_fixture.json (pinned recipe, numpy version recorded), src/gate_pricing.py (coherence invariants + fixture reprove + faithful-read gate reproducing predict_next's p_win/p_top5/p_top10/h2h within MC error), and the section-7 capture-assist template (full-board H2H matchups + implied fair odds from the sealed JSON). Wire gate_pricing.py into run_gates.sh + GATES.md; verify it goes red on an injected defect. Zero new deps; no change to predict_next.py / walkforward.py; no frozen-spec edit; the H2H pick rule feeding the benchmark is untouched (ITT continuity). Escalate to Opus on any judgment call. |
+| M3 | Run the walk-forward calibration backtest (frozen PL) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~2-4 hr | Grade the model's probabilities honestly against real results per the pre-registered rules, and report where they are trustworthy and where they are not -- free, on data we already have, needing no book odds. | Implement specs/calibration_backtest.md: src/calibration_backtest.py runs the frozen walk-forward (collect_preds; baseline-replication assert first), builds the as-of Bradley-Terry marginal baseline, prices each race via pricing_layer, and grades every market on all three strata (163 in-sample dev-only, 2026 peeked, the forward stream). Computes the ONE primary H2H Brier-skill-score verdict on the forward stream (race-clustered bootstrap, K>=20), the sealed secondary family (Bonferroni), and dual pooled+per-type reliability with the launder ban; publishes the power triage and the C-trigger split (non-SS tail arms F7-C T1, SS confirms stand-down). report/CALIBRATION_BACKTEST.md + RESULT block. Numbers must be right -- escalate to Opus on any judgment call. No frozen-model change; no scores_log touch. |
+| M4 | Ship the 3 tether gates + formalize the demote | pending | Sonnet 5 · thinking on · high | ~2-3 hr | Make "the benchmark stays sovereign" a machine-checked fact, not a promise -- and formalize the demote in the same commit that ships its protection. | Implement specs/tether_gates.md: src/gate_benchmark_liveness.py (prints N/K/verdict/last-admissible-priced-race every run_gates.sh; RED if predictions are active and capture-debt > 2 non-SS races), src/gate_calibration_not_edge.py (prose->gate: doctrine sentinel present + no edge-from-calibration substitution claim), src/gate_five_market_gated.py (clean_air section 0 reads the MARKET verdict, never calibration). Wire all three into run_gates.sh + GATES.md; verify each goes red on an injected violation. Formalize the demote in the SAME commit (standfirst/bottom_line/HANDOFF: benchmark sovereign-and-gate-protected, model-book co-equal). clean_air_causal_pace.md is FROZEN and only read. |
+| M5 | Optional PL+Bayesian ensemble A/B | ⛔ blocked | Sonnet 5 · thinking on · xhigh | TBD | Blend the frozen PL and the Bayesian-PL (F10) only if the blend earns its keep on the same walk-forward gate every model change must pass. Step 3 of the pivot's underlying-model axis. | Short pre-registered spec + A/B: a gated ensemble of the frozen PL baseline and F10's dynamic-skill Bayesian-PL, adopted only on the program-wide rho-Wilcoxon gate (mean(d)>=+0.005, alpha per the multiplicity precedent); the calibration harness (M3) is an additional secondary eval surface, never a replacement gate. Blocked on F10's outcome -- if F10 nulls, M5's prior drops sharply and letting it die unrun is a valid outcome. Underlying-model axis step 3 (memo section 4). |
 
 ## Phase G — Causal clean-air pace (gated: market EDGE)
 
@@ -119,92 +131,54 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (F20)
+## Handoff — next session (M2)
 
-**Model & settings:** Opus 4.8, thinking on, effort xhigh.
+**Model & settings:** Sonnet 5, thinking on, effort high.
 
-F20 is 'next' as of 2026-07-20 -- a design-vetting spike for a major pivot the owner opened during L6 (own multi-market model-book + walk-forward calibration backtest; PL + Bayesian-PL[F10] + Monte-Carlo pricing). Model: Opus 4.8, thinking on, effort xhigh (max for the one fork -- keep, demote, or drop the beat-the-line market benchmark). Judgment-shaped, adversarially vetted; propose/pre-register only -- no production code, no frozen-spec edit, no plan/HANDOFF commit without owner GO. Owner runs it fresh. E1 preempts on a race weekend: admissible MANUAL capture, commit+push before the scheduled green.
+M2 is 'next' as of 2026-07-20 -- build the diagnostic pricer + faithful-read gate + capture-assist template per specs/pricing_layer.md. Model: Sonnet 5, thinking on, effort high (well-specified, test-guarded build; escalate to Opus on any judgment call). Zero design judgment -- the spec pre-resolves every choice; genuine ambiguity means STOP and flag (as C1/D1 did). No frozen-spec edit, no change to predict_next.py / walkforward.py. Doctrine: calibration is model-quality, never edge, never unlocks #5; the market benchmark stays sovereign and gate-tethered. E1 preempts on a race weekend (predict + admissible capture, commit+push before the scheduled green).
 
 ```
-Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model). This is a
-DEDICATED PLANNING / DESIGN-VETTING session for a major proposed strategic pivot. Propose,
-adversarially vet, and pre-register only -- build nothing, change no frozen spec or model,
-bind no decision without owner GO.
+Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+Read HANDOFF.md, then specs/pricing_layer.md IN FULL -- it is the execution
+contract for this session and pre-resolves every design choice. Also read
+specs/README.md (freeze/pre-registration discipline), src/predict_next.py (the
+40k-Gumbel readout + h2h you are generalizing), and specs/calibration_backtest.md
+(M3 consumes your pricer -- know its interface).
 
-READ FIRST (in full): HANDOFF.md; research/odds_source_evaluation.md section 9 (the L6
-vendor spike that motivates this pivot -- no affordable/admissible/ToS-clean NASCAR odds
-vendor exists); specs/market_benchmark_decision_rule.md + specs/scoring_methodology.md (the
-FROZEN specs this reframes) and specs/README.md (freeze/amendment rules); the F7 Bayesian
-assessment and the F2/F7/F10/F11 session rows in plan/schedule.yml (F10 Bayesian recommended;
-F11 conditional; the full-race generative-outcome simulator decided NULL + its 3 re-proposal
-triggers); report/NASCAR_AUDIT_REPORT.md section 7 (the model's underconfidence finding; the
-fixed-effects and generative dead-ends).
+BUILD session M2 -- the diagnostic Monte-Carlo pricer, per specs/pricing_layer.md
+section 8's checklist. Zero design judgment: every choice is pre-resolved in the
+spec; genuine ambiguity means STOP and flag (as C1/D1 did), not choose.
+1. src/pricing_layer.py: analytic win=softmax, H2H=sigma(du), group best-of and
+   manufacturer (softmax sums); ONE pinned Gumbel block (section 5.1 recipe:
+   ascending driver_id, N=40000, default_rng([20260720, race_id]) PCG64) for
+   top-N single/joint and group-position markets; add-half MC floor + eps_floor
+   analytic (section 5.2); MC-reliability rarer-cell>=25 exclude-or-raise-N
+   (section 5.3); fair American odds (section 3.3). Runs on the conda 3.13
+   interpreter (NOT .venv).
+2. src/fixtures/pricing_fixture.json: generate once from the pinned recipe on
+   conda; commit it; record the numpy version inside it.
+3. src/gate_pricing.py: the section-4 coherence invariants + the section-5.4
+   fixture reprove + the section-6 faithful-read check (priced win/top5/top10/h2h
+   reproduce the committed race-5618 prediction JSON within the section-6
+   tolerance band; h2h exact to 4dp). Plain stdlib asserts; print the numpy
+   version; read-only w.r.t. every frozen file.
+4. Add gate_pricing.py to src/run_gates.sh (conda) + GATES.md; CONFIRM it goes red
+   on an injected defect (e.g. a doubled utility) before declaring done.
+5. The section-7 capture-assist template (full-board H2H matchups + implied fair
+   odds from the sealed JSON) -> predictions/race_{id}_{date}_capture_template.csv.
+6. Fill "## RESULT -- pricing layer" (dated) in the spec. Run the full gate
+   surface (all green); update plan/schedule.yml (M2 -> done; re-evaluate the
+   single 'next' -- M3 unblocks, M4 is co-startable off M1) and re-render via
+   python src/report_plan.py; commit; leave the tree clean.
+HARD CONSTRAINTS: no change to predict_next.py / walkforward.py; no frozen-spec
+edit (pricing_layer.md's frozen sections are immutable -- only its RESULT block is
+filled); the H2H pick rule feeding the market benchmark is untouched. If a race
+weekend falls, E1 duties (predict + admissible capture before the scheduled green)
+come first.
 
-THE PIVOT. In an L6 design conversation the owner proposed shifting the project's center of
-gravity from "prove the frozen PL model beats the sportsbook closing line" (the
-market-benchmark -- which needs perishable manual odds capture L6 showed has no cheap/
-automatable source) TOWARD building the project's own multi-market "model book":
-  - Price fair odds for ALL bet types (win, top-5, top-10, H2H, group matchups, ...) from
-    ONE coherent joint finishing-order distribution via a Monte-Carlo pricing/readout layer.
-  - Evaluate it with a WALK-FORWARD calibration / proper-scoring backtest on the existing 163
-    races (Brier, log-loss, calibration curves per market) -- self-graded on real results,
-    needing NO book odds.
-  - Underlying model: PL (frozen baseline) + Bayesian-PL (F10) as a gated A/B upgrade
-    (principled uncertainty + small-sample calibration); optional gated PL+Bayesian ensemble.
-    Full generative race simulator stays F7-NULL unless a trigger fires.
-  - Emit fair odds as a weekly betting aid AND as the capture template that makes any residual
-    manual book-odds capture fast + full-board.
-
-YOUR JOB -- fully vet this, adversarially, and produce a pre-registered design, before any build:
-
-1. NAIL THE CORE DISTINCTION AND DECIDE THE FORK. Calibration (model-vs-reality; free; on-hand;
-   a fair book breaks even by construction so it yields NO profit signal) is NOT edge
-   (model-vs-market; needs real closing prices; gates roadmap #5). Adjudicate: does the
-   beat-the-line market-benchmark thread STAY (kept as the #5 gate, fed by lightweight manual
-   capture), get DEMOTED, or get DROPPED (making the L5/L6/L2 odds-capture thread optional)?
-   State exactly what each choice costs and unlocks. This is the single most consequential
-   decision -- pre-register a recommendation with reasoning, then STOP for owner GO on it.
-
-2. PRESSURE-TEST ADVERSARIALLY (spin up independent refutation passes prompted to REFUTE, not
-   confirm). At minimum attack: (a) can a self-graded calibration backtest be gamed / is it
-   circular / in-sample-optimistic given the frozen config was SELECTED on the 2015-2025 era --
-   and does walk-forward + the 2026-OOS split actually fix it; (b) metric-shopping across many
-   markets/metrics and what pre-registration must lock; (c) the model's known underconfidence
-   (audit section 7) -- what recalibration means and whether it's a model change requiring the
-   walk-forward gate; (d) whether simulation pricing's "coherence" is real or masks
-   mis-specification; (e) computational feasibility of Bayesian-PL walk-forward (MCMC over 163
-   races x weekly refits) on the local DuckDB foundation; (f) whether the pivot quietly
-   abandons the project's hardest-won equity (the validated 0.413/0.476/0.447 result and the
-   anti-self-deception governance) -- and how to preserve it.
-
-3. RECONCILE WITH DOCTRINE + FROZEN SPECS. Nothing changes the frozen PL config, the frozen
-   sections of the scoring/market specs, or the validated results without a pre-registered,
-   walk-forward-gated A/B. Specify precisely: the NEW specs needed (a calibration-backtest
-   pre-registration; a fair-odds/pricing-layer spec; a new capture schema since book_prices is
-   H2H-shaped); which existing items are re-homed or superseded (F2 pooling, F7/F10/F11, the
-   market-benchmark specs, L2); and what stays untouched.
-
-4. DESIGN THE ARCHITECTURE precisely: the two axes (underlying model: PL / Bayesian-PL /
-   ensemble; pricing layer: Monte-Carlo readout), the coherence guarantees, the walk-forward
-   protocol, the pre-registered proper-scoring metrics + their decision rules, and how F10
-   plugs in as the downstream A/B gated by the calibration harness.
-
-5. RE-SEQUENCE THE PLAN. Propose the phased build order (step 1: sim pricing layer +
-   calibration backtest on frozen PL -- free, on existing data, also delivers the fair-odds
-   tool; step 2: F10 Bayesian A/B; step 3: optional ensemble; step 4: generative simulator
-   only on trigger), each item with model+settings + a one-line cost/quality rationale +
-   gates, in the project's sprint-table format; mark the single next actionable item.
-
-DELIVERABLE: a written pivot-vetting memo (propose-only) -- the fork recommendation, the
-adversarial findings and how the design survives them, the doctrine reconciliation, the
-architecture, and the re-sequenced plan -- plus proposed (not applied) plan/HANDOFF edits.
-STOP for owner GO before any production code, any frozen-section edit, or committing
-plan/HANDOFF. If a race weekend falls during the session, E1 duties (predict + admissible
-manual capture before the scheduled green) come first.
-
-Model: Opus 4.8, thinking on, effort xhigh (use max for the step-1 fork adjudication). On
-start, verify the running model is claude-opus-4-8 and ASK whether thinking is on and effort
-is xhigh before substantive work (same self-check L5/L6 used).
+Model: Sonnet 5, thinking on, effort high. On start, confirm the running model +
+settings match before substantive work; escalate to Opus on any genuine judgment
+call rather than guessing.
 ```
 
-**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but its prices were post-flag/inadmissible, so the market benchmark is at N=0 (D2's remainder is the owner-gated cutover). L5+L6 DONE: the odds-vendor question is resolved -- no vendor is affordable + real-time-admissible + confirmed-NASCAR + public-repo-ToS-clean (ranked ledger, odds_source_evaluation.md section 9), so the standing answer is STAY MANUAL. Mid-L6 the owner opened a strategic pivot: build our own multi-market model-book (simulation-priced fair odds across all bet types, self-graded by a walk-forward calibration backtest; PL + Bayesian-PL). 'next' is F20 -- an adversarial vetting of that pivot (Opus xhigh) deciding whether the beat-the-line benchmark stays, demotes, or drops. L2 blocked pending F20; E1 never pauses.
+**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0. L5+L6 DONE -- no affordable + real-time-admissible + confirmed-NASCAR + ToS-clean odds vendor exists, so STAY MANUAL; L2 moot. F20 vetted the model-book pivot (6 adversarial passes); owner chose DEMOTE + tether. M1 (this session) pre- registered the pivot: specs/pricing_layer.md (diagnostic order-derived MC readout), specs/calibration_backtest.md (one locked H2H primary cell on the forward stream), specs/tether_gates.md (3 gates keeping the benchmark sovereign). 'next' is M2 -- build the diagnostic pricer + faithful-read gate + capture-assist. E1 never pauses; the market benchmark stays the sole external check and sole roadmap-#5 gate.

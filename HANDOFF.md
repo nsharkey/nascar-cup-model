@@ -81,6 +81,15 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   over the closing line exists at all. ~52–53% pairwise accuracy against the
   book's orderings is break-even after hold. A negative result is a valid
   outcome.
+- **Calibration is model-quality, never edge, and never unlocks roadmap #5.**
+  Calibration is model-vs-reality (free; a fair book breaks even by construction,
+  so it yields zero profit signal and can never establish an edge); the
+  closing-line benchmark is model-vs-market and remains the sole thing that can
+  unlock roadmap #5. The model-book pivot (F20 — DEMOTE + tether) runs the
+  diagnostic pricing/calibration thread as a co-equal parallel focus, while the
+  market benchmark stays the sole external check and is mechanically tethered by
+  three gates (`specs/tether_gates.md`) so it cannot erode. See
+  `research/pivot_model_book_vetting.md`.
 
 ## Current status (update this section every session)
 
@@ -370,19 +379,40 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   (Opus 4.8 · thinking on · xhigh) that decides whether the beat-the-line benchmark **stays,
   demotes, or drops**. L2 stays blocked pending F20's re-sequencing. No purchase, no binding,
   no build.
-- **Next single step (plan `next` = F20):** a dedicated, adversarially-vetted **design
-  session for the model-book pivot** (Opus 4.8 · thinking on · xhigh; max for the fork
-  adjudication; owner runs it fresh). It nails calibration-vs-edge, decides the
-  keep/demote/drop fork on the market benchmark, pressure-tests the pivot (in-sample
-  optimism, metric-shopping, underconfidence/recalibration, sim-coherence, Bayesian-MCMC
-  feasibility, preserving the 0.413/0.476/0.447 equity), reconciles with doctrine (frozen
-  config untouched without a walk-forward-gated A/B), names the new specs and re-homed items,
-  and re-sequences the plan — propose/pre-register only, STOP for owner GO before any build.
-  The verbatim kickoff is in `plan/schedule.yml` (session F20) and rendered in `PLAN.md`.
-  Independently, the standing weekly loop (E1) fires at the next Cup race — predict / seal /
-  push before the green flag, record closing prices **before the scheduled flag** (5618's
-  were post-flag → inadmissible), then score after results post. The D2 cutover still needs a
-  **second** scored, *admissibly-priced* race before its two-clean-cycle bar can be assessed.
+- **2026-07-20 (F20 done — model-book pivot vetted; fork = DEMOTE + tether):**
+  `research/pivot_model_book_vetting.md` landed (deep read of the frozen specs +
+  audit + F7 + L5/L6 + **6 independent adversarial refutation passes**). The naive
+  pivot framing was **refuted** on four load-bearing claims (self-graded
+  calibration is a fast+free benchmark substitute; coherent ⇒ trustworthy; honest
+  fair odds you can bet; price all bet types); a reshaped, rescoped thread
+  survives. **Owner decision (memo §8): DEMOTE + tether** — build the reshaped
+  calibration/pricing thread as a co-equal near-term focus; the market benchmark
+  stays the **sole external check and sole roadmap-#5 gate**; three mechanical
+  tether gates ship in the same beat that demotes. DROP rejected; STAY was the
+  conservative alternative.
+- **2026-07-20 (M1 done — pivot pre-registered):** three NEW pre-registration
+  specs authored (no pricing/production code, no frozen-spec edit — they are new
+  files, not amendments): `specs/pricing_layer.md` (a **diagnostic** order-derived
+  Monte-Carlo readout — analytic-where-exact, coherence = internal-consistency
+  only [**not** correctness], pinned determinism + committed fixture, a
+  faithful-read gate proving it changes nothing frozen); `specs/calibration_backtest.md`
+  (ONE locked primary decision cell = H2H Brier skill score vs an as-of
+  Bradley–Terry marginal baseline, pooled non-SS, **forward stream only**; the
+  163-race backtest is an in-sample dev smoke test barred from any decision and
+  from fitting any recalibration map; 2026 = peeked secondary; dual pooled+per-type
+  reporting with a pooling-launder ban; power triage; the C-trigger split — non-SS
+  tail arms F7-C T1, SS confirms stand-down); `specs/tether_gates.md` (the three
+  tether gates M4 builds). Plan re-sequenced onto **phase M (M1–M5)**; F10 re-homed
+  as pivot step 2; F20 → done; L2 moot. All gates green before + after.
+- **Next single step (plan `next` = M2):** build the diagnostic pricer +
+  faithful-read gate + capture-assist template per `specs/pricing_layer.md`
+  (**Sonnet 5 · thinking on · high**; escalate to Opus on any judgment call). The
+  verbatim kickoff is in `plan/schedule.yml` (session M2) and rendered in `PLAN.md`.
+  Independently, the standing weekly loop (E1) fires at the next Cup race — predict
+  / seal / push before the green flag, record closing prices **before the scheduled
+  flag** (5618's were post-flag → inadmissible), then score after results post. The
+  D2 cutover still needs a **second** scored, *admissibly-priced* race before its
+  two-clean-cycle bar can be assessed.
 
 ## Roadmap (agreed order — do not skip ahead)
 
