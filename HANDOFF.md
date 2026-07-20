@@ -90,7 +90,8 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   pricing/calibration thread as a **co-equal parallel thread**, never a
   replacement, and the benchmark's sovereignty is enforced mechanically, not by
   prose — three tether gates (`specs/tether_gates.md`, shipped M4, `GATES.md`
-  gates 12–14) keep weekly odds capture alive, forbid any document from claiming
+  gates 14–16 — renumbered as F3/F4 each added a gate ahead of them) keep
+  weekly odds capture alive, forbid any document from claiming
   calibration establishes an edge, and forbid roadmap #5 from ever being
   re-pointed at a calibration verdict. See `research/pivot_model_book_vetting.md`.
 
@@ -524,30 +525,64 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   the a priori 5-race sample floor against the genuinely small per-track
   sample sizes the derivation doc itself documented, not a defect. Full
   detail: `report/TRACK_PROFILES.md`.
-- **Next single step (plan `next` = F4):** empirical track similarity vs
-  structural edges (Driver Skill Transferability), per
-  `research/track_audit_derivation.md` §4 (**Sonnet 5 · thinking on ·
-  xhigh**). Promoted off F3's close-out per phase F's own enumerated order
-  (F3/F4/F13/F14/F19); dep (D1) already satisfied; F3 left a reusable
-  frozen-engine-replay-on-gold function F4 can reuse rather than
-  re-deriving. Pre-register a spec, then compute driver-residual
-  correlation between track configs (leave-one-season-out CV) and compare
-  against the vendored structural-similarity edges (edge-restricted
-  Spearman + top-3 Jaccard + a named disagreement list), plus a pltree
-  cross-validation of `MY_TYPE` against `silver.track_dim`'s physical
-  covariates. Analytics/reference tier — never touches the frozen model, no
-  `>=8`-scored-races gate. The verbatim kickoff is in `plan/schedule.yml`
-  (session F4) and rendered in `PLAN.md`. Independently, the standing
-  weekly loop (E1) fires at the next Cup race (Brickyard 400, race 5619,
-  2026-07-26) — predict / seal / push before the green flag, record closing
-  prices **before the scheduled flag** (5618's were post-flag →
-  inadmissible), then score after results post. The D2 cutover still needs
-  a **second** scored, *admissibly-priced* race before its two-clean-cycle
-  bar can be assessed. The calibration backtest (M3) should be re-run
-  periodically as the forward stream accrues non-SS races toward K≥20
-  (interim, no decision weight) and K≥60 (terminal, decision-grade) — no new
-  session is required to re-run it, just `python3 calibration_backtest.py`
-  from `src/`.
+- **2026-07-20 (F4 done):** empirical track similarity vs structural edges
+  (Driver Skill Transferability), per `specs/track_similarity.md`
+  (pre-registered first, per `specs/README.md` discipline) and
+  `research/track_audit_derivation.md` §4. `src/track_similarity_build.py`
+  built `gold.track_dst` (561 pairwise rows, `track_id`-only grain — a
+  documented deviation from F3's `(track_id, era_key)` grain, since it's
+  the one that reconciles with the derivation doc's own "36 configs / 630
+  pairs" worked numbers; real count 34 configs / 561 pairs),
+  `gold.track_dst_edges` (edge-restricted comparison vs
+  `silver.track_similarity_prior`: Spearman rho=0.313 n=15, top-3 Jaccard
+  mean=0.186 n=7, 4 type-1 + 20 type-2 named disagreements — empirical wins
+  for analytics where they disagree, per the derivation doc's own doctrine),
+  and `gold.track_pltree`/`track_pltree_splits` (a from-scratch, no-R/
+  PlackettLuce-dependency pltree cross-validation of `MY_TYPE` against
+  `silver.track_dim` physical covariates: purity 85.3%, Adjusted Rand Index
+  0.501, 5 interpretable disagreements — the three SS/drafting tracks
+  cluster with other large ovals on raw geometry alone, expected since
+  drafting status is a rules/aero distinction physical covariates can't
+  see). `replay_frozen_engine_by_driver()` mirrors `gate_gold.py`'s
+  `gold_sourced_walk_forward()` line-for-line (`gate_gold.py` itself
+  untouched), extending F3's replay pattern to driver grain instead of
+  aggregate rho. One dated pre-data amendment recorded mid-build: the pair
+  floor gained a per-side `n_races>=5` requirement after a first pass with
+  only the driver-overlap floor found 0/561 pairs below floor (including
+  1-race configs); after the fix, 516/561 (92.0%) are correctly
+  `below_floor`. New gate `src/gate_track_similarity.py` — **PASS**. Full
+  gate surface **16/16 green** (15 inherited + this session's new gate;
+  also corrected a pre-existing stale gate-number cross-reference in
+  `GATES.md`'s own Notes section, left over from F3's insertion, and in
+  this file's doctrine section above). No frozen spec, `walkforward.py`,
+  `predict_next.py`, or `gate_gold.py` touched; vendored
+  `research/track_audit/` untouched. Full detail:
+  `report/TRACK_SIMILARITY.md`.
+- **Next single step (plan `next` = F13):** driver loop-metric histories
+  (in-house loop data), per `research/external_knowledge_scan.md` §6.1
+  (**Sonnet 5 · thinking on · high**). Promoted off F4's close-out per
+  phase F's own enumerated order (F3/F4/F13/F14/F19); dep (C2) already
+  satisfied. Pre-register a spec, then build as-of driver histories from
+  `silver.laps`/`silver.lap_flags` — Average Running Position (pin one of
+  three circulating definitions), green-flag pass differential, quality
+  passes, fastest-lap share, laps-in-top-15, closers — importing F3's
+  already-pinned loop-metric definitions (`specs/track_profiles.md` §1.7:
+  green-flag lap, pass, durable pass, restart) rather than re-choosing
+  them. NASCAR's own Driver Rating is not imported (same-race circular by
+  construction — finish is a direct formula input); a self-built composite
+  supersedes it. Analytics/reference tier — never touches the frozen model,
+  no `>=8`-scored-races gate. The verbatim kickoff is in
+  `plan/schedule.yml` (session F13) and rendered in `PLAN.md`.
+  Independently, the standing weekly loop (E1) fires at the next Cup race
+  (Brickyard 400, race 5619, 2026-07-26) — predict / seal / push before the
+  green flag, record closing prices **before the scheduled flag** (5618's
+  were post-flag → inadmissible), then score after results post. The D2
+  cutover still needs a **second** scored, *admissibly-priced* race before
+  its two-clean-cycle bar can be assessed. The calibration backtest (M3)
+  should be re-run periodically as the forward stream accrues non-SS races
+  toward K≥20 (interim, no decision weight) and K≥60 (terminal,
+  decision-grade) — no new session is required to re-run it, just
+  `python3 calibration_backtest.py` from `src/`.
 
 ## Roadmap (agreed order — do not skip ahead)
 
@@ -583,8 +618,8 @@ research/           vendored external research (track_audit/ — immutable
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate
-GATES.md            the 15-gate health surface + interpreter split;
-                    run `src/run_gates.sh` to prove all 15 green in one command
+GATES.md            the 16-gate health surface + interpreter split;
+                    run `src/run_gates.sh` to prove all 16 green in one command
 DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
                     JSON, CSV contracts, raw cf.nascar.com feeds)
 src/                pipeline: download.py, parse_lib.py, parse.py,
@@ -606,7 +641,10 @@ src/                pipeline: download.py, parse_lib.py, parse.py,
                     report/INCENTIVE_ANALYTICS.md) -- track_profiles_build.py +
                     gate_track_profiles.py (F3, gold.track_profiles/
                     track_profiles_asof, build-graph isolated -- Tier A/analytics,
-                    report/TRACK_PROFILES.md)
+                    report/TRACK_PROFILES.md) -- track_similarity_build.py +
+                    gate_track_similarity.py (F4, gold.track_dst/track_dst_edges/
+                    track_pltree*, build-graph isolated, gate_gold.py untouched --
+                    Tier A/analytics, report/TRACK_SIMILARITY.md)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 data/               gitignored medallion foundation (bronze/silver/gold +
