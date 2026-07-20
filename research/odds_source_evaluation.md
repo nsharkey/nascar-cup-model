@@ -363,6 +363,21 @@ no documented NASCAR H2H coverage to even trial. Recommend:
    FanDuel or DraftKings with more confidence than L5 already had (SportsDataIO's
    confirmed feed still sources FanDuel per L5's original evidence) — no new
    information changes that lean, it's just less speculative now.
+4. **Cross-project note (owner-raised, 2026-07-20):** the owner's unrelated NFL project
+   (`~/Downloads/nflverseanalytics`) sources odds from **The Odds API**, currently on its
+   **free tier** ($0/mo) with a documented upgrade trigger at **~$150/season**
+   (`docs/decisions/163-player-prop-market-data.md` there) — verified read-only, no edits
+   made. That vendor has zero NASCAR coverage at any tier (re-confirms §2b's The Odds API
+   dead end from the other direction), so **no vendor consolidation is possible through
+   it**. The angle that *does* exist: SportsDataIO's full commercial access is a single
+   custom quote spanning all 13 of their covered sports (including NFL) at once, not
+   priced per-sport — so **if a SportsDataIO sales conversation happens (item 2 above),
+   ask for an NFL+NASCAR bundle quote, not a NASCAR-only quote**; a price that doesn't
+   clear the bar for NASCAR alone might clear it once it's also displacing the NFL
+   project's future paid-tier need. Not actioned — the NFL project's Odds API integration
+   is real, working, decision-documented infrastructure (decisions 161/162/163) on a free
+   tier with no urgency to change; this is a fact banked for whoever has that sales call,
+   not a recommendation to migrate it.
 
 **Not authorized in this session:** no fetcher built (Step 2 stays gated on owner GO
 per this session's kickoff), no primary book bound, no spec/model touched. Plan/HANDOFF
