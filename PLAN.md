@@ -35,8 +35,8 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | C1 | Silver driver-race table (behavior-preserving) | ✅ done | Sonnet 5 · thinking on · high | ~90 min | Rebuilt the cleaned per-driver-per-race table the model uses. It matches today's numbers exactly on every field except one long-known-unused diagnostic (fepace), which differed only at floating-point noise level due to a numerics-library difference between machines — confirmed harmless, owner-authorized a narrow documented exception, gate passed. Nothing about the validated model changed. | silver_build.py + gate_silver.py built per spec sections 3.1-3.3/4; warehouse.py extended with load_race_records() (full per-race index records) and silver.races/silver.driver_race DuckDB views over parquet. --full build: 601 Cup/Xfinity/Truck race_type_id=1 races parsed ok, 22,463 driver_race rows. Gate vs the 163-race anchor (sha b41e697d2c0f...): 6,083 rows / 92,386 field comparisons; every column bit-identical except fepace (the sole np.linalg.lstsq-derived field), which differed at ULP scale (~1e-15 rel) on 162/163 races — confirmed reproducible, confirmed isolated to fepace, confirmed a BLAS/LAPACK cross-environment artifact (not parser/plumbing, not a NASCAR data revision -- the frozen §4.3's two anticipated causes). Escalated to the owner mid-session; owner authorized a dated §4 amendment exempting fepace via math.isclose(rel_tol=1e-9, abs_tol=1e-12), unused-in-production field, every other column unaffected. Gate re-run: PASS (1 clean, 162 PASS-with-note, 0 fail). report/SILVER_REGRESSION.md committed (full per-race detail); RESULT -- C-gate filled; DATA_DICTIONARY §9 added. |
-| C2 | Silver lap / pit / flag tables | ⬅ next | Sonnet 5 · thinking on · high | ~2-4 hr | Build cleaned tables for the richer data we've never used — lap-by-lap, pit stops, and cautions — so it's ready when the model wants it. | Lap-level (times/positions), pit-level (stop timing/tires/positions gained), flag-level (caution/stage transitions) silver tables from the newly-archived feeds; keyed to race+driver. Feeds roadmap-#5 pace work. |
-| C3 | Track reference tables from vendored audit | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize the vendored track audit into queryable reference tables — physical facts, crosswalk, and quarantined analyst priors — so every silver/gold table can join on track configuration. Proposed by the F5 derivation spike (26dff0c); reference tables only, no model change. | Build silver.track_dim (43 configs: physical facts + parsed banking + era bounds + hp750_2026 flag; the ten 1-10 analyst priors excluded by design), silver.track_xwalk (crosswalk verbatim + a race_track join view), silver.track_priors (10 priors long-form, score_type/evidence labels carried so they can never be silently used as measurements), silver.rules_era (6 era keys 2015->2026) + the §2.3 leakage-free derived features (config_age, config/era race number, era_key, hp750_2026). All per research/track_audit_derivation.md §2. Package files untouched (the test_track_audit.py hash gate stays green); extend that gate with re-derivation checks (row counts, banking parse, dim-xwalk integrity). |
+| C2 | Silver lap / pit / flag tables | ✅ done | Sonnet 5 · thinking on · high | ~2 hr | Built cleaned tables for the richer data we've never used — lap-by-lap, pit stops, cautions, practice, and live-final snapshots — so it's ready when the model wants it. Nearly a million rows total across the eight new tables; pit stops now know which driver made them 99.3% of the time. | silver_build.py's build_silver_breadth() builds spec section 3.4's 8 tables (results, laps, lap_flags, flag_events, pit_stops, lap_notes, practice_runs, live_final) in DuckDB SQL directly over bronze json.gz, one read_json(..., columns={...}) call per race per feed (explicit schema avoids cross-season type-drift DuckDB's auto-detection hit at full-archive scale). 934/1,166 races had >=1 relevant feed; 34,816/4,223,220/122,807/6,494/113,423/32,311/ 71,913/33,694 rows respectively. Section-3.4 dedupe applied per table (a handful of real same-key conflicts traced to drivers entered in two cars for one event -- genuine data, not bugs). pit_stops.driver_id: 112,596 resolved by car_number join, 2 by name fallback, 825 unresolved (race-5580 weekend_race-null gap + Cup crossover drivers in a lower-series race's shared live-pit-data feed -- both documented). Independent breadth_v{N} build-state fingerprint alongside driver_race's own. C-gate re-run: still PASS (1 clean, 162 pass-with-note, 0 fail) -- silver.driver_race untouched. warehouse.py views + DATA_DICTIONARY §9e + report/SILVER_BREADTH.md. |
+| C3 | Track reference tables from vendored audit | ⬅ next | Sonnet 5 · thinking on · high | ~1-2 hr | Materialize the vendored track audit into queryable reference tables — physical facts, crosswalk, and quarantined analyst priors — so every silver/gold table can join on track configuration. Proposed by the F5 derivation spike (26dff0c); reference tables only, no model change. | Build silver.track_dim (43 configs: physical facts + parsed banking + era bounds + hp750_2026 flag; the ten 1-10 analyst priors excluded by design), silver.track_xwalk (crosswalk verbatim + a race_track join view), silver.track_priors (10 priors long-form, score_type/evidence labels carried so they can never be silently used as measurements), silver.rules_era (6 era keys 2015->2026) + the §2.3 leakage-free derived features (config_age, config/era race number, era_key, hp750_2026). All per research/track_audit_derivation.md §2. Package files untouched (the test_track_audit.py hash gate stays green); extend that gate with re-derivation checks (row counts, banking parse, dim-xwalk integrity). |
 
 ## Phase D — Gold — model & analytics surface
 
@@ -113,47 +113,61 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (C2)
+## Handoff — next session (C3)
 
 **Model & settings:** Sonnet 5, thinking on, effort high.
 
-C2 is a Sonnet build session (thinking on, high) executing the spec's §3.4 tables and section-10 C2 checklist with zero design judgment calls (every choice is pre-resolved in the spec; genuine ambiguity means stop and flag, not choose). Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
+C3 is a Sonnet build session (thinking on, high) executing research/track_audit_derivation.md section 2 and its own kickoff_prompt with zero design judgment calls (every choice is pre-resolved; genuine ambiguity means stop and flag, not choose — exactly as C1 did for the fepace finding). Doctrine for the whole rebuild: preserve the validated results and pre-registered decisions, RE-PROVE the model on the new foundation rather than re-choosing it, and never pause the perishable weekly odds capture.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, then specs/medallion_architecture.md section 3.4 (new
-silver tables) and section 10's "C2 — silver breadth" checklist IN FULL —
-that is the execution contract for this session. Also read section 3's
-common rules and section 3.5 (incremental build).
+Read HANDOFF.md, then research/track_audit_derivation.md section 2 IN FULL
+(2.1 what the crosswalk unlocks, 2.2 the candidate reference tables, 2.3 the
+leakage-free derived features) — that is the execution contract for this
+session, alongside specs/medallion_architecture.md's general silver
+conventions (section 3's common rules: snake_case, series_id/race_id where
+applicable, additive-only columns).
 
-BUILD session C2 — silver breadth (lap / pit / flag / etc.). Zero design
-judgment: every choice is pre-resolved in the spec; genuine ambiguity means
-STOP and flag, not choose (exactly as C1 did for the fepace finding).
-1. In src/silver_build.py, build the §3.4 tables in SQL over bronze:
-   silver.results, silver.laps, silver.lap_flags, silver.flag_events,
-   silver.pit_stops, silver.lap_notes, silver.practice_runs,
-   silver.live_final. Honor the common rules verbatim: snake_case names;
-   the key map (NASCARDriverID->driver_id, LapTime->lap_time, Lap->lap,
-   RunningPos->running_pos, FlagState->flag_state,
-   LapsCompleted->laps_completed); every table carries series_id, race_id;
-   additive columns OK, never drop/rename the listed ones.
-2. Dedupe = drop exact-duplicate rows silently; keep-first + COUNT for
-   same-key-different-value conflicts. Unparseable/missing feed -> race
-   simply absent from that table; empty/stub feeds (seen for
-   live-flag-data) -> zero rows, not errors.
-3. pit_stops.driver_id resolution per §3.4: join vehicle_number to
-   silver.results.car_number (trimmed strings, within race); else exact
-   driver_name==driver_fullname; else NULL. Report the unresolved count.
-4. Wire the §3.5 incremental fingerprint (bump parser_v{N} if parse logic
-   changed). C2 adds NO parity obligation, but must not regress
-   silver.driver_race — the §4 C-gate still runs green on a --full build.
-5. Emit a build-report section: per-table row counts, dedupe/conflict
-   counts, pit-stop driver_id resolution stats. Extend warehouse views +
-   DATA_DICTIONARY for the new tables.
-6. Update plan/schedule.yml (C2 -> done; re-evaluate the single 'next' —
-   C3 finishes silver, then D1 is the gate-critical successor) and
-   re-render via python src/report_plan.py; commit; leave the tree clean.
+BUILD session C3 — track reference tables from the vendored audit package
+(research/track_audit/, six immutable hash-verified files; loader/crosswalk
+already at src/track_audit.py, gate at src/test_track_audit.py, PASS).
+1. Build silver.track_dim (43 rows, one per track_id): identity, T1 physical
+   facts (length_mi, shape, surface, road_course, turns, banking_text +
+   parsed banking_max_deg/banking_secondary_deg), T2 taxonomy
+   (primary_family, secondary_family), era bounds + race counts,
+   hp750_2026 = road_course OR length_mi < 1.5 (VF S039), provenance
+   (source_ids, confidence, evidence_class, package_version, source_sha256,
+   built_at). Deliberately EXCLUDE the ten priors, key_comparables,
+   structural_nearest_neighbors, and narrative fields (§2.2's design
+   decision — a fact table nobody can mistake for including a prior).
+2. Build silver.track_xwalk (45 rows, the crosswalk verbatim) + the
+   convenience view silver.race_track = silver.races JOIN xwalk ->
+   (series_id, race_id, track_id), season-range rule per the crosswalk
+   (implement the Phoenix-2018 month rule even though it's unreachable in
+   2022+ data, mirroring track_id_for's existing behavior).
+3. Build silver.track_priors (43x10 long-form: track_id, prior_name, score
+   1-10, score_type verbatim from the bundle, evidence_class='Working
+   Hypothesis', package_version) — the quarantine table. Optionally
+   silver.track_similarity_prior (193 edges verbatim), same quarantine
+   treatment.
+4. Build silver.rules_era (6 rows: era_key, season_start, season_end,
+   description, source_ids) + the §2.3 derived features (config_age_years,
+   config_race_number, return_gap_years, era_key/era_race_number,
+   hp750_2026) as leakage-free (walk-forward-safe) columns joinable onto
+   silver.races.
+5. Package files (research/track_audit/) stay untouched — the
+   test_track_audit.py hash-manifest gate must stay green. Extend that
+   gate (or add a sibling check) with re-derivation checks: row counts
+   (43/45/430/6), banking parse spot-checks, dim<->xwalk join integrity
+   (every xwalk row's track_id resolves in track_dim).
+6. None of this feeds the frozen model — reference/analytics tables only,
+   same doctrine as the rest of this rebuild (RE-PROVE, don't re-choose).
+7. Emit a short build-report section (row counts per table, any parse
+   anomalies). Extend warehouse.py views + DATA_DICTIONARY.md for the new
+   tables. Update plan/schedule.yml (C3 -> done; D1 becomes the single
+   'next' since silver is then complete) and re-render via
+   python src/report_plan.py; commit; leave the tree clean.
 If today is a race weekend, E1 duties (prediction + odds capture) first.
 ```
 
-**Bottom line:** Bronze is built AND verified (B1-B4 done; 2017 recovered and wired in like any other year). Silver parity C1 is done and PASSED the frozen C-gate. Per owner decision 2026-07-19, the plan finishes the silver layer before gold: C2 (silver lap/pit/flag breadth) is next, C3 (track reference tables) the co-startable remainder; D1 (gold features + re-prove 0.413) is deferred to pending but remains the gate-critical successor once silver is complete. The perishable weekly predict+odds capture never pauses — race 5618's prediction and its 3 DraftKings closing matchups are logged. Governance and all three research spikes are complete; nothing they propose enters the frozen model without a gated A/B.
+**Bottom line:** Bronze is built AND verified (B1-B4 done; 2017 recovered and wired in like any other year). Silver parity C1 and silver breadth C2 (8 new lap/pit/flag/ practice/live tables) are both done; the frozen C-gate re-ran clean after C2 (still PASS, silver.driver_race untouched). Per owner decision 2026-07-19, the plan finishes the silver layer before gold: C3 (track reference tables) is next; D1 (gold features + re-prove 0.413) remains the gate-critical successor once C3 lands. The perishable weekly predict+odds capture never pauses — race 5618's prediction and its 3 DraftKings closing matchups are logged. Governance and all three research spikes are complete; nothing they propose enters the frozen model without a gated A/B.
