@@ -410,3 +410,74 @@ fine, matching F3's one-directional isolation.
    enumerated order F3/F4/F13/F14/F19 — F14 stays blocked-but-unblocked,
    sequenced after F13); re-render (`python src/report_plan.py`); run the
    full gate surface (`src/run_gates.sh`, 16/16 expected); commit.
+
+---
+
+## AMENDMENT (2026-07-20, mid-build, made before any `gold.track_dst` row was finalized — the
+data this amendment's rule adjudicates does not yet exist yet in committed form, so this is a
+permitted pre-data amendment per `specs/README.md`, not a protocol violation)
+
+**§1.4's floor gains a third, per-side requirement: `n_races(a) >= 5 AND n_races(b) >= 5`,
+alongside the existing `n_common_drivers >= 5` and `weight_sum >= 15`.** A first build pass
+computed `gold.track_dst` with only the driver-overlap floor as originally written and found
+**zero** of 561 pairs below floor — including pairs where one side is a genuinely 1-race config
+(`san_diego_street`, `auto_club_2mi`, `bristol_dirt`, `indianapolis_road`, `charlotte_roval_v1`,
+`mexico_city`, `chicagoland_oval` — 7 of the 34 in-scope configs have exactly 1 qualifying race).
+The gap: `weight_sum` only requires *many* low-weight (`min(n_a(d), n_b(d)) = 1`) driver
+contributions, not *few noisy* ones — a 1-race config sharing ~25 drivers with a well-established
+config trivially clears `weight_sum >= 15` even though every one of that config's driver-means is
+based on a single residual observation, exactly the noise source §4.1's own text names ("per-config
+race counts of 1–10 mean each driver-config mean averages ≤10 noisy residuals" — a statement about
+races-per-config, not drivers-per-pair). `n_races(track)` = the count of distinct qualifying races
+contributing residual observations for that `track_id` (§1.2's scored-race set) — independent of
+which pair is being evaluated. The `min_races=5` value is unchanged from the rest of this project's
+convention (F3's own default, §1.4's TDS-floor reuse). This is an additive floor tightening only —
+`family_pair_raw`/`blend_values` (§1.4's blend step) are unchanged; a pair failing the new
+per-side check now correctly falls to the family-pair posterior instead of displaying a
+single-race track-specific value.
+
+## AMENDMENT LOG
+
+- 2026-07-20: added the per-side `n_races >= 5` floor component (above), before any output row
+  was finalized. No other amendment made.
+
+## RESULT — F4 (2026-07-20)
+
+Built. `gold.track_dst` (561 rows, `C(34,2)` unordered pairs), `gold.track_dst_edges` (35 rows:
+15 real structural edges restricted to in-scope/non-below-floor pairs + 20 synthetic type-2
+disagreement rows), `gold.track_pltree` (34 rows) and `gold.track_pltree_splits` (6 internal
+nodes). New gate `src/gate_track_similarity.py` **PASS**; full repository gate surface **16/16
+green** (15 inherited + this session's new gate), C-gate and D-gate unaffected, `gate_gold.py`
+byte-for-byte untouched (gate check 4).
+
+**34 in-scope configs, not the doc's estimated 36** -- 148 races clear the walk-forward
+eligibility bar and resolve to 35 `track_id`s, but only 128 of those also clear the PL
+weight-fit threshold (the identical 128-race population F3's FVS-model independently
+established) -- `road_america`'s sole race falls before that threshold, leaving 34. One dated
+pre-data AMENDMENT recorded above: the pair floor gained a third, per-side
+`n_races(a)>=5 AND n_races(b)>=5` requirement after a first build pass found the
+driver-overlap-only floor let genuinely 1-race configs display a track-specific value (0 of 561
+pairs below floor); after the fix, 516/561 (92.0%) are `below_floor`, 0 `no_family_backstop`.
+
+**Comparison protocol:** edge-restricted Spearman rho=0.313 (n=15, small but positive and
+directionally consistent with the structural priors where both are measurable); top-3 Jaccard
+mean=0.186 (n=7 qualifying tracks); 4 type-1 disagreements (structurally close, empirically
+dissimilar) and 20 type-2 (empirically close, structurally absent) — per section 4.2's own
+doctrine, empirical wins for analytics where they disagree, feeding future structural-edge
+refinement candidates, not evidence the priors are "wrong." Both named callouts (H4, "Large flat
+oval" vs INT) are underpowered by the floor (all constituent pairs `below_floor`) but the raw,
+pre-shrinkage values are directionally interesting and recorded as future data points, not
+resolved tests.
+
+**pltree addendum:** 7 leaves at max depth 3, purity=85.3% (29/34) and Adjusted Rand
+Index=0.501 against MY_TYPE — independent, physical-covariate-only corroboration of the frozen
+typology. 5 disagreeing tracks, all interpretable (the three SS/drafting tracks cluster with
+other large ovals on raw geometry alone, expected since drafting status is a rules/aero
+distinction pure physical covariates cannot see; `bristol_dirt` clusters with SHORT tracks;
+`new_hampshire` is the one genuinely mild surprise, routed to a future pooling-refinement
+candidate per section 3's own instruction). No model change either way — MY_TYPE is untouched.
+
+No frozen spec, `walkforward.py`, `predict_next.py`, or `gate_gold.py` touched; vendored
+`research/track_audit/` untouched (hash-verified, gate check 7). Structural edges retain their
+sole donor role for the ~9 configs outside the 34-in-scope set (section 1.5), unchanged by
+anything in this session. Full detail: `report/TRACK_SIMILARITY.md`.
