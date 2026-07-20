@@ -425,6 +425,8 @@ which carries the identical field vocabulary; `DATA_DICTIONARY` §8f).
 | `number_of_cautions` / `number_of_caution_laps` / `number_of_lead_changes` | int | Race summary stats. |
 | `parse_status` | str | `ok` \| `skipped: <reason>` (verbatim `parse_race` skip string) \| `not_attempted` (missing lap-times/weekend-feed, or non-points race type). |
 | `n_green` / `n_fe` / `n_prac` | int \| null | Parse diagnostics from `parse_race`; `null` unless `parse_status='ok'`. |
+| `playoff_round` (C4) | int \| null | 2020+ (playoff round number; `0`/absent pre-playoff and 2017–2019); sourced from `weekend-feed` `weekend_race[0]`, not the index (§9g). |
+| `stage_4_laps` (C4) | int \| null | Nonzero only for the Coca-Cola 600 (the one Cup points race with a 4th stage); sourced from `weekend-feed` `weekend_race[0]` (§9g). |
 
 ### 9b. `silver.driver_race` — `data/silver/driver_race.parquet` (FROZEN parity contract)
 
@@ -548,6 +550,59 @@ real join bug caught and fixed): `report/TRACK_REFERENCE.md`.
 
 `src/warehouse.py`'s `build_warehouse()` registers all seven as DuckDB views over their parquet
 files, same rebuildable-from-disk pattern as every other silver table.
+
+### 9g. C4 breadth extension #2 — `data/silver/*.parquet` (medallion rebuild, C4)
+
+Three more tables built by `silver_build.py`'s `build_silver_breadth()` (same section-3.4 DuckDB
+SQL path as C2 — no parity obligation), plus two new columns on `silver.races` (§9a). Design:
+`research/domain_knowledge_scan.md` sections 3.2/10.1. `BREADTH_VERSION` bumped 1→2, forcing a
+one-time full rebuild of all eight C2 tables alongside the three new ones (no logic change to
+those eight — same conventions, same outputs modulo a few weeks of routine bronze capture since
+C2). Full build report (row counts, dedupe/conflict counts, coverage, two parse anomalies):
+`report/SILVER_BREADTH.md` (C4 addendum).
+
+| table | grain | source | key columns |
+|---|---|---|---|
+| `silver.caution_segments` | event (ordered) | `weekend-feed` `weekend_race[0].caution_segments[]` | `event_seq` (file order); no smaller natural key |
+| `silver.stage_results` | driver-stage | `weekend-feed` `weekend_race[0].stage_results[].results[]` | `(series_id, race_id, stage_number, driver_id)` |
+| `silver.race_leaders` | leader segment (ordered) | `weekend-feed` `weekend_race[0].race_leaders[]` | `leader_seq` (file order); no smaller natural key |
+
+- `silver.caution_segments`: `start_lap, end_lap, reason` (taxonomy: Debris/Accident/Spin/
+  Competition/…), `comment`, `beneficiary_car_number` (lucky-dog car), `flag_state`. 2017+,
+  323/324 Cup points races 2017–2025 covered (99.7%).
+- `silver.stage_results`: `stage_number, driver_id, driver_fullname, car_number,
+  finishing_position, stage_points`. **Empty 2017–2019 — a schema floor, not a bug**: stages
+  existed those years (98/108 Cup points races have nonzero `stage_1_laps`) but the structured
+  field wasn't populated upstream. 2020+ covers 214/216 Cup points races through 2025.
+- `silver.race_leaders`: `start_lap, end_lap, car_number` — **not** resolved to `driver_id`
+  (unlike `silver.pit_stops`; not specified by the C4 proposal, so left as the raw `car_number`
+  the feed provides). 2017+, 323/324 (99.7%) coverage, same pattern as `caution_segments`.
+- `silver.races.playoff_round` / `silver.races.stage_4_laps`: sourced from `weekend-feed`
+  `weekend_race[0]`, **not** the `race_list` index — the index carries `playoff_round` but only
+  carries `stage_4_laps` inconsistently across seasons/races, so both are read from the same feed
+  for uniform coverage. Extracted and patched onto `silver.races` by `build_silver_breadth()`
+  (the sole writer of these two columns); `build_silver()`'s own per-race loop only carries the
+  prior build's values forward, so a breadth-only rebuild (`silver_build.py` with no `--full`)
+  still produces a complete `silver.races` even though its own logic never touches weekend-feed.
+  `playoff_round`: 2020+, 10 playoff races/season 2020–2024, 9 in 2025 (see anomaly below), 0 in
+  2017–2019 (playoffs existed but the field wasn't populated, same schema-floor pattern as
+  `stage_results`) and 0 so far in 2026 (playoffs haven't started).
+
+**Two parse anomalies, both genuine upstream data, not pipeline defects:**
+
+1. 2025's playoff-race count is 9, not 10 — the missing race is race_id 5580 (fall-2025
+   Talladega), the already-documented B3/C1 finding: its stored `weekend-feed`'s `weekend_race`
+   field is `null` (upstream NASCAR data gap), so none of silver's weekend-feed-derived objects
+   have any data for it. `playoff_round` is correctly `NULL` there, not `0`.
+2. `stage_4_laps = -51` for the 2024 Coca-Cola 600 (race_id 5406), verified against the raw
+   stored bytes in both the `race_list` index and `weekend-feed`. That race was rain-shortened to
+   249 actual laps against 300 scheduled stage-1–3 laps (100 each); a stage-4 remaining-laps
+   figure computed upstream as `actual_laps - (stage_1+2+3)` goes negative. Recorded verbatim, not
+   clamped — section 3.4's convention is to flatten feeds as-is, not invent validation.
+
+`src/warehouse.py`'s `build_warehouse()` breadth-table view loop extended with these three tables
+(`silver.races` needed no view-definition change — `SELECT *` already picks up the two new
+columns).
 
 ## 10. Gold layer — `data/gold/` (medallion rebuild, D1)
 

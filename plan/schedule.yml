@@ -19,25 +19,26 @@ meta:
     Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green.
     Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark
     is at N=0, capture_debt=1. L5+L6 DONE -- STAY MANUAL; L2 moot. F20 vetted the
-    model-book pivot; owner chose DEMOTE + tether. M1-M3 pre-registered, built, and
-    ran the calibration backtest (UNDERPOWERED at K=1, as pre-registered). M4 (this
-    session) shipped the three tether gates (GATES.md 12-14, each confirmed
-    red-on-injected-violation) and formalized the demote: the market benchmark is
-    now **sovereign and gate-protected**, the model-book a co-equal parallel thread.
-    14/14 gates green. 'next' is C4 (silver breadth extension #2, cheap/additive/no
-    deps). M5/F10/F1/F2 stay gated on >=8 scored non-SS races; G2 stays gated on
-    market EDGE. E1 never pauses; the benchmark stays the sole roadmap-#5 gate --
-    now mechanically enforced, not just prose.
+    model-book pivot; owner chose DEMOTE + tether. M1-M4 pre-registered, built the
+    pricer, ran the calibration backtest (UNDERPOWERED at K=1, as pre-registered),
+    and shipped the three tether gates (GATES.md 12-14): the market benchmark is now
+    **sovereign and gate-protected**, the model-book a co-equal parallel thread. C4
+    (this session) added silver.caution_segments/stage_results/race_leaders +
+    playoff_round/stage_4_laps on silver.races -- additive reference tables, C-gate
+    still PASS. 14/14 gates green. 'next' is F19 (incentive-state analytics, Tier A
+    -- its preferred prerequisite C4 is now done). M5/F10/F1/F2 stay gated on >=8
+    scored non-SS races; G2 stays gated on market EDGE. E1 never pauses; the
+    benchmark stays the sole roadmap-#5 gate, mechanically enforced.
   handoff_note: >-
-    C4 is 'next' as of 2026-07-20 -- silver breadth extension #2 per
-    research/domain_knowledge_scan.md sections 3.2/10.1: materialize
-    silver.caution_segments (2017+), silver.stage_results (2020+),
-    silver.race_leaders (2017+), add playoff_round (2020+) + stage_4_laps to
-    silver.races. Model: Sonnet 5, thinking on, effort high (mechanical reference-
-    table build, same tier as C2/C3). Zero design judgment -- C2's conventions apply
-    verbatim; genuine ambiguity means STOP and flag. Additive-only; the frozen C-gate
-    (gate_silver.py) must stay green. E1 preempts on a race weekend (predict +
-    admissible capture, commit+push before the scheduled green).
+    F19 is 'next' as of 2026-07-20 -- incentive-state analytics (playoff pressure,
+    measured) per research/domain_knowledge_scan.md sections 5/10.3. Tier A
+    (analytics only; never joins a feature bank without its own later pre-registered
+    A/B). Descriptive only: crash-class DNF rate vs cutline proximity late in the
+    regular season (2017-2025), bubble drivers' stage-point spikes, locked-in-cohort
+    rho-residual degradation -- plus live 2026 tracking under the new Chase format
+    (playoff points + win-and-in abolished 2026-01-12; 2017-2025 findings are
+    regime-stale for 2026, not assumed to transfer). Model: Sonnet 5, thinking on,
+    effort high. E1 preempts on a race weekend.
 
 phases:
   - key: "A"
@@ -715,38 +716,46 @@ sessions:
   - id: "C4"
     phase: "C"
     title: "Silver breadth extension #2 (caution segments / stages / leaders)"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1-2 hr"
     ref: null
     exec_summary: >-
-      Materialize four structured race-level objects the weekend feed has
+      Materialized four structured race-level objects the weekend feed has
       carried for years but silver never read — caution segments with cause
       labels (back to 2017, two years deeper than the flag feed), per-stage
       results, leader segments, and playoff-round markers. Cheap, additive,
       and it widens the data floor for the track-profile and incentive work.
       Proposed by the F16 domain scan.
     tech_summary: >-
-      Per domain_knowledge_scan.md §3.2/§10.1: build silver.caution_segments
-      (2017+, ~98% of Cup races: start/end lap, reason taxonomy
-      Debris/Accident/..., comment, beneficiary_car_number = lucky dog,
-      flag_state), silver.stage_results (2020+: per-stage finishing order +
-      stage_points), silver.race_leaders (2017+: start/end-lap segments per
-      car) from bronze weekend-feed weekend_race[0]; add playoff_round (2020+)
-      and stage_4_laps to silver.races. C2 conventions verbatim (snake_case,
-      series_id/race_id keys, dedupe rules, independent breadth-style build
-      fingerprint); additive-only — the frozen C-gate must re-run green. The
-      2020-2022-only relics (infractions/pit_reports) explicitly out of scope.
-      Extends F3's caution metrics to 2017+ results-grade depth (below
-      live-flag-data's 2019 floor) and feeds F19's stage/playoff inputs.
+      Per domain_knowledge_scan.md §3.2/§10.1: built silver.caution_segments
+      (2017+, 323/324 Cup points races 2017-2025 = 99.7%: start/end lap, reason
+      taxonomy Debris/Accident/..., comment, beneficiary_car_number = lucky dog,
+      flag_state), silver.stage_results (2020+, 214/216: per-stage finishing
+      order + stage_points; correctly empty 2017-2019, a schema floor not a bug),
+      silver.race_leaders (2017+, same 99.7%: start/end-lap segments per car,
+      not driver-resolved -- not specified by the C4 row), all from bronze
+      weekend-feed weekend_race[0]; added playoff_round (2020+, 59 Cup playoff
+      races 2020-2025) and stage_4_laps to silver.races, also sourced from
+      weekend-feed (not the race_list index -- inconsistent stage_4_laps
+      coverage there). C2 conventions applied verbatim (snake_case,
+      series_id/race_id keys, dedupe rules, BREADTH_VERSION 1->2 as the
+      independent breadth-style build fingerprint); additive-only, C-gate
+      re-ran PASS, all 14 gates green before and after. Two parse anomalies
+      recorded (both genuine upstream data, not defects): 2025's playoff-race
+      count is 9 not 10 (the already-documented race_id 5580 weekend_race-null
+      gap propagating correctly); stage_4_laps=-51 for the rain-shortened 2024
+      Coca-Cola 600. Zero design-judgment escalations needed. Full detail:
+      report/SILVER_BREADTH.md (C4 addendum), DATA_DICTIONARY.md §9g.
     deps: []
     status_note: >-
       Proposed by F16 (c94f7e7, scan §10.1). Promoted to 'next' by M4
-      (2026-07-20): M-phase's buildable work is exhausted (M4 done, M5 blocked
-      on F10, F10/F1/F2 gated on >=8 scored non-SS races), and C4 is the only
-      ready, dependency-free, non-owner-led item -- bronze already holds
-      everything; reference tables only, no gate beyond C-gate-stays-green.
+      (2026-07-20), done same day. M-phase's buildable work was exhausted (M4
+      done, M5 blocked on F10, F10/F1/F2 gated on >=8 scored non-SS races), and
+      C4 was the only ready, dependency-free, non-owner-led item -- bronze
+      already held everything; reference tables only, no gate beyond
+      C-gate-stays-green. Preferred prerequisite for F19, now promoted to 'next'.
       Preferred prerequisite for F19 and for F3's caution-taxonomy tightening.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
@@ -1861,7 +1870,7 @@ sessions:
   - id: "F19"
     phase: "F"
     title: "Incentive-state analytics (playoff pressure, measured)"
-    status: "pending"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-4 hr"
@@ -1878,24 +1887,71 @@ sessions:
       points_position (confirmed post-race official standings — read the
       PRIOR race's payload, leak-free by construction; scan §9.1),
       playoff_round / driver_is_in_chase markers (2020+/2017+),
-      stage-aggression from stage_results (via C4). Descriptives 2017-2025
-      + live 2026 tracking: crash-class DNF rate x cutline proximity in
-      late regular season, stage-point-chasing on the bubble,
-      locked-in-cohort residual degradation. Tier A — never joins feature
-      banks; any M-tier A/B needs its own later spec conditioned on these
-      effects surviving the 2026 Chase break (playoff points + win-and-in
+      stage-aggression from stage_results (via C4, now landed in silver).
+      Descriptives 2017-2025 + live 2026 tracking: crash-class DNF rate x
+      cutline proximity in late regular season, stage-point-chasing on the
+      bubble, locked-in-cohort residual degradation. Tier A — never joins
+      feature banks; any M-tier A/B needs its own later spec conditioned on
+      these effects surviving the 2026 Chase break (playoff points + win-and-in
       abolished; scan §5.3/§9.4). H5's championship-contender flag is NOT
       here — routed to F3 as a pace-estimate sensitivity (0.3% exposure
       kills it as a feature). Ordinal-position-vs-derived-points caveat
       pinned (feed carries no season totals and no penalty deductions;
       scan §5.2).
-    deps: ["C2"]
+    deps: ["C2", "C4"]
     status_note: >-
-      Proposed by F16 (c94f7e7, scan §10.3). C2 met; C4 preferred first
-      (stage_results/playoff_round land in silver there). Otherwise
-      ungated — analytics tier, frozen model untouched; doubles as the
-      measured version of the "motivation" signal F6 §4.2 marked
-      unmeasured.
+      Proposed by F16 (c94f7e7, scan §10.3). C2 met; C4 was the preferred
+      prerequisite (stage_results/playoff_round land in silver there) and is
+      now done (2026-07-20) — promoted to 'next'. Otherwise ungated — analytics
+      tier, frozen model untouched; doubles as the measured version of the
+      "motivation" signal F6 §4.2 marked unmeasured.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, then research/domain_knowledge_scan.md sections 5 (incentive
+      states) and 10.3 (the F19 proposal row) IN FULL -- that is the execution
+      contract for this session, alongside silver.stage_results/silver.races.
+      playoff_round (C4, just landed) and silver.live_final.driver_is_in_chase (C2).
+
+      BUILD session F19 -- incentive-state analytics, Tier A (analytics only, never
+      joins a feature bank without its own later pre-registered A/B). Zero design
+      judgment on the frozen model: this session touches no gated surface, only new
+      read-only analytics.
+      1. As-of cutline distance: |points_position - 16| entering race t, read from
+         the PRIOR race's payload (leak-free by construction, scan §5.2). Ordinal
+         only -- season point totals are not in-feed and a derived cumulative sum
+         would drift from official standings wherever NASCAR assessed a penalty
+         deduction (not in any feed); do not attempt a points-distance metric,
+         document the ordinal-only caveat instead.
+      2. Three descriptive questions, 2017-2025 (results-grade, C1/C2/C4 complete
+         over that range) + live 2026 tracking:
+         a. Does crash-class DNF rate rise with cutline proximity in the last
+            3-5 regular-season races?
+         b. Do bubble drivers' stage points spike relative to their season baseline
+            (stage-strategy aggression) using silver.stage_results (C4)?
+         c. Does the locked-in cohort's rho-residual degrade in the same late-season
+            window?
+      3. **The 2026 format break is load-bearing, not a footnote**: NASCAR abolished
+         playoff points and win-and-you're-in for 2026 (confirmed in our own feed --
+         playoff_points_earned = 0 across all 2026 rows). Any effect measured on
+         2017-2025 data lived in the old elimination format and must be labeled
+         regime-stale for 2026, not assumed to transfer. Report the 2017-2025 and
+         live-2026 findings separately; do not pool across the format break.
+      4. H5's championship-contender flag is explicitly OUT of scope here (0.3%
+         exposure, hopeless as a feature) -- note it as routed to F3 instead, do not
+         re-litigate it in this session.
+      5. Tier A discipline: this session produces descriptive findings only. It must
+         not modify walkforward.py, predict_next.py, or any gold feature table. Any
+         effect strong enough to justify an M-tier A/B needs its own later
+         pre-registered spec, not built here.
+      6. Emit a short report (e.g. report/INCENTIVE_ANALYTICS.md) with the three
+         descriptive findings, the 2017-2025-vs-2026 split, and the ordinal-only
+         caveat. Update plan/schedule.yml (F19 -> done; re-evaluate the single
+         'next') and re-render via python src/report_plan.py; run the full gate
+         surface (all green, unchanged since this session touches no gated
+         artifact); commit; leave the tree clean.
+      Zero design judgment calls: if the spec/scan is genuinely ambiguous anywhere,
+      STOP and flag it rather than choosing. If today is a race weekend, E1 duties
+      (predict + admissible capture) come first.
 
   - id: "F20"
     phase: "F"

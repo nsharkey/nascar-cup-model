@@ -450,20 +450,39 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   `## RESULT — calibration backtest` in the spec. No frozen-spec edit; no change
   to `predict_next.py`/`walkforward.py`/`scores_log.csv`. Gate surface 11/11
   green before and after (M3 has no gate obligation of its own).
-- **Next single step (plan `next` = M4):** ship the 3 tether gates + formalize
-  the demote, per `specs/tether_gates.md` (**Sonnet 5 · thinking on · high**).
-  This is the natural continuation of the M1→M2→M3 pivot chain and was already
-  co-startable off M1; M3's UNDERPOWERED (as pre-registered) result does not
-  block it. The verbatim kickoff is in `plan/schedule.yml` (session M4) and
-  rendered in `PLAN.md`. Independently, the standing weekly loop (E1) fires at
-  the next Cup race — predict / seal / push before the green flag, record
-  closing prices **before the scheduled flag** (5618's were post-flag →
-  inadmissible), then score after results post. The D2 cutover still needs a
-  **second** scored, *admissibly-priced* race before its two-clean-cycle bar can
-  be assessed. The calibration backtest (M3) should be re-run periodically as
-  the forward stream accrues non-SS races toward K≥20 (interim, no decision
-  weight) and K≥60 (terminal, decision-grade) — no new session is required to
-  re-run it, just `python3 calibration_backtest.py` from `src/`.
+- **2026-07-20 (C4 done):** silver breadth extension #2 per
+  `research/domain_knowledge_scan.md` §3.2/§10.1: `silver.caution_segments`
+  (2017+, 323/324 Cup points races 2017–2025 = 99.7%), `silver.stage_results`
+  (2020+, 214/216; correctly empty 2017–2019, a schema floor not a bug),
+  `silver.race_leaders` (2017+, same 99.7%), plus `playoff_round` (2020+, 59
+  Cup playoff races 2020–2025) and `stage_4_laps` added to `silver.races` —
+  all sourced from `weekend-feed` `weekend_race[0]`, extending C2's
+  no-parity-obligation DuckDB SQL path (`BREADTH_VERSION` 1→2). Additive-only;
+  the frozen C-gate re-ran PASS, all 14 gates green before and after. Two
+  parse anomalies recorded (both genuine upstream data, not defects): 2025's
+  playoff-race count is 9 not 10 (the already-documented race_id 5580
+  weekend_race-null gap propagating correctly, not new); `stage_4_laps=-51`
+  for the rain-shortened 2024 Coca-Cola 600 (`actual_laps` fell below the
+  stage-1–3 cumulative). Zero design-judgment escalations needed. Full
+  detail: `report/SILVER_BREADTH.md` (C4 addendum), `DATA_DICTIONARY.md` §9g.
+- **Next single step (plan `next` = F19):** incentive-state analytics
+  (playoff pressure, measured), per `research/domain_knowledge_scan.md` §5/
+  §10.3 (**Sonnet 5 · thinking on · high**). Tier A — descriptive-only,
+  never joins a feature bank without its own later pre-registered A/B;
+  explicitly conditioned on the 2026 Chase-format break (playoff points +
+  win-and-in abolished 2026-01-12), so 2017–2025 findings must be reported
+  separately from live 2026 tracking, not pooled. The verbatim kickoff is in
+  `plan/schedule.yml` (session F19) and rendered in `PLAN.md`. Independently,
+  the standing weekly loop (E1) fires at the next Cup race (Brickyard 400,
+  race 5619, 2026-07-26) — predict / seal / push before the green flag,
+  record closing prices **before the scheduled flag** (5618's were post-flag
+  → inadmissible), then score after results post. The D2 cutover still needs
+  a **second** scored, *admissibly-priced* race before its two-clean-cycle
+  bar can be assessed. The calibration backtest (M3) should be re-run
+  periodically as the forward stream accrues non-SS races toward K≥20
+  (interim, no decision weight) and K≥60 (terminal, decision-grade) — no new
+  session is required to re-run it, just `python3 calibration_backtest.py`
+  from `src/`.
 
 ## Roadmap (agreed order — do not skip ahead)
 
@@ -510,7 +529,7 @@ src/                pipeline: download.py, parse_lib.py, parse.py,
                     --full/--update/--verify/--sync-legacy-cache), warehouse.py
                     (duckdb catalog: bronze/silver/gold schemas + gold.scores/
                     gold.predictions read-only views), bronze_report.py
-                    (coverage matrix), silver_build.py + gate_silver.py (C1/C2),
+                    (coverage matrix), silver_build.py + gate_silver.py (C1/C2/C4),
                     gold_build.py + gate_gold.py (D1) -- score_race.py +
                     test_score_race.py + market_benchmark.py (D2, frozen specs,
                     verbatim) -- gold_predict_dryrun.py (D2, dry-run only:

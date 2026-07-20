@@ -59,6 +59,11 @@ RACES_SCHEMA = pa.schema([
     ('n_green', pa.int32()),
     ('n_fe', pa.int32()),
     ('n_prac', pa.int32()),
+    # C4 (section 3.2/10.1 of the medallion spec): sourced from weekend-feed weekend_race[0],
+    # not the race_list index (inconsistent stage_4_laps coverage there) -- extracted and
+    # patched in by build_silver_breadth() below, carried forward here from the prior build.
+    ('stage_4_laps', pa.int32()),
+    ('playoff_round', pa.int32()),
 ])
 
 DRIVER_RACE_SCHEMA = pa.schema([
@@ -210,6 +215,11 @@ def build_silver(full=False):
         elif parse_status == 'not_attempted':
             n_not_attempted += 1
 
+        # C4: carry forward the prior build's weekend-feed-sourced values (build_silver_breadth()
+        # below is the sole writer of these two fields -- see its patch step); empty dict on a
+        # --full run, correctly deferring to a fresh extraction there.
+        prior_row = prior_races_by_key.get((sid, rid), {})
+
         races_rows.append({
             'series_id': sid, 'race_id': rid, 'year': year,
             'race_type_id': race_type_id, 'race_date': race_date,
@@ -223,6 +233,7 @@ def build_silver(full=False):
             'number_of_caution_laps': r.get('number_of_caution_laps'),
             'number_of_lead_changes': r.get('number_of_lead_changes'),
             'parse_status': parse_status, 'n_green': n_green, 'n_fe': n_fe, 'n_prac': n_prac,
+            'stage_4_laps': prior_row.get('stage_4_laps'), 'playoff_round': prior_row.get('playoff_round'),
         })
 
     pq.write_table(pa.Table.from_pylist(races_rows, schema=RACES_SCHEMA), RACES_PATH)
@@ -252,7 +263,8 @@ def build_silver(full=False):
 # this was adopted as the build strategy.
 # ---------------------------------------------------------------------------
 
-BREADTH_VERSION = 1  # bump on any section 3.4 SQL transform change -- forces full rebuild of breadth tables
+BREADTH_VERSION = 2  # bump on any section 3.4 SQL transform change -- forces full rebuild of breadth tables
+                     # (v2 = C4: caution_segments/stage_results/race_leaders + silver.races.playoff_round/stage_4_laps)
 BREADTH_FEEDS = ['weekend-feed', 'lap-times', 'live-pit-data', 'lap-notes', 'live-flag-data', 'live-feed']
 
 BREADTH_BUILD_STATE_PATH = os.path.join(SILVER_DIR, '_breadth_build_state.parquet')
@@ -264,6 +276,9 @@ PIT_STOPS_PATH = os.path.join(SILVER_DIR, 'pit_stops.parquet')
 LAP_NOTES_PATH = os.path.join(SILVER_DIR, 'lap_notes.parquet')
 PRACTICE_RUNS_PATH = os.path.join(SILVER_DIR, 'practice_runs.parquet')
 LIVE_FINAL_PATH = os.path.join(SILVER_DIR, 'live_final.parquet')
+CAUTION_SEGMENTS_PATH = os.path.join(SILVER_DIR, 'caution_segments.parquet')
+STAGE_RESULTS_PATH = os.path.join(SILVER_DIR, 'stage_results.parquet')
+RACE_LEADERS_PATH = os.path.join(SILVER_DIR, 'race_leaders.parquet')
 
 RESULTS_SCHEMA = pa.schema([
     ('series_id', pa.int32()), ('race_id', pa.int32()),
@@ -332,6 +347,23 @@ PRACTICE_RUNS_SCHEMA = pa.schema([
     ('laps_completed', pa.int32()), ('comment', pa.string()), ('delta_leader', pa.float64()), ('disqualified', pa.bool_()),
 ])
 
+CAUTION_SEGMENTS_SCHEMA = pa.schema([
+    ('series_id', pa.int32()), ('race_id', pa.int32()), ('event_seq', pa.int32()),
+    ('start_lap', pa.int32()), ('end_lap', pa.int32()), ('reason', pa.string()),
+    ('comment', pa.string()), ('beneficiary_car_number', pa.string()), ('flag_state', pa.int32()),
+])
+
+STAGE_RESULTS_SCHEMA = pa.schema([
+    ('series_id', pa.int32()), ('race_id', pa.int32()), ('stage_number', pa.int32()),
+    ('driver_id', pa.int32()), ('driver_fullname', pa.string()), ('car_number', pa.string()),
+    ('finishing_position', pa.int32()), ('stage_points', pa.int32()),
+])
+
+RACE_LEADERS_SCHEMA = pa.schema([
+    ('series_id', pa.int32()), ('race_id', pa.int32()), ('leader_seq', pa.int32()),
+    ('start_lap', pa.int32()), ('end_lap', pa.int32()), ('car_number', pa.string()),
+])
+
 LIVE_FINAL_SCHEMA = pa.schema([
     ('series_id', pa.int32()), ('race_id', pa.int32()),
     ('lap_number', pa.int32()), ('laps_in_race', pa.int32()), ('flag_state', pa.int32()),
@@ -356,6 +388,9 @@ BREADTH_TABLES = {
     'lap_notes':      (LAP_NOTES_PATH, LAP_NOTES_SCHEMA),
     'practice_runs':  (PRACTICE_RUNS_PATH, PRACTICE_RUNS_SCHEMA),
     'live_final':     (LIVE_FINAL_PATH, LIVE_FINAL_SCHEMA),
+    'caution_segments': (CAUTION_SEGMENTS_PATH, CAUTION_SEGMENTS_SCHEMA),
+    'stage_results':    (STAGE_RESULTS_PATH, STAGE_RESULTS_SCHEMA),
+    'race_leaders':     (RACE_LEADERS_PATH, RACE_LEADERS_SCHEMA),
 }
 
 # key map (section 3.4 common rules): NASCARDriverID->driver_id, LapTime->lap_time, Lap->lap,
@@ -435,6 +470,71 @@ def _extract_practice_runs(con, path):
         row.update(weekend_run_id=weekend_run_id, run_type=run_type, run_name=run_name, run_date=run_date)
         rows.append(row)
     return rows
+
+
+_CAUTION_SEGMENT_STRUCT = """STRUCT(
+    start_lap BIGINT, end_lap BIGINT, reason VARCHAR, comment VARCHAR,
+    beneficiary_car_number VARCHAR, flag_state BIGINT
+)[]"""
+
+_STAGE_RESULT_STRUCT = """STRUCT(
+    driver_fullname VARCHAR, driver_id BIGINT, car_number VARCHAR,
+    finishing_position BIGINT, stage_points BIGINT
+)[]"""
+
+_RACE_LEADER_STRUCT = """STRUCT(
+    start_lap BIGINT, end_lap BIGINT, car_number VARCHAR
+)[]"""
+
+
+def _extract_caution_segments(con, path):
+    q = f"""
+        SELECT c.seg AS seg
+        FROM read_json($p, columns={{'weekend_race': 'STRUCT(caution_segments {_CAUTION_SEGMENT_STRUCT})[]'}}) t,
+             UNNEST(t.weekend_race) AS _(wr),
+             UNNEST(wr.caution_segments) AS c(seg)
+    """
+    return [dict(row[0]) for row in con.sql(q, params={'p': path}).fetchall()]
+
+
+def _extract_stage_results(con, path):
+    q = f"""
+        SELECT s.stage.stage_number AS stage_number, r.res AS result
+        FROM read_json($p, columns={{'weekend_race':
+            'STRUCT(stage_results STRUCT(stage_number BIGINT, results {_STAGE_RESULT_STRUCT})[])[]'}}) t,
+             UNNEST(t.weekend_race) AS _(wr),
+             UNNEST(wr.stage_results) AS s(stage),
+             UNNEST(s.stage.results) AS r(res)
+    """
+    rows = []
+    for stage_number, result in con.sql(q, params={'p': path}).fetchall():
+        row = dict(result)
+        row['stage_number'] = stage_number
+        rows.append(row)
+    return rows
+
+
+def _extract_race_leaders(con, path):
+    q = f"""
+        SELECT l.seg AS seg
+        FROM read_json($p, columns={{'weekend_race': 'STRUCT(race_leaders {_RACE_LEADER_STRUCT})[]'}}) t,
+             UNNEST(t.weekend_race) AS _(wr),
+             UNNEST(wr.race_leaders) AS l(seg)
+    """
+    return [dict(row[0]) for row in con.sql(q, params={'p': path}).fetchall()]
+
+
+def _extract_race_meta(con, path):
+    """C4: playoff_round + stage_4_laps, scalar per race, sourced from weekend-feed
+    weekend_race[0] (not the race_list index -- inconsistent stage_4_laps coverage there)."""
+    q = """
+        SELECT wr.playoff_round AS playoff_round, wr.stage_4_laps AS stage_4_laps
+        FROM read_json($p, columns={'weekend_race': 'STRUCT(playoff_round BIGINT, stage_4_laps BIGINT)[]'}) t,
+             UNNEST(t.weekend_race) AS _(wr)
+        LIMIT 1
+    """
+    row = con.sql(q, params={'p': path}).fetchone()
+    return (None, None) if row is None else (row[0], row[1])
 
 
 def _extract_laps(con, path):
@@ -613,6 +713,9 @@ def build_silver_breadth(race_records, full=False):
     pit_resolution = Counter()
     new_state = {}
     n_reused = n_fresh = n_no_feeds = 0
+    race_meta = {}  # C4: {(sid, rid): (playoff_round, stage_4_laps)}, fresh races only --
+                     # patched onto races.parquet after the loop; reused races keep whatever
+                     # build_silver() already carried forward from the prior races.parquet.
 
     for (sid, rid) in sorted(race_records.keys()):
         year = race_records[(sid, rid)]['year']
@@ -653,6 +756,41 @@ def build_silver_breadth(race_records, full=False):
             dedupe_stats['practice_runs']['dropped'] += dd
             dedupe_stats['practice_runs']['conflicts'] += cf
             table_rows['practice_runs'].extend(deduped_pr)
+
+            raw_cs = _extract_caution_segments(con, feed_paths['weekend-feed'])
+            for r in raw_cs:
+                r['series_id'], r['race_id'] = sid, rid
+            deduped_cs, dd, cf = _dedupe(
+                raw_cs, ['series_id', 'race_id', 'start_lap', 'end_lap', 'reason',
+                         'comment', 'beneficiary_car_number', 'flag_state']
+            )
+            dedupe_stats['caution_segments']['dropped'] += dd
+            dedupe_stats['caution_segments']['conflicts'] += cf
+            for seq, r in enumerate(deduped_cs):
+                r['event_seq'] = seq
+            table_rows['caution_segments'].extend(deduped_cs)
+
+            raw_sr = _extract_stage_results(con, feed_paths['weekend-feed'])
+            for r in raw_sr:
+                r['series_id'], r['race_id'] = sid, rid
+            deduped_sr, dd, cf = _dedupe(raw_sr, ['series_id', 'race_id', 'stage_number', 'driver_id'])
+            dedupe_stats['stage_results']['dropped'] += dd
+            dedupe_stats['stage_results']['conflicts'] += cf
+            table_rows['stage_results'].extend(deduped_sr)
+
+            raw_rl = _extract_race_leaders(con, feed_paths['weekend-feed'])
+            for r in raw_rl:
+                r['series_id'], r['race_id'] = sid, rid
+            deduped_rl, dd, cf = _dedupe(
+                raw_rl, ['series_id', 'race_id', 'start_lap', 'end_lap', 'car_number']
+            )
+            dedupe_stats['race_leaders']['dropped'] += dd
+            dedupe_stats['race_leaders']['conflicts'] += cf
+            for seq, r in enumerate(deduped_rl):
+                r['leader_seq'] = seq
+            table_rows['race_leaders'].extend(deduped_rl)
+
+            race_meta[(sid, rid)] = _extract_race_meta(con, feed_paths['weekend-feed'])
 
         if feed_paths['lap-times']:
             raw_laps = _extract_laps(con, feed_paths['lap-times'])
@@ -727,12 +865,26 @@ def build_silver_breadth(race_records, full=False):
                          for (sid, rid), fp in new_state.items()]
     pq.write_table(pa.Table.from_pylist(build_state_rows, schema=BUILD_STATE_SCHEMA), BREADTH_BUILD_STATE_PATH)
 
+    # C4: patch playoff_round/stage_4_laps onto the races.parquet build_silver() already wrote --
+    # only for races freshly (re-)extracted this run; reused races keep the value build_silver()
+    # already carried forward from the prior races.parquet (see its prior_row.get(...) above).
+    n_meta_patched = 0
+    if os.path.exists(RACES_PATH):
+        races_rows_out = pq.read_table(RACES_PATH).to_pylist()
+        for row in races_rows_out:
+            key = (row['series_id'], row['race_id'])
+            if key in race_meta:
+                row['playoff_round'], row['stage_4_laps'] = race_meta[key]
+                n_meta_patched += 1
+        pq.write_table(pa.Table.from_pylist(races_rows_out, schema=RACES_SCHEMA), RACES_PATH)
+
     report = {
         'mode': 'full' if full else 'incremental',
         'n_races_fresh': n_fresh, 'n_races_reused': n_reused, 'n_races_no_feeds': n_no_feeds,
         'row_counts': {name: len(rows) for name, rows in table_rows.items()},
         'dedupe': {name: dict(counts) for name, counts in dedupe_stats.items()},
         'pit_resolution': dict(pit_resolution),
+        'n_races_meta_patched': n_meta_patched,
     }
     return report
 
@@ -745,6 +897,8 @@ def print_breadth_report(report):
         d = report['dedupe'][name]
         print(f"[silver_build] silver.{name}: {n} rows "
               f"(dedup dropped={d.get('dropped', 0)}, conflicts={d.get('conflicts', 0)})")
+    print(f"[silver_build] silver.races.playoff_round/stage_4_laps: "
+          f"{report['n_races_meta_patched']} races patched from weekend-feed")
     pr = report['pit_resolution']
     print(f"[silver_build] pit_stops.driver_id resolution: by_car={pr.get('by_car', 0)}, "
           f"by_name={pr.get('by_name', 0)}, unresolved={pr.get('unresolved', 0)}")
