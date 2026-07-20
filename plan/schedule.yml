@@ -2104,7 +2104,7 @@ sessions:
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~2-4 hr"
-    ref: null
+    ref: "34afa71"
     exec_summary: >-
       Grade the model's probabilities honestly against real results per the
       pre-registered rules, and report where they are trustworthy and where they are
