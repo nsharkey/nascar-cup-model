@@ -267,9 +267,12 @@ def build_warehouse():
             f"CREATE OR REPLACE VIEW silver.driver_race AS SELECT * FROM read_parquet('{silver_driver_race_path}')"
         )
 
-    # Section 3.4 breadth tables (C2) -- same rebuildable-from-disk view pattern as above.
+    # Section 3.4 breadth tables (C2) + track reference tables (C3, research/track_audit_derivation.md
+    # section 2) -- same rebuildable-from-disk view pattern as above.
     for table_name in ('results', 'laps', 'lap_flags', 'flag_events', 'pit_stops',
-                        'lap_notes', 'practice_runs', 'live_final'):
+                        'lap_notes', 'practice_runs', 'live_final',
+                        'track_dim', 'track_xwalk', 'track_priors', 'track_similarity_prior',
+                        'rules_era', 'race_track', 'race_track_features'):
         path = os.path.join(silver_dir, f'{table_name}.parquet').replace('\\', '/')
         if os.path.exists(path):
             con.execute(f"CREATE OR REPLACE VIEW silver.{table_name} AS SELECT * FROM read_parquet('{path}')")

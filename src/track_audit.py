@@ -49,6 +49,64 @@ COUNT_FIELDS = [
     'last_year_in_scope_or_schedule',
 ]
 
+# bundle `schedule_by_year` / `completed_2026_through_cutoff` / `future_2026_after_cutoff` are
+# keyed by this display-name vocabulary, not by track_id -- this is the one mapping between the
+# two. Single source of truth: src/test_track_audit.py imports this rather than redefining it.
+DISPLAY_TO_ID = {
+    'Daytona oval': 'daytona_oval', 'Talladega': 'talladega_oval',
+    'Atlanta pre-2022': 'atlanta_pre_2022', 'Atlanta post-2022': 'atlanta_post_2022',
+    'Auto Club': 'auto_club_2mi', 'Charlotte oval': 'charlotte_oval',
+    'Chicagoland': 'chicagoland_oval', 'Darlington': 'darlington',
+    'Homestead': 'homestead', 'Kansas': 'kansas',
+    'Kentucky pre-2016': 'kentucky_pre_2016', 'Kentucky post-2016': 'kentucky_post_2016',
+    'Las Vegas': 'las_vegas', 'Michigan': 'michigan',
+    'Texas pre-2017': 'texas_pre_2017', 'Texas post-2017': 'texas_post_2017',
+    'Indianapolis oval': 'indianapolis_oval', 'Pocono': 'pocono',
+    'Bristol concrete': 'bristol_concrete', 'Bristol dirt': 'bristol_dirt',
+    'Dover': 'dover', 'Iowa': 'iowa', 'Martinsville': 'martinsville',
+    'Nashville': 'nashville', 'New Hampshire': 'new_hampshire',
+    'North Wilkesboro': 'north_wilkesboro',
+    'Phoenix pre-2018F': 'phoenix_pre_2018f', 'Phoenix post-2018F': 'phoenix_post_2018f',
+    'Richmond': 'richmond', 'WWT Gateway': 'wwt_gateway',
+    'Charlotte Roval v1': 'charlotte_roval_v1', 'Charlotte Roval v2': 'charlotte_roval_v2',
+    'Chicago street': 'chicago_street', 'COTA full': 'cota_full',
+    'COTA short': 'cota_short', 'Daytona road': 'daytona_road',
+    'Indianapolis road': 'indianapolis_road', 'Mexico City': 'mexico_city',
+    'Road America': 'road_america', 'San Diego street': 'san_diego_street',
+    'Sonoma short': 'sonoma_short', 'Sonoma carousel': 'sonoma_carousel',
+    'Watkins Glen': 'watkins_glen',
+}
+
+# Transcribed from the "Recommended era keys" table + its two VF-cited callouts in
+# nascar_cup_track_audit_2015_2026.md (narrative-only content, not in the JSON bundle -- see
+# DATA_DICTIONARY section 7). season_end=9999 marks the current, still-open era (mirrors the
+# crosswalk's own open-range convention). source_ids point into the S001-S041 ledger.
+RULES_ERA = [
+    {'era_key': 'gen6_2015_725hp', 'season_start': 2015, 'season_end': 2015,
+     'description': 'Horsepower reduction versus prior Gen-6 baseline; keep separate when '
+                    'older data are added.', 'source_ids': ''},
+    {'era_key': 'gen6_low_downforce', 'season_start': 2016, 'season_end': 2018,
+     'description': 'Lower-downforce development; Phoenix start/finish splits in fall 2018.',
+     'source_ids': ''},
+    {'era_key': 'gen6_2019_package', 'season_start': 2019, 'season_end': 2021,
+     'description': '550-hp/high-downforce package at many larger ovals; superspeedways '
+                    'transitioned from plates to tapered spacers.', 'source_ids': 'S036;S037'},
+    {'era_key': 'nextgen_launch', 'season_start': 2022, 'season_end': 2022,
+     'description': 'Next Gen baseline; Atlanta physical reconfiguration begins.',
+     'source_ids': ''},
+    {'era_key': 'nextgen_low_downforce_short_road', 'season_start': 2023, 'season_end': 2025,
+     'description': 'Short-track/road-course aero revisions plus evolving tire strategies.',
+     'source_ids': ''},
+    {'era_key': 'nextgen_750hp_sub15_road', 'season_start': 2026, 'season_end': 9999,
+     'description': '750 hp at road courses and ovals under 1.5 miles; broad coefficient-reset '
+                    'candidate.', 'source_ids': 'S039'},
+]
+
+
+def load_rules_era():
+    """6 rows: era_key, season_start, season_end, description, source_ids (see RULES_ERA)."""
+    return [dict(r) for r in RULES_ERA]
+
 
 def _read_csv(path):
     with open(path, newline='', encoding='utf-8') as f:

@@ -64,31 +64,9 @@ CROSSWALK_COLUMNS = ['track_id', 'feed_track_name', 'season_start', 'season_end'
                      'date_note', 'mapping', 'in_repo_scope', 'my_type',
                      'package_primary_family', 'notes']
 
-# package display names (schedule_by_year vocabulary) -> track_id
-DISPLAY_TO_ID = {
-    'Daytona oval': 'daytona_oval', 'Talladega': 'talladega_oval',
-    'Atlanta pre-2022': 'atlanta_pre_2022', 'Atlanta post-2022': 'atlanta_post_2022',
-    'Auto Club': 'auto_club_2mi', 'Charlotte oval': 'charlotte_oval',
-    'Chicagoland': 'chicagoland_oval', 'Darlington': 'darlington',
-    'Homestead': 'homestead', 'Kansas': 'kansas',
-    'Kentucky pre-2016': 'kentucky_pre_2016', 'Kentucky post-2016': 'kentucky_post_2016',
-    'Las Vegas': 'las_vegas', 'Michigan': 'michigan',
-    'Texas pre-2017': 'texas_pre_2017', 'Texas post-2017': 'texas_post_2017',
-    'Indianapolis oval': 'indianapolis_oval', 'Pocono': 'pocono',
-    'Bristol concrete': 'bristol_concrete', 'Bristol dirt': 'bristol_dirt',
-    'Dover': 'dover', 'Iowa': 'iowa', 'Martinsville': 'martinsville',
-    'Nashville': 'nashville', 'New Hampshire': 'new_hampshire',
-    'North Wilkesboro': 'north_wilkesboro',
-    'Phoenix pre-2018F': 'phoenix_pre_2018f', 'Phoenix post-2018F': 'phoenix_post_2018f',
-    'Richmond': 'richmond', 'WWT Gateway': 'wwt_gateway',
-    'Charlotte Roval v1': 'charlotte_roval_v1', 'Charlotte Roval v2': 'charlotte_roval_v2',
-    'Chicago street': 'chicago_street', 'COTA full': 'cota_full',
-    'COTA short': 'cota_short', 'Daytona road': 'daytona_road',
-    'Indianapolis road': 'indianapolis_road', 'Mexico City': 'mexico_city',
-    'Road America': 'road_america', 'San Diego street': 'san_diego_street',
-    'Sonoma short': 'sonoma_short', 'Sonoma carousel': 'sonoma_carousel',
-    'Watkins Glen': 'watkins_glen',
-}
+# package display names (schedule_by_year vocabulary) -> track_id -- single source of truth is
+# track_audit.DISPLAY_TO_ID (also used by src/track_reference_build.py, C3)
+DISPLAY_TO_ID = ta.DISPLAY_TO_ID
 
 
 def main():

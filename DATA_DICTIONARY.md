@@ -523,3 +523,28 @@ Notes:
   `silver_build.py`) is bumped on any section-3.4 transform change, forcing a full rebuild —
   independent of `silver.driver_race`'s own `PARSER_VERSION`/build state, so a breadth-only logic
   change never forces an unnecessary re-parse of the frozen parity path (and vice versa).
+
+### 9f. Track reference tables — `data/silver/*.parquet` (medallion rebuild, C3)
+
+Seven tables built by `src/track_reference_build.py` from the vendored `research/track_audit/`
+package (loader: `src/track_audit.py`; section 7 above) plus `silver.races`. Design:
+`research/track_audit_derivation.md` section 2. No parity obligation, no incremental build state
+(cheap to fully rebuild every time from the immutable package). Package files untouched —
+`src/test_track_audit.py` and the frozen C-gate (`src/gate_silver.py`) both re-run clean after
+this build. New sibling gate: `src/gate_track_reference.py` (re-derivation checks: row counts,
+banking parse, dim↔xwalk join integrity, race_track/race_track_features consistency). Full build
+report, including two findings from this session (a crosswalk row-count prose correction and a
+real join bug caught and fixed): `report/TRACK_REFERENCE.md`.
+
+| table | rows | grain | notes |
+|---|---:|---|---|
+| `silver.track_dim` | 43 | one per `track_id` | T1 physical facts (`length_mi, shape, surface, road_course, turns, banking_text` verbatim + parsed `banking_max_deg`/`banking_secondary_deg`), T2 taxonomy (`primary_family, secondary_family`), era bounds + Cup-points-race counts, `hp750_2026` BOOL (`road_course OR length_mi < 1.5`, VF S039), provenance (`source_ids, confidence, evidence_class, package_version, source_sha256, built_at`). **The ten `*_prior` fields, `key_comparables`, `structural_nearest_neighbors`, and all narrative fields are deliberately excluded** — a fact table nobody can mistake for a Working Hypothesis (section 2.2's design decision). |
+| `silver.track_xwalk` | 44 | one per era-range (`sonoma_short` has two) | Crosswalk verbatim + provenance. **44, not the "45" some prose says** — see the build report's row-count correction. |
+| `silver.track_priors` | 430 | `(track_id, prior_name)` | Long-form quarantine table: `track_id, prior_name, score (1-10), score_type` (verbatim "not an empirical measurement" warning), `evidence_class='Working Hypothesis'`, `package_version`. Every row labeled — nothing here can be silently read as a measurement. |
+| `silver.track_similarity_prior` | 193 | edge | The 193 structural-similarity edges verbatim, same quarantine treatment (`evidence_class='Working Hypothesis'`). |
+| `silver.rules_era` | 6 | one per era | `era_key, season_start, season_end, description, source_ids`, transcribed from the narrative report's "Recommended era keys" table (`track_audit.RULES_ERA`). Contiguous, `season_end=9999` for the open 2026 era. |
+| `silver.race_track` | 966 | `(series_id, race_id)` | `series_id, race_id, track_id`. **All three series**, points races only (`race_type_id=1`) — join of `silver.races` to the crosswalk on `(track_name=feed_track_name, season_start<=year<=season_end)`, with the Phoenix-2018 month-split tiebreak implemented for parity with `track_id_for()` (verified unreachable against real data — 2018 Phoenix races carry the track_name `"ISM Raceway"`, outside the crosswalk's vocabulary). Unresolved races (historical facility-name variants) are simply absent, the standard silver coverage-by-absence convention. |
+| `silver.race_track_features` | 404 | `(series_id, race_id)`, **Cup only** | The section-2.3 leakage-free derived features: `config_age_years, config_race_number, return_gap_years, era_key, era_race_number, hp750_2026`. Restricted to `series_id=1` because the source counts (`schedule_by_year`) are Cup-points-race counts by the package's own stated scope. `config_race_number`/`return_gap_years` computed walk-forward: full prior seasons from the package's own `schedule_by_year` (safe for any completed season), within-season order from the repo's actual `race_date` sequence. None of these are model features until they win their own pre-registered A/B (research/track_audit_derivation.md section 7, catalog items 6/7). |
+
+`src/warehouse.py`'s `build_warehouse()` registers all seven as DuckDB views over their parquet
+files, same rebuildable-from-disk pattern as every other silver table.
