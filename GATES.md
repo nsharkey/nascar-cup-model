@@ -1,6 +1,6 @@
 # GATES.md — the repo's health surface (how to run every gate)
 
-This repo is guarded by **10 gates**. They are the standing proof that the
+This repo is guarded by **11 gates**. They are the standing proof that the
 medallion foundation still reproduces the validated model, that the frozen
 specs still bind the code, and that the plan/docs have not drifted. Run them
 whenever you touch anything, and always before a push.
@@ -11,7 +11,7 @@ whenever you touch anything, and always before a push.
 src/run_gates.sh
 ```
 
-Runs all 10 gates with the correct interpreter and working directory, prints a
+Runs all 11 gates with the correct interpreter and working directory, prints a
 pass/fail summary table, and exits:
 
 - `0` — all green
@@ -31,7 +31,7 @@ most common way to get a spurious red:
 | Interpreter | Version | Has | Used by |
 |---|---|---|---|
 | `.venv/bin/python` | 3.14.x | PyYAML | the **plan** gate only (`test_report_plan.py`) |
-| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 9** gates (all medallion / model gates) |
+| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 10** gates (all medallion / model gates) |
 
 - The plan gate reads `plan/schedule.yml`; it needs PyYAML but **not** the
   scientific stack.
@@ -56,7 +56,7 @@ Gates run **sequentially on purpose**: seven of them open the shared
 `data/nascar.duckdb`, and concurrent opens can contend on the file lock. The
 ~1 min saved by parallelizing a health check is not worth the flakiness.
 
-## The 10 gates
+## The 11 gates
 
 | # | Gate | Interp | What it proves | Source of truth |
 |---|------|--------|----------------|-----------------|
@@ -70,6 +70,7 @@ Gates run **sequentially on purpose**: seven of them open the shared
 | 8 | `test_readme_numbers.py` | conda | README headline trio equals `gate_gold.py`'s `EXPECTED_*` (which the D-gate reproves live); 2026-OOS row is the corrected 0.447 | `README.md`, `gate_gold.py` |
 | 9 | `test_stand_down.py` | conda | Doctrine's superspeedway stand-down set {Daytona, Talladega, Atlanta} == `walkforward.MY_TYPE`'s SS set == the tracks `predict_next` flags `stand_down` (`tt=='SS'`) | `HANDOFF.md` doctrine, `walkforward.py` (frozen) |
 | 10 | `test_medallion_invariants.py` | conda | Bronze has no `failed` terminal state; silver has exactly one winner and no duplicate driver per (series, race) on both `driver_race` and `results`; checkers self-validate against injected corruption | `specs/medallion_architecture.md` §2.9, silver structure |
+| 11 | `gate_pricing.py` | conda | Pricing layer: §4 coherence invariants (internal self-consistency only, not correctness), §5.4 committed-fixture reprove (bit-exact, numpy version recorded), §6 faithful-read (priced win/top5/top10/h2h reproduce every committed prediction JSON's own numbers within MC error) | `specs/pricing_layer.md` §§4, 5.4, 6 (frozen) |
 
 ## Notes
 

@@ -404,15 +404,38 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   tail arms F7-C T1, SS confirms stand-down); `specs/tether_gates.md` (the three
   tether gates M4 builds). Plan re-sequenced onto **phase M (M1–M5)**; F10 re-homed
   as pivot step 2; F20 → done; L2 moot. All gates green before + after.
-- **Next single step (plan `next` = M2):** build the diagnostic pricer +
-  faithful-read gate + capture-assist template per `specs/pricing_layer.md`
-  (**Sonnet 5 · thinking on · high**; escalate to Opus on any judgment call). The
-  verbatim kickoff is in `plan/schedule.yml` (session M2) and rendered in `PLAN.md`.
-  Independently, the standing weekly loop (E1) fires at the next Cup race — predict
-  / seal / push before the green flag, record closing prices **before the scheduled
-  flag** (5618's were post-flag → inadmissible), then score after results post. The
-  D2 cutover still needs a **second** scored, *admissibly-priced* race before its
-  two-clean-cycle bar can be assessed.
+- **2026-07-20 (M2 done — diagnostic pricer built):** `src/pricing_layer.py`
+  (analytic win/H2H/group-best-of/manufacturer softmax + one pinned Gumbel block
+  for top-N/joint/group-count; add-half + eps floors; MC-reliability
+  exclude-or-raise-N; fair American odds), `src/fixtures/pricing_fixture.json`
+  (two committed sub-fixtures: race 5618's real 37-driver vector, and a synthetic
+  5-driver toy field exercising manufacturer/group/set/SS-flag/tail-flag paths;
+  numpy 2.1.3 / scipy 1.15.3 / python 3.13.5 recorded), `src/gate_pricing.py`
+  (section-4 coherence + section-5.4 fixture reprove [bit-exact] + section-6
+  faithful-read [1,443 marginals vs race 5618's JSON, all within tolerance]),
+  and `src/capture_template.py` (section 7). Wired into `run_gates.sh`/`GATES.md`
+  as the repo's **11th gate**; confirmed red on an injected doubled-utility defect
+  (6,000+ mismatches). Zero design-judgment escalations needed — three mechanical
+  resolutions recorded in the spec's RESULT block (§4 point 3 read as
+  floating-point-exact not bit-exact; `mfr_bestof`'s manufacturer set taken as
+  exactly the caller's `manufacturer_of` keys; `topN_joint`/`group_topN_count`
+  emit the full count pmf since the pinned signature has no explicit `m`). No
+  change to `predict_next.py` / `walkforward.py`; H2H pick rule (ITT continuity)
+  untouched. All 11 gates green before (10/10, inherited) and after. Full detail:
+  `specs/pricing_layer.md` `## RESULT — pricing layer`.
+- **Next single step (plan `next` = M3):** run the walk-forward calibration
+  backtest per `specs/calibration_backtest.md`, consuming M2's pricer
+  (**Sonnet 5 · thinking on · xhigh**; the judgment was spent in M1). The forward
+  stream is race 5618 only (N=1) today, so the primary H2H BSS verdict will be
+  **UNDERPOWERED** by the pre-registered terminal-only rule — the correct outcome,
+  not a shortfall. The verbatim kickoff is in `plan/schedule.yml` (session M3) and
+  rendered in `PLAN.md`. M4 (ship the 3 tether gates + formalize the demote)
+  remains co-startable off M1 any time the owner wants to prioritize it ahead of
+  M3. Independently, the standing weekly loop (E1) fires at the next Cup race —
+  predict / seal / push before the green flag, record closing prices **before the
+  scheduled flag** (5618's were post-flag → inadmissible), then score after
+  results post. The D2 cutover still needs a **second** scored,
+  *admissibly-priced* race before its two-clean-cycle bar can be assessed.
 
 ## Roadmap (agreed order — do not skip ahead)
 

@@ -91,8 +91,8 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | M1 | Pricing + calibration pre-registration + tether-gate design | ✅ done | Opus 4.8 · thinking on · xhigh | ~4-6 hr | Wrote the rulebook before any code: what gets priced, the one number that decides anything, and the gates that keep the external benchmark alive. Three pre-registration specs authored and the plan re-sequenced onto the model-book pivot; no production or pricing code. | Authored specs/pricing_layer.md (diagnostic Monte-Carlo readout: order-derived markets only; analytic-where-exact -- win=softmax, H2H=sigma(du), group best-of and manufacturer analytic, top-N/joint via one pinned Gumbel block; coherence=internal-only, NOT correctness; pinned seed/N/PCG64/numpy/conda-3.13 + committed fixture + add-half floor + MC-reliability rule; faithful-read gate reproducing predict_next's p_win/p_top5/p_top10/h2h within MC error). specs/calibration_backtest.md (ONE locked primary cell = H2H Brier skill score vs an as-of Bradley-Terry marginal baseline, pooled non-SS, FORWARD stream only; 163=in-sample dev smoke barred from decision + recal-fitting, 2026=peeked; dual pooled+per-type with a launder ban; ported race-count floor + race-clustered bootstrap; sealed non-citable secondary family + Bonferroni; power triage; non-SS tail arms F7-C T1, SS confirms stand-down). specs/tether_gates.md (gate A benchmark-liveness, gate B calibration-is-not-edge, gate C #5-stays-market-gated). Plan re-sequenced: phase M + M1-M5, F10 re-homed as pivot step 2, F20 done, L2 moot. All gates green before + after. |
-| M2 | Build the diagnostic pricer + faithful-read gate + capture-assist template | ⬅ next | Sonnet 5 · thinking on · high | ~3-5 hr | Turn the model's existing simulation into a labeled fair-odds readout across order-derived markets that also speeds up the weekly manual capture -- and prove it changes nothing the frozen model already publishes. | Implement specs/pricing_layer.md verbatim: src/pricing_layer.py (analytic win/H2H/group-best-of/manufacturer + one pinned Gumbel block for top-N/joint; add-half floor; MC-reliability exclude-or-raise-N; fair American odds), src/fixtures/pricing_fixture.json (pinned recipe, numpy version recorded), src/gate_pricing.py (coherence invariants + fixture reprove + faithful-read gate reproducing predict_next's p_win/p_top5/p_top10/h2h within MC error), and the section-7 capture-assist template (full-board H2H matchups + implied fair odds from the sealed JSON). Wire gate_pricing.py into run_gates.sh + GATES.md; verify it goes red on an injected defect. Zero new deps; no change to predict_next.py / walkforward.py; no frozen-spec edit; the H2H pick rule feeding the benchmark is untouched (ITT continuity). Escalate to Opus on any judgment call. |
-| M3 | Run the walk-forward calibration backtest (frozen PL) | ⛔ blocked | Sonnet 5 · thinking on · xhigh | ~2-4 hr | Grade the model's probabilities honestly against real results per the pre-registered rules, and report where they are trustworthy and where they are not -- free, on data we already have, needing no book odds. | Implement specs/calibration_backtest.md: src/calibration_backtest.py runs the frozen walk-forward (collect_preds; baseline-replication assert first), builds the as-of Bradley-Terry marginal baseline, prices each race via pricing_layer, and grades every market on all three strata (163 in-sample dev-only, 2026 peeked, the forward stream). Computes the ONE primary H2H Brier-skill-score verdict on the forward stream (race-clustered bootstrap, K>=20), the sealed secondary family (Bonferroni), and dual pooled+per-type reliability with the launder ban; publishes the power triage and the C-trigger split (non-SS tail arms F7-C T1, SS confirms stand-down). report/CALIBRATION_BACKTEST.md + RESULT block. Numbers must be right -- escalate to Opus on any judgment call. No frozen-model change; no scores_log touch. |
+| M2 | Build the diagnostic pricer + faithful-read gate + capture-assist template | ✅ done | Sonnet 5 · thinking on · high | ~3-5 hr | Turned the model's existing simulation into a labeled fair-odds readout across order-derived markets that also speeds up the weekly manual capture, and proved mechanically that it changes nothing the frozen model already publishes. | Implemented specs/pricing_layer.md verbatim: src/pricing_layer.py (analytic win/H2H/group-best-of/manufacturer softmax; one pinned Gumbel block for top-N/joint/group-count; add-half + eps floors; MC-reliability exclude-or-raise-N; fair American odds), src/fixtures/pricing_fixture.json (two committed sub-fixtures -- race 5618's real 37-driver vector, and a synthetic 5-driver toy field exercising manufacturer/group/set/SS-flag/tail-flag paths; numpy 2.1.3/scipy 1.15.3/python 3.13.5 recorded), src/gate_pricing.py (section-4 coherence + section-5.4 fixture reprove [bit-exact] + section-6 faithful-read [1,443 marginals vs race 5618's JSON, all within tolerance]), src/capture_template.py (section 7). Wired into run_gates.sh/GATES.md as the repo's 11th gate; confirmed red on an injected doubled-utility defect (6,000+ mismatches). Zero new deps; predict_next.py / walkforward.py untouched; the H2H pick rule feeding the benchmark is unchanged (ITT continuity). Full RESULT block filled in the spec. |
+| M3 | Run the walk-forward calibration backtest (frozen PL) | ⬅ next | Sonnet 5 · thinking on · xhigh | ~2-4 hr | Grade the model's probabilities honestly against real results per the pre-registered rules, and report where they are trustworthy and where they are not -- free, on data we already have, needing no book odds. | Implement specs/calibration_backtest.md: src/calibration_backtest.py runs the frozen walk-forward (collect_preds; baseline-replication assert first), builds the as-of Bradley-Terry marginal baseline, prices each race via pricing_layer, and grades every market on all three strata (163 in-sample dev-only, 2026 peeked, the forward stream). Computes the ONE primary H2H Brier-skill-score verdict on the forward stream (race-clustered bootstrap, K>=20), the sealed secondary family (Bonferroni), and dual pooled+per-type reliability with the launder ban; publishes the power triage and the C-trigger split (non-SS tail arms F7-C T1, SS confirms stand-down). report/CALIBRATION_BACKTEST.md + RESULT block. Numbers must be right -- escalate to Opus on any judgment call. No frozen-model change; no scores_log touch. |
 | M4 | Ship the 3 tether gates + formalize the demote | pending | Sonnet 5 · thinking on · high | ~2-3 hr | Make "the benchmark stays sovereign" a machine-checked fact, not a promise -- and formalize the demote in the same commit that ships its protection. | Implement specs/tether_gates.md: src/gate_benchmark_liveness.py (prints N/K/verdict/last-admissible-priced-race every run_gates.sh; RED if predictions are active and capture-debt > 2 non-SS races), src/gate_calibration_not_edge.py (prose->gate: doctrine sentinel present + no edge-from-calibration substitution claim), src/gate_five_market_gated.py (clean_air section 0 reads the MARKET verdict, never calibration). Wire all three into run_gates.sh + GATES.md; verify each goes red on an injected violation. Formalize the demote in the SAME commit (standfirst/bottom_line/HANDOFF: benchmark sovereign-and-gate-protected, model-book co-equal). clean_air_causal_pace.md is FROZEN and only read. |
 | M5 | Optional PL+Bayesian ensemble A/B | ⛔ blocked | Sonnet 5 · thinking on · xhigh | TBD | Blend the frozen PL and the Bayesian-PL (F10) only if the blend earns its keep on the same walk-forward gate every model change must pass. Step 3 of the pivot's underlying-model axis. | Short pre-registered spec + A/B: a gated ensemble of the frozen PL baseline and F10's dynamic-skill Bayesian-PL, adopted only on the program-wide rho-Wilcoxon gate (mean(d)>=+0.005, alpha per the multiplicity precedent); the calibration harness (M3) is an additional secondary eval surface, never a replacement gate. Blocked on F10's outcome -- if F10 nulls, M5's prior drops sharply and letting it die unrun is a valid outcome. Underlying-model axis step 3 (memo section 4). |
 
@@ -131,54 +131,55 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (M2)
+## Handoff — next session (M3)
 
-**Model & settings:** Sonnet 5, thinking on, effort high.
+**Model & settings:** Sonnet 5, thinking on, effort xhigh.
 
-M2 is 'next' as of 2026-07-20 -- build the diagnostic pricer + faithful-read gate + capture-assist template per specs/pricing_layer.md. Model: Sonnet 5, thinking on, effort high (well-specified, test-guarded build; escalate to Opus on any judgment call). Zero design judgment -- the spec pre-resolves every choice; genuine ambiguity means STOP and flag (as C1/D1 did). No frozen-spec edit, no change to predict_next.py / walkforward.py. Doctrine: calibration is model-quality, never edge, never unlocks #5; the market benchmark stays sovereign and gate-tethered. E1 preempts on a race weekend (predict + admissible capture, commit+push before the scheduled green).
+M3 is 'next' as of 2026-07-20 -- run the walk-forward calibration backtest per specs/calibration_backtest.md, consuming M2's pricer. Model: Sonnet 5, thinking on, effort xhigh (numbers must be right; judgment was spent in M1). Zero design judgment -- genuine ambiguity means STOP and flag (as C1/D1/M2 did). No frozen-spec edit; no change to predict_next.py / walkforward.py / scores_log.csv. Forward stream is N=1 today, so the primary verdict will be UNDERPOWERED -- the correct, pre-registered outcome, not a failure. E1 preempts on a race weekend (predict + admissible capture, commit+push before the scheduled green).
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, then specs/pricing_layer.md IN FULL -- it is the execution
-contract for this session and pre-resolves every design choice. Also read
-specs/README.md (freeze/pre-registration discipline), src/predict_next.py (the
-40k-Gumbel readout + h2h you are generalizing), and specs/calibration_backtest.md
-(M3 consumes your pricer -- know its interface).
+Read HANDOFF.md, then specs/calibration_backtest.md IN FULL, including the
+2026-07-20 terminal-only amendment at the bottom (it supersedes the original
+section 3 sequential-look language -- the primary verdict is evaluated ONLY at
+the terminal look, K>=60 non-SS forward races or 2028-02-15, whichever first).
+Also read src/pricing_layer.py + src/gate_pricing.py (M2's pricer -- your input)
+and specs/pricing_layer.md section 2 (the price_race interface).
 
-BUILD session M2 -- the diagnostic Monte-Carlo pricer, per specs/pricing_layer.md
-section 8's checklist. Zero design judgment: every choice is pre-resolved in the
-spec; genuine ambiguity means STOP and flag (as C1/D1 did), not choose.
-1. src/pricing_layer.py: analytic win=softmax, H2H=sigma(du), group best-of and
-   manufacturer (softmax sums); ONE pinned Gumbel block (section 5.1 recipe:
-   ascending driver_id, N=40000, default_rng([20260720, race_id]) PCG64) for
-   top-N single/joint and group-position markets; add-half MC floor + eps_floor
-   analytic (section 5.2); MC-reliability rarer-cell>=25 exclude-or-raise-N
-   (section 5.3); fair American odds (section 3.3). Runs on the conda 3.13
-   interpreter (NOT .venv).
-2. src/fixtures/pricing_fixture.json: generate once from the pinned recipe on
-   conda; commit it; record the numpy version inside it.
-3. src/gate_pricing.py: the section-4 coherence invariants + the section-5.4
-   fixture reprove + the section-6 faithful-read check (priced win/top5/top10/h2h
-   reproduce the committed race-5618 prediction JSON within the section-6
-   tolerance band; h2h exact to 4dp). Plain stdlib asserts; print the numpy
-   version; read-only w.r.t. every frozen file.
-4. Add gate_pricing.py to src/run_gates.sh (conda) + GATES.md; CONFIRM it goes red
-   on an injected defect (e.g. a doubled utility) before declaring done.
-5. The section-7 capture-assist template (full-board H2H matchups + implied fair
-   odds from the sealed JSON) -> predictions/race_{id}_{date}_capture_template.csv.
-6. Fill "## RESULT -- pricing layer" (dated) in the spec. Run the full gate
-   surface (all green); update plan/schedule.yml (M2 -> done; re-evaluate the
-   single 'next' -- M3 unblocks, M4 is co-startable off M1) and re-render via
-   python src/report_plan.py; commit; leave the tree clean.
-HARD CONSTRAINTS: no change to predict_next.py / walkforward.py; no frozen-spec
-edit (pricing_layer.md's frozen sections are immutable -- only its RESULT block is
-filled); the H2H pick rule feeding the market benchmark is untouched. If a race
-weekend falls, E1 duties (predict + admissible capture before the scheduled green)
-come first.
+BUILD session M3 -- the calibration backtest, per specs/calibration_backtest.md
+section 10's checklist. Zero design judgment: every choice is pre-resolved;
+genuine ambiguity means STOP and flag (as C1/D1/M2 did), not choose.
+1. src/calibration_backtest.py: run the frozen walk-forward with collect_preds
+   (assert baseline replication of 0.413/0.476/0.447 FIRST, before reading any
+   calibration number); build the as-of Bradley-Terry marginal baseline (non-SS
+   pairwise-win fraction, <5 prior races -> s_d=0.5); price every race via
+   pricing_layer.price_race; grade on all three strata (163 in-sample dev-only,
+   2026 peeked, forward). The FORWARD stream is race 5618 only (N=1) --
+   confirm this is reflected honestly, not padded.
+2. Compute the ONE primary decision: H2H Brier skill score vs the BT baseline on
+   non-SS forward pairs, race-clustered bootstrap (B_CALIB=10000,
+   CALIB_SEED=20260720), K>=20 floor, delta_prac=0.01. Per the terminal-only
+   amendment: this look is UNDERPOWERED by construction (K=1 << 20) -- compute
+   and report it, but do NOT declare CALIBRATED-SKILL or NULL.
+3. Compute the sealed secondary family (S1-S6, Bonferroni alpha=0.05/6,
+   non-citable), the dual pooled + per-track-type reliability curves (10
+   equal-mass bins, launder ban enforced), the power triage, and the section-9
+   C-trigger split (non-SS tail arms F7-C T1; SS confirms stand-down, never a
+   C-trigger).
+4. Write report/CALIBRATION_BACKTEST.md (all strata, all cells, the verdict,
+   power triage, trigger split, numpy/interpreter environment). Fill
+   "## RESULT -- calibration backtest" (dated) in the spec.
+5. Run the full gate surface (all green, no new gate expected -- M3 has no
+   frozen-gate obligation of its own); update plan/schedule.yml (M3 -> done;
+   re-evaluate 'next' -- M4 is the natural continuation, still co-startable);
+   re-render via python src/report_plan.py; commit; leave the tree clean.
+HARD CONSTRAINTS: no change to predict_next.py / walkforward.py / scores_log.csv;
+no frozen-spec edit (only the RESULT block is filled). If a race weekend falls,
+E1 duties (predict + admissible capture before the scheduled green) come first.
 
-Model: Sonnet 5, thinking on, effort high. On start, confirm the running model +
-settings match before substantive work; escalate to Opus on any genuine judgment
-call rather than guessing.
+Model: Sonnet 5, thinking on, effort xhigh (numbers must be right -- the judgment
+was already spent in M1). On start, confirm the running model + settings match
+before substantive work; escalate to Opus on any genuine judgment call.
 ```
 
-**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0. L5+L6 DONE -- no affordable + real-time-admissible + confirmed-NASCAR + ToS-clean odds vendor exists, so STAY MANUAL; L2 moot. F20 vetted the model-book pivot (6 adversarial passes); owner chose DEMOTE + tether. M1 (this session) pre- registered the pivot: specs/pricing_layer.md (diagnostic order-derived MC readout), specs/calibration_backtest.md (one locked H2H primary cell on the forward stream), specs/tether_gates.md (3 gates keeping the benchmark sovereign). 'next' is M2 -- build the diagnostic pricer + faithful-read gate + capture-assist. E1 never pauses; the market benchmark stays the sole external check and sole roadmap-#5 gate.
+**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark is at N=0. L5+L6 DONE -- no affordable + real-time-admissible + confirmed-NASCAR + ToS-clean odds vendor exists, so STAY MANUAL; L2 moot. F20 vetted the model-book pivot (6 adversarial passes); owner chose DEMOTE + tether. M1 pre-registered the pivot (3 specs). M2 (this session) built the diagnostic pricer: src/pricing_layer.py + a committed fixture + src/gate_pricing.py (coherence/fixture-reprove/faithful-read, the repo's 11th gate, confirmed red-on-defect) + the capture-assist template. 'next' is M3 -- run the calibration backtest (will be UNDERPOWERED at forward N=1, by design). M4 (tether gates) remains co-startable off M1. E1 never pauses; the market benchmark stays the sole external check and sole roadmap-#5 gate.

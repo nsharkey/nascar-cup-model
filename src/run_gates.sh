@@ -65,6 +65,7 @@ GATES=(
   "conda|test_readme_numbers.py|README headline trio"
   "conda|test_stand_down.py|superspeedway stand-down list"
   "conda|test_medallion_invariants.py|bronze/silver data invariants"
+  "conda|gate_pricing.py|pricing layer: coherence + fixture reprove + faithful-read"
 )
 
 LOGDIR="$(mktemp -d)"

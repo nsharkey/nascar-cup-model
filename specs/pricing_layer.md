@@ -438,8 +438,67 @@ frozen JSON's own numbers as odds.
 
 ---
 
-## RESULT — pricing layer (to be filled by M2, on build)
+## RESULT — pricing layer (M2, 2026-07-20)
 
-*(dated build outcome: fixture committed, faithful-read gate PASS on race 5618
-+ all committed predictions, coherence invariants PASS, red-on-defect confirmed,
-numpy version recorded. Filled by M2, not M1.)*
+**Built, all green, tree clean.** `src/pricing_layer.py` (pure functions: `softmax`,
+`h2h_matrix`, `group_bestof`, `mfr_markets`, `mc_block` (§5.1 recipe), `topN_single`,
+`count_topN_distribution` (shared machinery for `topN_joint`/`group_topN_count`),
+`mc_reliability` (§5.3), `fair_odds`/`score_floor` (§3.3/§5.2), `price_race` (§2
+signature)); `src/generate_pricing_fixture.py` + `src/fixtures/pricing_fixture.json`
+(two sub-fixtures: `real_race_5618` — race 5618's real 37-driver `field[].utility`
+verbatim, win/h2h/topN only — and `toy_field` — a synthetic 5-driver `SS`-typed field
+exercising `manufacturer_of`/one `group`/one `set`/coherence/the tail-flag path);
+`src/gate_pricing.py`; `src/capture_template.py` (§7). Conda interpreter: Python
+3.13.5, numpy 2.1.3, scipy 1.15.3 (recorded in the fixture's `meta` block and
+asserted live by the gate).
+
+**Gate (11th in `run_gates.sh`/`GATES.md`) — PASS on all three checks:**
+1. **Coherence (§4):** points 1/3/4/5 hold to floating-point precision (≤1e-9,
+   the achievable bound for IEEE754 — literal bit-exact `==` is not attainable for
+   §4 point 3's pairwise sum, a genuine floating-point property of computing
+   `σ(Δu)` and `σ(-Δu)` via two independent divisions, not a defect). Point 2's
+   "holds exactly" is proved by comparing **all four** terms (N=1/3/5/10) from the
+   **same** MC block — not the analytic `p_win` against MC top-N, which are
+   different estimators and only agree within the point-6 cross-check tolerance
+   (documented in `gate_pricing.py`'s module docstring; both fields' point-6
+   cross-checks pass, 37/37 and 5/5 drivers within tolerance).
+2. **Fixture reprove (§5.4):** bit-exact match on both sub-fixtures after a fresh
+   `price_race` recompute from the fixture's own committed `input` blocks.
+3. **Faithful-read (§6):** race 5618's committed prediction JSON — the only one
+   committed to date — hash-verified, then 1,443 marginals checked (37 win + 37
+   top5 + 37 top10 + 1,332 h2h, the full matrix, a superset of the canonical
+   lower-id minimum) against the JSON's own `p_win`/`p_top5`/`p_top10`/`h2h_prob`,
+   all within `TOL_i` (h2h within 2e-4). Max observed slack vs. tolerance: win
+   ≤1.4e-3 under bound, top5 ≤3.5e-3, top10 ≤4.9e-3, h2h max diff 6.97e-5 (vs. the
+   2e-4 floor) — comfortable margins, consistent with a faithful, defect-free
+   implementation.
+
+**Red-on-defect confirmed:** an injected doubled-utility defect (`utility *= 2`
+inside `price_race`) was run against the live fixture reprove and produced 6,000+
+mismatches, exit code 1 — the gate is not vacuously green.
+
+**Resolved (not flagged) during build, for the record:**
+- §4 point 3's "exactly" and point 2's "holds exactly" read as floating-point-exact
+  (≤1e-9), not bit-exact `==`, for the reasons above — a numerical-practice
+  correction to the gate's own assertions, not a spec ambiguity requiring an
+  amendment (the spec's own point 1 already states "within 1e-9").
+- `mfr_bestof`'s market-defining set 𝓜 is taken as exactly the drivers present in
+  the caller's `manufacturer_of` dict (∪𝓜), matching the §3.1 formula literally;
+  the pinned `price_race` signature has no separate 𝓜 parameter.
+- `topN_joint`/`group_topN_count` emit the full count pmf (k = 0..|subset|) rather
+  than a single "≥m"/"exactly m" value, since the pinned signature carries no `m`
+  parameter — the pmf is a strict superset from which any m is derivable without a
+  second MC pass, and both markets share one `count_topN_distribution` helper
+  (same statistic, different caller-side label).
+- The fixture's `toy_field` is `track_type='SS'` (not a neutral non-SS type) so the
+  `SS_STAND_DOWN` flag path is exercised by the same committed fixture that also
+  exercises `manufacturer_of`/group/set, rather than adding a third sub-fixture.
+
+**No frozen-spec edit; no change to `predict_next.py` / `walkforward.py`.** H2H
+pick rule (ITT continuity, §3.4) untouched — `gate_pricing.py` only reads the
+sealed JSON. `src/capture_template.py` re-expresses race 5618's own sealed numbers
+as fair odds (smoke-tested against race 5618, output not committed — race 5618 is
+already closed out, so a capture sheet for it now serves no live purpose; the
+script is the deliverable). Gate surface was 10/10 green going into this session
+(M1's last verification, untouched by the intervening spec-only commit); 11/11
+green (the new `gate_pricing.py` included) after this build; tree left clean.
