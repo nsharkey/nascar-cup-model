@@ -20,25 +20,26 @@ meta:
     Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible, so the market benchmark
     is at N=0, capture_debt=1. L5+L6 DONE -- STAY MANUAL; L2 moot. F20 vetted the
     model-book pivot; owner chose DEMOTE + tether. M1-M4 shipped the pricer,
-    calibration backtest, and three tether gates (GATES.md 12-14): the market
-    benchmark is **sovereign and gate-protected**, the model-book a co-equal thread.
-    C4 added silver caution/stage tables + playoff_round. F19 measured incentive-
-    state lore: cutline-proximity DNF is a null once disaggregated by rank; bubble
-    stage-point spike is real; locked-in rho decay is a noisy null. F3 shipped
-    gold.track_profiles/track_profiles_asof (ten empirical metrics + F16
-    additions), analytics-only, build-graph isolated. 15/15 gates green. 'next' is
-    F4 (track similarity / DST). M5/F10/F1/F2 gated on >=8 scored non-SS races;
-    G2 gated on market EDGE. E1 never pauses, the sole #5 gate.
+    calibration backtest, and three tether gates (GATES.md 14-16, renumbered as F3/
+    F4 each added a gate ahead of them): the benchmark stays **sovereign and
+    gate-protected**. C4 added silver caution/stage tables + playoff_round. F19
+    measured incentive-state lore (cutline-proximity DNF null; bubble stage-point
+    spike real; rho decay a noisy null). F3 shipped gold.track_profiles (ten
+    empirical metrics), analytics-only, build-graph isolated. F4 shipped
+    gold.track_dst/track_pltree (Driver Skill Transferability vs structural edges:
+    edge-restricted Spearman 0.313; pltree-vs-MY_TYPE ARI 0.501), same isolation.
+    16/16 gates green. 'next' is F13 (loop-metric histories). M5/F10/F1/F2 gated on
+    >=8 scored non-SS races; G2 gated on market EDGE. E1 never pauses.
   handoff_note: >-
-    F4 is 'next' as of 2026-07-20 -- empirical track similarity vs structural edges
-    (Driver Skill Transferability) per research/track_audit_derivation.md section 4.
-    Pre-register a spec, then compute residual-based track-config similarity (leave-
-    one-season-out CV, frozen-engine residuals replayed on gold -- reuse F3's replay
-    function) and compare against the vendored structural-similarity edges (edge-
-    restricted Spearman + top-3 Jaccard + a named disagreement list), plus a pltree
-    cross-validation of MY_TYPE against silver.track_dim's physical covariates.
-    Analytics/reference tier -- never touches the frozen model, no >=8-scored-races
-    gate. Model: Sonnet 5, thinking on, effort xhigh. E1 preempts on a race weekend.
+    F13 is 'next' as of 2026-07-20 -- driver loop-metric histories (in-house loop
+    data) per research/external_knowledge_scan.md section 6.1. Pre-register a spec,
+    then build as-of driver histories from silver.laps/lap_flags (ARP -- pin one of
+    three circulating definitions --, green-flag pass differential, quality passes,
+    fastest-lap share, laps-in-top-15, closers), importing F3's already-pinned
+    loop-metric definitions (green-flag lap, pass, durable pass, restart) rather
+    than re-choosing them. Analytics/reference tier -- never touches the frozen
+    model, no >=8-scored-races gate. Model: Sonnet 5, thinking on, effort high.
+    E1 preempts on a race weekend.
 
 phases:
   - key: "A"
@@ -1206,11 +1207,11 @@ sessions:
   - id: "F4"
     phase: "F"
     title: "Empirical track similarity vs structural edges (DST)"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~3-5 hr"
-    ref: null
+    ref: "6c0bd41"
     exec_summary: >-
       Test whether tracks that look similar on paper actually behave similarly
       for drivers — replacing the audit's structural guesses with measured
@@ -1231,14 +1232,30 @@ sessions:
       pooling refinement exits F4 as an A/B candidate, not an adoption.
     deps: ["D1"]
     status_note: >-
-      Promoted to 'next' 2026-07-20 (F3 close-out): dep (D1) was already done;
-      F3 landed a reusable frozen-engine-replay-on-gold function
-      (track_profiles_build.replay_frozen_engine, used for FVS-model) that F4's
-      own residual-replay step can reuse rather than re-deriving. Second-listed
-      among the analytics/reference group (F3/F4/F13/F14/F19 — phase F's own
-      note enumerates them in this order); F13's status_note calls itself
-      "complementary to F3's track-grain profiles", i.e. still sequenced after
-      F4 in this order. Audit follow-up (research/track_audit/INTEGRATION.md).
+      2026-07-20: DONE. specs/track_similarity.md pre-registered first
+      (research/track_audit_derivation.md §4 as source), then
+      src/track_similarity_build.py built gold.track_dst (561 pairs,
+      track_id-only grain -- deviates from F3's (track_id, era_key) since
+      it's the one that reconciles with the derivation doc's "36 configs /
+      630 pairs" worked numbers; real count 34 configs / 561 pairs),
+      gold.track_dst_edges (edge-restricted Spearman rho=0.313 n=15, top-3
+      Jaccard mean=0.186 n=7, 4 type-1 + 20 type-2 named disagreements vs
+      silver.track_similarity_prior), and gold.track_pltree/
+      track_pltree_splits (from-scratch pltree cross-validation of MY_TYPE,
+      no R/PlackettLuce dependency: purity 85.3%, ARI 0.501, 5 interpretable
+      disagreements -- SS/drafting tracks cluster with other large ovals on
+      physical covariates alone, expected since drafting status is a
+      rules/aero distinction raw geometry can't see). replay_frozen_engine_
+      by_driver() mirrors gate_gold.py's gold_sourced_walk_forward()
+      line-for-line (gate_gold.py untouched), extending F3's replay pattern
+      to driver grain. One dated pre-data amendment: the pair floor gained a
+      per-side n_races>=5 requirement after a first pass found the
+      driver-overlap-only floor let 1-race configs display track-specific
+      values; after the fix, 516/561 (92%) are below_floor. New gate
+      src/gate_track_similarity.py PASS; full surface 16/16 green (also
+      fixed a pre-existing stale gate-number cross-reference in GATES.md's
+      Notes, left over from F3's insertion). Full detail:
+      report/TRACK_SIMILARITY.md. Promotes F13 to 'next'.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, specs/README.md (pre-registration discipline), then
@@ -1703,7 +1720,7 @@ sessions:
   - id: "F13"
     phase: "F"
     title: "Driver loop-metric histories (in-house loop data)"
-    status: "blocked"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~3-5 hr"
@@ -1728,8 +1745,66 @@ sessions:
       components supersedes it.
     deps: ["C2"]
     status_note: >-
-      Proposed by F6 (6d5e18e, scan §8.2/§9.1). Needs silver lap/flag tables
-      (C2). Driver-history grain — complementary to F3's track-grain profiles.
+      Promoted to 'next' 2026-07-20 (F4 close-out): dep (C2) was already
+      done; proposed by F6 (6d5e18e, scan §8.2/§9.1). Third-listed among the
+      analytics/reference group (F3/F4/F13/F14/F19 — phase F's own note
+      enumerates them in this order); F14's status_note names D1 (already
+      done) as its own sole dep, so F13 stays first between the two.
+      Driver-history grain — complementary to F3's track-grain profiles;
+      must import F3's §1.7 loop-metric definitions (green-flag lap, pass,
+      durable pass, restart) rather than re-choosing them.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, specs/README.md (pre-registration discipline), then
+      research/external_knowledge_scan.md section 6.1 (loop data) and section 7
+      items 1-3 (leakage/circularity traps: same-race Driver Rating embeds the
+      finish; all loop whole-race metrics are same-race outcomes, not pre-race
+      signals; ARP has >=3 circulating definitions with no accessible official
+      glossary) IN FULL -- these are this session's execution contract. Also
+      read specs/track_profiles.md (F3) section 1.7 for the four loop-metric-
+      adjacent definitions F13 must import verbatim rather than re-choose
+      (green-flag lap, pass, durable pass, restart) -- F3's own note names F13
+      as the intended importer.
+
+      BUILD session F13 -- driver loop-metric histories (in-house loop data).
+      Zero design judgment on the frozen model: this is analytics/reference
+      tier (phase F's own note: "Analytics and reference sessions
+      (F3/F4/F13/F14/F19) never touch the frozen model") -- no gated A/B, no
+      walkforward.py/predict_next.py change, no >=8-scored-races gate.
+
+      1. Pre-register a spec (specs/ following specs/README.md's
+         frozen-once-committed discipline) using external_knowledge_scan.md
+         section 6.1 as the derivation source: from silver.laps/silver.
+         lap_flags (C2), build AS-OF driver histories (never same-race values
+         -- section 7 item 2's trap) for Average Running Position (pin ONE of
+         the three circulating definitions -- all-laps / green-flag-only /
+         lead-lap-only -- section 7 item 3, and freeze it), green-flag pass
+         differential, quality passes (passes while running top-15),
+         fastest-lap share, laps-in-top-15, and closers (positions gained in
+         the final 10% of green-flag laps).
+      2. Import F3's already-pinned definitions verbatim where they overlap
+         (green-flag lap, pass, durable pass, restart -- specs/
+         track_profiles.md section 1.7) rather than re-choosing them.
+      3. Driver Rating itself is NOT imported: finish and win are direct
+         formula inputs to NASCAR's own Rating (section 6.1), making
+         same-race use circular by construction; build a self-built
+         composite from this session's own components instead, per the
+         derivation doc's own recommendation.
+      4. Analytics tables only (Tier A) -- any future model-feature use of
+         these histories requires its own later pre-registered,
+         walk-forward-gated A/B; nothing here joins gold.wf_features or
+         touches walkforward.py/predict_next.py.
+      5. Output: the spec file, a build module + gate (mirror F3/F4's
+         build-graph-isolation gate pattern -- a source-text scan proving
+         gold_build.py/walkforward.py/predict_next.py never reference this
+         session's tables) + a short report. Update plan/schedule.yml (F13
+         -> done; promote F14 to 'next' per phase F's own enumerated order)
+         and re-render via python src/report_plan.py; run the full gate
+         surface; commit; leave the tree clean.
+      Zero design judgment calls: if a definition is genuinely ambiguous
+      anywhere the spec doesn't resolve, STOP and flag it rather than
+      choosing. If today is a race weekend, E1 duties (predict + admissible
+      capture) come first.
   - id: "F14"
     phase: "F"
     title: "Next Gen equipment-share decomposition"
