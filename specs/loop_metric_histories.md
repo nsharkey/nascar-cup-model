@@ -335,4 +335,16 @@ composite_h`. Provenance: `built_at`.
 
 ---
 
-## RESULT — F13
+## RESULT — F13 (2026-07-20)
+
+Built exactly per this spec, zero design-judgment escalations. `gold.driver_loop_race` (8,949
+rows, `(driver_id, race_id)`, 237 Cup points races 2020–2026 — the natural `silver.lap_flags` data
+floor) and `gold.driver_loop_history` (8,949 rows, AS-OF, 8,808 with a defined `composite_h`).
+ARP pinned green-flag-only (§2.1); green-flag-lap/pass imported verbatim from
+`track_profiles_build.py` (confirmed by the gate's source-scan, not just by prose); durable
+pass/restart disclosed as not used by any of the six components. `gate_loop_metrics.py` — PASS,
+all six §5 checks green, including a full (not sampled) re-derivation of every row in both
+tables. Full gate surface 17/17 green (16 inherited + this session's new gate). No frozen-model
+file touched; `gold.driver_loop_race`/`gold.driver_loop_history` referenced zero times in
+`gold_build.py`/`walkforward.py`/`predict_next.py`. Full detail:
+`report/LOOP_METRIC_HISTORIES.md`.

@@ -283,7 +283,8 @@ def build_warehouse():
     gold_dir = os.path.join(REPO_ROOT, 'data', 'gold')
     for table_name in ('track_typology', 'wf_features', 'driver_form', 'driver_type_form',
                        'track_profiles', 'track_profiles_asof',
-                       'track_dst', 'track_dst_edges', 'track_pltree', 'track_pltree_splits'):
+                       'track_dst', 'track_dst_edges', 'track_pltree', 'track_pltree_splits',
+                       'driver_loop_race', 'driver_loop_history'):
         path = os.path.join(gold_dir, f'{table_name}.parquet').replace('\\', '/')
         if os.path.exists(path):
             con.execute(f"CREATE OR REPLACE VIEW gold.{table_name} AS SELECT * FROM read_parquet('{path}')")

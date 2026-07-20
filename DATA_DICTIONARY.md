@@ -722,6 +722,49 @@ engine's own mechanics, tagged with `race_id`, via a new function that imports `
 
 ---
 
+### 10g. Driver loop-metric histories — `data/gold/*.parquet` (medallion rebuild, F13)
+
+Driver-history-grain loop-data signals built by `src/loop_metrics_build.py` per
+`specs/loop_metric_histories.md`, derived in-house from `silver.laps`/`silver.lap_flags` (C2) —
+complementary to F3's track-grain profiles (§10f), not a duplicate. Analytics/reference tier —
+build-graph-isolated from `gold.wf_features`/`gold_build.py`/`walkforward.py`/`predict_next.py`
+(gate-enforced, `src/gate_loop_metrics.py`); never feeds the frozen model. Full detail:
+`report/LOOP_METRIC_HISTORIES.md`.
+
+| table | rows | grain | governance |
+|---|---:|---|---|
+| `gold.driver_loop_race` | 8,949 | `(driver_id, race_id)` | raw, same-race — audit-only intermediate; never a pre-race signal |
+| `gold.driver_loop_history` | 8,949 | `(driver_id, race_id, race_seq)` | walk-forward AS-OF (strictly prior races only) — the deliverable |
+
+`gold.driver_loop_race` columns: `race_seq` (global ordinal across every in-scope race, `ORDER BY
+race_date, race_id`), `n_green_race` (the race's own total green-flag lap count — the shared rate
+denominator), `green_flag_laps` (this driver's own green-flag lap count), `arp` (Average Running
+Position, **green-flag-only** — one of three circulating public definitions, pinned per
+`specs/loop_metric_histories.md` §2.1 after rejecting lead-lap-only as not cleanly derivable from
+archived data and all-laps as not caution-noise-corrected), `passes_made`/`times_passed`/
+`pass_diff`, `quality_passes`/`quality_pass_rate` (green-flag pass ending `<=15`), `fastest_laps`/
+`fastest_lap_share` (field-minimum lap_time per green-flag lap, ties credited to all tied drivers),
+`laps_top15`/`laps_top15_rate`, `closers` (positions gained in the final 10% of the race's own
+green-flag laps by count; `NULL` if the driver retired before that window began).
+
+`gold.driver_loop_history` columns: `n_hist` (count of strictly-prior qualifying races
+contributing to `arp_h`/`pass_diff_h`/`quality_pass_rate_h`/`fastest_lap_share_h`/
+`laps_top15_rate_h` — these five share one subsequence since they are non-`NULL` together by
+construction), `n_hist_closers`/`closers_h` (closers' own subsequence, since `closers` can be
+`NULL` independently), and `composite_h` — a self-built replacement for NASCAR's own Driver Rating
+(not imported: finish/win are direct formula inputs to NASCAR's Rating, making same-race use
+circular by construction, scan §6.1). `composite_h` is the mean of six per-`race_id`
+cross-sectional z-scores of the `_h` columns (ARP sign-flipped), requiring all six non-`NULL` —
+`NULL` otherwise (no invented partial-component threshold). Half-life = 8 races, reusing the
+frozen production half-life (`HANDOFF.md`/`gold_build.py`), not a new tuned parameter.
+
+Green-flag-lap and pass are imported verbatim from `track_profiles_build.py` (F3) —
+`_green_laps_by_driver`/`_green_stretches` — per the spec's own overlap guard, not
+re-implemented. Durable pass and restart (also pinned in `specs/track_profiles.md` §1.7) are not
+used by any of F13's six components (disclosed in the spec, not an oversight).
+
+---
+
 ## 11. Scoring and market-benchmark consumers — `src/score_race.py`, `src/market_benchmark.py` (medallion rebuild, D2)
 
 Implement `scoring_methodology.md` and `market_benchmark_decision_rule.md` verbatim (incl. every
