@@ -73,10 +73,12 @@ Gates run **sequentially on purpose**: seven of them open the shared
 
 - Gate 5 (`gate_gold.py`) is the slow one (~30–60 s: it runs the walk-forward
   engine R0→R3). Everything else is seconds.
-- Running the full surface should leave the working tree **clean**. If
-  `git status` shows a change after a gate run, that is a bug in the gate, not
-  expected output — see `report/SILVER_REGRESSION.md`'s generation for the one
-  historical instance of this.
+- Running the full surface leaves the working tree **clean**. A bare
+  `gate_silver.py` run is read-only and does **not** rewrite
+  `report/SILVER_REGRESSION.md`; regenerate that report deliberately with
+  `gate_silver.py --write` (its Environment block records the interpreter that
+  generated it, so refresh it only on purpose). If `git status` shows any
+  change after `run_gates.sh`, that is a bug in a gate, not expected output.
 - Gates 7 and 8 are "prose→gate" tests: they exist so a documented claim can
   never silently drift from the code/data it describes. Add more of these when
   a prose-only claim is cleanly and passingly encodable (each must also be

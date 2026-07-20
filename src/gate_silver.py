@@ -7,8 +7,15 @@ copy in data/anchors/) field-for-field. Must run against a --full silver build (
 
 Exit code 0 on PASS, 1 on FAIL, 2 if a mismatch needs owner escalation (section 4.3 step 1
 has no legacy-import sha baseline to attribute against -- see the known C1 blocker).
+
+report/SILVER_REGRESSION.md is regenerated ONLY under `--write`. A bare run is a
+read-only verification (verdict + exit code) that never touches the tree, so it is safe
+to run in run_gates.sh and CI. Pass `--write` deliberately when you intend to refresh the
+committed report (its Environment block records the interpreter that generated it). The
+verdict/adjudication logic (frozen section 4, incl. the fepace tolerance) is unaffected by
+this flag.
 """
-import glob, gzip, hashlib, math, os, pickle, sys
+import argparse, glob, gzip, hashlib, math, os, pickle, sys
 from collections import Counter
 
 import duckdb
@@ -350,9 +357,20 @@ def write_report(result):
 
 
 if __name__ == '__main__':
+    ap = argparse.ArgumentParser(
+        description='C-gate: silver.driver_race vs the frozen section-4.1 anchor.')
+    ap.add_argument('--write', action='store_true',
+                    help='(re)generate report/SILVER_REGRESSION.md from this run. '
+                         'Off by default: a bare run is a read-only verification that '
+                         'never dirties the working tree.')
+    args = ap.parse_args()
     result = run_gate()
     if result['verdict'] == 'PASS':
-        write_report(result)
+        if args.write:
+            write_report(result)
+        else:
+            print('[gate_silver] read-only run -- report/SILVER_REGRESSION.md NOT rewritten '
+                  '(pass --write to refresh it)')
         sys.exit(0)
     elif result['verdict'] == 'ESCALATE':
         sys.exit(2)
