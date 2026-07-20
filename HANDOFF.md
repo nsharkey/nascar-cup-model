@@ -49,8 +49,15 @@ is needed. `update_data.py` appends any newly completed races in seconds.
    `python3 predict_next.py`. Writes prediction to `predictions/`.
 2. `git add -A && git commit -m "pre-race: <track>" && git push` — **before
    the green flag.** The public timestamp is the point.
-3. Record book head-to-head matchup prices at close into the JSON's
-   `book_prices` block (manual, or paste them in chat).
+3. Record closing head-to-head matchup prices into the JSON's
+   `book_prices.entries` block (manual read, or paste them in chat) — the **full
+   board** of the chosen book's matchups, not a subset — then **commit AND push
+   before the *scheduled* green flag.** The market spec's admissibility rule keys
+   off the scheduled start (`start_time_utc` of the "Race" event); race 5618's
+   prices were committed after the scheduled flag and were ruled inadmissible.
+   Practically: capture ~45 min out, commit+push ~30 min out. No sportsbook
+   scraping (DK/FanDuel ToS bar automated access); see
+   `research/odds_source_evaluation.md`.
 4. After the race: run `update_data.py` again, then score — Spearman of
    predicted vs. actual order; H2H pick accuracy from the JSON's `h2h_prob`
    matrix; vs. book picks where prices were recorded. Append results to
@@ -302,14 +309,34 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   created with its first row. All 8 gates green before and after — scoring touches
   no gated surface (the anchor pkl and gold views are unchanged; bronze/silver are
   gitignored foundation).
-- **Next single step:** continue the standing weekly loop (E1) at the next Cup
-  race — predict / seal / push before the green flag, and this time record closing
-  book prices **before** the flag (5618's were post-flag, hence inadmissible). Then
-  score after results post. No further gold build/gate engineering is required —
-  D1's gate and D2's dual-run check cover the mechanics; what remains is
-  calendar-gated, not code-gated. One scored race now exists (5618); the D2 cutover
-  still needs a **second** scored, *admissibly-priced* race before its
-  two-clean-cycle bar can be assessed.
+- **2026-07-20 (L5 done — odds-source research + book decision):** produced
+  `research/odds_source_evaluation.md` (evidence ledger + recommendation;
+  propose-only, hit no odds endpoint, no spec/model touched). **Reframing:** race
+  5618's inadmissibility was a **workflow** failure (book prices committed 26 min
+  after the *scheduled* green), not a source failure — any source is admissible if
+  the entry is committed **and pushed before the scheduled green flag**. **ToS:**
+  DraftKings/FanDuel terms **explicitly** bar automated scraping "for any purpose"
+  (cease-and-desist + account termination) — so the DK unofficial JSON and any
+  Apify DK scraper both violate them; the conservative posture (mirroring A6)
+  resolves the odds side by *not scraping*. Clean, non-scrape licensed routes exist
+  for NASCAR H2H (SportsDataIO — matchups + closing lines sourced from FanDuel;
+  SportsGameOdds — free tier / $99, H2H depth to confirm on trial); The Odds API
+  still has **no** NASCAR. **Owner decision (2026-07-20):** DEFER the permanent
+  primary-book binding until L2's free-trial probe; do admissible **manual** capture
+  on the fixed early-commit workflow meanwhile; **no sportsbook scraping.** Plan:
+  L5 → done, **L2 → next**.
+- **Next single step (plan `next` = L2):** free-trial probe of a licensed odds
+  aggregator (SportsGameOdds / SportsDataIO) to confirm NASCAR H2H matchup
+  depth/cost, then — on owner GO — build the fetcher; **no sportsbook scraping**,
+  and the primary-book binding stays deferred until the probe. Independently, the
+  standing weekly loop (E1) fires at the next Cup race — predict / seal / push
+  before the green flag, and record closing book prices **before the scheduled
+  flag** this time (5618's were post-flag, hence inadmissible), then score after
+  results post. No further gold build/gate engineering is required — D1's gate and
+  D2's dual-run check cover the mechanics; what remains is calendar-gated, not
+  code-gated. One scored race exists (5618); the D2 cutover still needs a
+  **second** scored, *admissibly-priced* race before its two-clean-cycle bar can be
+  assessed.
 
 ## Roadmap (agreed order — do not skip ahead)
 

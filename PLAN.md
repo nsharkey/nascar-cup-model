@@ -99,8 +99,8 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
 | L1 | Local archive mirror + archived-endpoint expansion | pending | Sonnet 5 · thinking on · high | ~1 hr | Back up all source data locally and start saving three extra archived feeds, so nothing is lost if NASCAR stops serving old races. | Extend the src/update_data.py fetch loop to also pull live-pit-data.json, live-flag-data.json, lap-notes.json per race -> data/races/; one-time backfill of ~163 races + fold into the weekly increment. planning/aws_solutions.md L1. |
-| L5 | Odds-source research + book decision (feeds L2) | ⬅ next | Opus 4.8 · thinking on · xhigh | ~2-3 hr | Decide where betting odds come from programmatically, and which book to standardize on, instead of reading a phone screen against the green-flag deadline every week. | Research spike. 2026-07-19 finding: The Odds API does NOT cover NASCAR; paid feeds (SportsDataIO/OddsMatrix/OpticOdds) carry H2H matchups but cost; DK's own unofficial JSON (sportsbook.draftkings.com/sites/US-SB/api/v5/ eventgroups/{id}, no auth) is free+exact but ToS-gated. Order, STOP after 2: (1) resolve the scrape ToS posture like A6, hit no endpoint until decided; (2) compare DK-unofficial vs scraper (Apify) vs paid feed, and recommend the primary book to standardize on; stop for GO; (3) on GO, build a fetcher emitting book_prices.entries per scoring spec 5.1. Fixes L2's dead 'licensed odds API' assumption. See memory nascar-odds-source-options. |
-| L2 | Local closing-odds capture (launchd) | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Automatically record betting prices every race morning from this machine. | launchd job ~1 h pre-green -> odds source chosen in L5 (no licensed API covers NASCAR H2H) -> raw JSON + paste-ready book_prices.entries (scoring spec 5.1); human still pastes+commits. Soft-fails if the Mac is off Saturday. planning/aws_solutions.md L2. |
+| L5 | Odds-source research + book decision (feeds L2) | ✅ done | Opus 4.8 · thinking on · xhigh | ~2-3 hr | Decide where betting odds come from programmatically, and which book to standardize on, instead of reading a phone screen against the green-flag deadline every week. | Research spike. 2026-07-19 finding: The Odds API does NOT cover NASCAR; paid feeds (SportsDataIO/OddsMatrix/OpticOdds) carry H2H matchups but cost; DK's own unofficial JSON (sportsbook.draftkings.com/sites/US-SB/api/v5/ eventgroups/{id}, no auth) is free+exact but ToS-gated. Order, STOP after 2: (1) resolve the scrape ToS posture like A6, hit no endpoint until decided; (2) compare DK-unofficial vs scraper (Apify) vs paid feed, and recommend the primary book to standardize on; stop for GO; (3) on GO, build a fetcher emitting book_prices.entries per scoring spec 5.1. Fixes L2's dead 'licensed odds API' assumption. See memory nascar-odds-source-options. |
+| L2 | Local closing-odds capture (launchd) | ⬅ next | Sonnet 5 · thinking on · high | ~1-2 hr | Automatically record betting prices every race morning from this machine. | Step 1 (research, startable now): free-trial PROBE of SportsGameOdds (free tier / $99 Rookie) and SportsDataIO (free trial) to confirm whether either returns NASCAR Cup driver H2H MATCHUP markets, for which books, at what depth/latency/cost -- L5 found licensed aggregators DO carry NASCAR H2H (SportsDataIO sources FanDuel) but the market depth needs a key-gated probe. Step 2 (on owner GO): launchd job ~1 h pre-green -> chosen licensed feed (or admissible MANUAL capture) -> raw JSON + paste-ready book_prices.entries (scoring spec 5.1), full board, on L5's fixed admissibility workflow (capture ~T-45; the human commits+pushes before the SCHEDULED green). NO sportsbook scraping -- DK/FanDuel ToS bar automated access. Soft-fails if the Mac is off Saturday. research/odds_source_evaluation.md; planning/aws_solutions.md L2. |
 | L3 | Local weekly pipeline (launchd) | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Make the weekly public prediction post fire automatically from this machine. | launchd detects qualifying off the weekend feed -> update_data.py + predict_next.py -> git commit/push via the existing local SSH key (no cloud credentials — simpler than the AWS version). planning/aws_solutions.md L3. |
 | L4 | Local live-feed poller (pmset + caffeinate) | pending | Sonnet 5 · thinking on · high | ~1-2 hr | Start recording the one race-day stream that is otherwise lost forever, accepting gaps when the laptop is asleep or off. | pmset wake pre-green -> launchd starts poller -> caffeinate held -> poll live-feed.json @5-10 s -> gzip JSONL to data/. Log will have holes on asleep/off race days; no roadmap item consumes it yet. planning/aws_solutions.md L4. |
 | H1 | S1 closing-odds capture (AWS — FROZEN) | ⛔ blocked | Sonnet 5 · thinking on · high | ~1-2 hr | Cloud fallback for odds capture if the local version proves unreliable — frozen until the owner lifts the AWS deferral. | EventBridge -> Lambda -> licensed odds API -> S3; emits book_prices.entries per scoring spec 5.1. planning/aws_solutions.md S1 (A1). Superseded for now by L2. |
@@ -117,37 +117,32 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (L5)
+## Handoff — next session (L2)
 
-**Model & settings:** Opus 4.8, thinking on, effort xhigh.
+**Model & settings:** Sonnet 5, thinking on, effort high.
 
-L5 is 'next' as of 2026-07-20 (owner decision). Race 5618 is scored, so D2's leftover no longer rides inside E1's kickoff; E1 is demoted to 'pending' (recurring) and fires at the next race weekend, ~1 week out -- record its closing prices BEFORE the green flag (5618's were late and inadmissible). L5 works the odds-source/primary-book bottleneck in the gap, ToS-gated (stop after step 2). Once a second scored AND admissibly-priced race exists, re-evaluate F1's >=8-scored gate and the D2 cutover. Doctrine stands: preserve validated results, RE-PROVE on the new foundation rather than re-choose, never pause the weekly capture.
+L2 is 'next' as of 2026-07-20 (owner decision, after L5). Model: Sonnet 5, thinking on, effort high. L2 step 1 is a free-trial PROBE (SportsGameOdds / SportsDataIO) of NASCAR H2H depth/cost -- no sportsbook scraping (DK/FanDuel ToS bar it); the permanent primary-book binding stays DEFERRED until the probe. Meanwhile E1 fires at the next race weekend (~1 week out): admissible MANUAL capture -- record closing prices and commit+push BEFORE the scheduled green flag (5618's were late and inadmissible). Doctrine: preserve validated results, RE-PROVE not re-choose, never pause the weekly capture.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md, plan/schedule.yml session L5, and
-specs/market_benchmark_decision_rule.md (the primary-book-binding + admissibility
-amendments), then resume. This is session L5: research where H2H matchup odds can
-come from programmatically and RECOMMEND a primary sportsbook + an admissibility-safe
-capture route. Propose only; acquire nothing.
+Read HANDOFF.md, research/odds_source_evaluation.md IN FULL, plan/schedule.yml
+session L2, and specs/scoring_methodology.md 5.1 + specs/market_benchmark_decision_rule.md
+(primary-book binding + admissibility amendments). This is L2 (local closing-odds capture).
 
-Context: the whole backlog is bottlenecked on N=0 admissible priced races; race 5618's
-manual DK prices were post-flag and inadmissible. Admissibility requires primary-book
-binding (market_benchmark_decision_rule.md §primary-book) and a commit before the
-scheduled green flag. Prior finding (memory nascar-odds-source-options): The Odds API
-does NOT cover NASCAR; DK's unofficial JSON is free+exact but ToS-gated; primary-book
-choice is still OPEN.
+STEP 1 FIRST -- free-trial PROBE, no sportsbook scraping: sign up for SportsGameOdds
+(free tier / $99 Rookie) and SportsDataIO (free trial) and confirm whether each returns
+NASCAR Cup driver HEAD-TO-HEAD MATCHUP markets, for which books (FanDuel/DraftKings),
+at what depth (matchups per race), latency, and cost. Report findings; recommend
+automate-vs-manual and, if automating, which feed + which book to bind as primary (the
+binding is currently DEFERRED per L5). STOP for owner GO on the binding before any
+admissible price is committed under it.
 
-Do, and STOP after step 2 for an owner GO: (1) resolve the scrape/ToS posture (coordinate
-with A6) -- hit NO endpoint until it is decided; (2) compare DK-unofficial vs scraper vs
-paid feed, and recommend the primary book + capture method + a recording workflow that
-keeps prices admissible. Produce an evidence ledger.
-
-Scope boundary: DO NOT hit any gated/authenticated odds endpoint; DO NOT implement capture
-(that is L2, a separate session); DO NOT change any model or spec. Exit criteria: a written
-recommendation putting the primary-book decision to the owner, with an admissibility-safe
-route. Model: Opus 4.8, thinking on, effort xhigh. On start, verify the running model is
-claude-opus-4-8 and ASK whether thinking is on and effort is xhigh before substantive work.
+STEP 2 (on GO only) -- build the fetcher: emit book_prices.entries per scoring 5.1,
+full board, closing:true, on L5's admissibility-safe workflow (capture ~T-45; the human
+commits+pushes BEFORE the scheduled green flag). launchd wiring per plan L2 +
+planning/aws_solutions.md. Do NOT scrape DraftKings/FanDuel (their ToS bar automated
+access "for any purpose"); do NOT change any model or frozen spec. If a race weekend
+falls during this session, E1 duties (predict + admissible manual odds capture) come first.
 ```
 
-**Bottom line:** Bronze/silver/gold are complete: D1 re-proved 0.413/0.476/0.447 clean and D2's scoring/benchmark consumers are green. Race 5618 is now SCORED -- the forward test's first point (rho=0.5458, e8725cf); D2's only remainder is the owner-gated cutover (two clean cycles). Its 3 DraftKings prices were post-flag and inadmissible, so the market benchmark still stands at N=0. With the next race ~1 week out, 'next' is L5 (odds-source + primary-book decision) -- the highest-leverage startable session, since the backlog is bottlenecked on admissible priced races. E1 (the perishable weekly loop) is 'pending' and fires at the next race weekend; capture never pauses. Governance is complete and all four backlog-building spikes are done; F17 (SMT broadcast-telemetry, owner-prioritized, Fable · xhigh) remains queued.
+**Bottom line:** Bronze/silver/gold are complete: D1 re-proved 0.413/0.476/0.447 clean and D2's scoring/benchmark consumers are green. Race 5618 is SCORED -- the forward test's first point (rho=0.5458, e8725cf); D2's only remainder is the owner-gated cutover (two clean cycles). Its 3 prices were post-flag and inadmissible, so the market benchmark stands at N=0. L5 is now DONE: the odds-source ledger + recommendation (research/odds_source_evaluation.md) landed and the owner DEFERRED the permanent primary-book binding until L2's free-trial probe, choosing admissible MANUAL capture on a fixed early-commit workflow meanwhile. 'next' is L2 (trial-probe a licensed feed, then build the fetcher; no sportsbook scraping). E1 (the perishable weekly loop) fires at the next race weekend, ~1 week out; capture never pauses. F17 (SMT broadcast-telemetry, owner-prioritized, Fable · xhigh) remains queued.
