@@ -257,3 +257,114 @@ any of L2 is built — nothing here is implemented.
 - **Not authorized in this session:** L2 is not built here (separate session);
   no spec/model touched; the plan/HANDOFF status edits are proposed to the owner,
   not applied unilaterally (parallel-session hygiene).
+
+---
+
+## 8. L2 step-1 probe results (2026-07-20)
+
+**Status:** the free-trial probe this section's §6/§7 called for. Proposes only; no
+fetcher built, no spec/model touched, no primary book bound. No sportsbook was ever
+hit — only the two licensed aggregators, and only with keys the owner obtained
+themselves (I have no browser/form-fill tool, so account creation was necessarily
+the owner's action; I ran the read-only queries once a key existed).
+
+### 8a. SportsDataIO — key-gated probe (real endpoint discovery + real trial data)
+
+The public docs page (`sportsdata.io/developers/api-documentation/nascar`) is a
+client-rendered shell, but its initial HTML payload embeds the full endpoint catalog
+and coverage-tier copy server-side — fetched directly (not via the rendered page) to
+recover it:
+
+- **Real endpoint catalog** (the doc names differ from the guessed ones): `odds/json/
+  BettingEvents/{season}`, `BettingEventsByDate/{date}`, `BettingMarkets/{eventId}`
+  (not `BettingMarketsByEvent`), `BettingMarketsByMarketType/{eventID}/{marketTypeID}`,
+  `BettingMarketsByRaceID/{raceID}`, `BettingMetaData`, `ActiveSportsbooks`,
+  `RaceOdds/{Raceid}`, `RaceOddsLineMovement/{Raceid}`.
+- **`BettingMetaData` (real, unscrambled reference data) confirms `BettingMarketTypeID
+  3 = "Head To Head Prop"` is a genuine, actively-defined NASCAR market type** — not
+  just marketing copy. The same embedded doc payload independently confirms this at
+  the product-description level: NASCAR's "Props" coverage tier reads *"Race props
+  include things like Head to Head props and Group Props 3+"*, and NASCAR's "Props"
+  add-on reads *"available as both pre-match including timestamps for opening price,
+  all line movement changes, and closing price"* — i.e., their production feed is
+  documented to carry exactly the closing-price-with-timestamp shape
+  `scoring_methodology.md` §5.1 needs, if bought.
+- **What the free trial actually returns is not usable for confirming depth/latency.**
+  Queried all 99 events on the 2026 Cup/Xfinity/Truck/Futures schedule via
+  `BettingMarkets/{eventId}`:
+  - Only **9 of 99 events have any market rows at all**, and every one is from
+    **Feb 15 – Apr 19, 2026** (Daytona 500 through Kansas). Nothing since — not
+    Coca-Cola 600, not last week's North Wilkesboro, not the upcoming Brickyard 400,
+    not any playoff race. Last `Created` timestamp anywhere: 2026-04-16. This reads as
+    a one-time stale sync at trial activation, not a live feed.
+  - On every market row, `BettingMarketType`, `BettingBetType`, `BettingPeriodType`,
+    and `DriverName` are the literal string `"Scrambled"`; `Name` and `DriverID` are
+    `null`; `AvailableSportsbooks` and `BettingOutcomes` are always empty `[]`
+    (`ActiveSportsbooks` similarly returns 17 real `SportsbookID`s all named
+    `"Scrambled"`). Trial data cannot identify which book, which driver pair, or any
+    price — matches the trial welcome page's own "some data points are scrambled"
+    disclosure, more thoroughly than expected.
+  - The numeric `BettingMarketTypeID` survives scrambling (only names are replaced).
+    Cross-tabulating all 49 market rows from the 9 populated events against
+    `BettingMetaData`'s real type table: **`3` (Head To Head Prop) appears 3 times,
+    across 2 of the 9 events** (Pennzoil 400, Food City 500) — so the market type is
+    confirmed *present in real historical production data*, not merely documented,
+    but the observed depth (1–2 H2H rows per race that has any) is far below the
+    "5–10 matchups/race" §5's accrual math assumed, and — because the data is frozen
+    at April and every field that would prove it's the *current* board is scrambled —
+    **this trial cannot confirm current-week depth, latency, or book coverage** for
+    the upcoming Brickyard 400 or any live race. Filtering by
+    `BettingMarketsByMarketType/{id}/3` did not reliably return only type-3 rows,
+    so it isn't a dependable way to isolate H2H markets either.
+  - **Net for D2:** the "does SportsDataIO carry NASCAR H2H matchups" question is
+    now answered **yes, confirmed at the schema and historical-data level** — stronger
+    than L5's `[vendor]`-only evidence. But "at what current depth, latency, and cost"
+    remains **unresolved by the free trial** — that requires either the paid Props/
+    Props Plus tier (sales-gated, per L5 likely high cost) or their separate Replay
+    tool (real unscrambled historical playback — not probed this session; would need
+    the owner to point at it from their dashboard, and it's retrospective, not a
+    live-capture proof).
+
+### 8b. SportsGameOdds — documentation-only (no key obtained this session)
+
+No SportsGameOdds account was created. Public-page fetches (`/docs`, `/docs/reference`,
+`/docs/basics/cheat-sheet`, `/motorsport-betting-odds-api/`) were checked the same
+way as SportsDataIO's (raw HTML, not the rendered SPA shell) — these pages *did*
+return real embedded content (100–190 KB each, not just a loading shell), unlike the
+thinner marketing pages checked pre-signup. **None mention NASCAR, motorsport, or a
+`leagueID` anywhere** — not in the endpoint reference, not in the parameter cheat
+sheet. The dedicated "Motorsport Betting Odds API" landing page (checked in the
+earlier evidence ledger, §2b) never names NASCAR specifically either, only generic
+"motorsports." An unauthenticated call to `api.sportsgameodds.com/v2/leagues`
+correctly 401s (`"Missing API key"`) — league enumeration needs a live key, so this
+remains not-fully-ruled-out, but the complete absence of NASCAR from every
+documentation surface checked (vs. SportsDataIO's explicit, repeated, market-name-
+level NASCAR documentation) is a real negative signal, not just an absence of
+positive evidence.
+
+### 8c. Recommendation
+
+**Automate: not yet — not at the free tier.** Neither provider's free/no-cost path
+clears the bar §6 set ("adopt the cheapest that returns the bound book's NASCAR H2H
+board at adequate depth and ≤10-min latency"): SportsDataIO's trial is real but
+structurally blind to depth/book/latency (scrambled + stale); SportsGameOdds shows
+no documented NASCAR H2H coverage to even trial. Recommend:
+
+1. **Continue admissible MANUAL capture** (already authorized, E1) as the only
+   currently-confirmed method — unchanged from L5.
+2. **If the owner wants to pursue automation**, the concrete next step is a SportsDataIO
+   sales conversation for **Props** or **Props Plus** pricing (Props Plus adds line
+   movement, which would let capture timestamps be verified after the fact rather than
+   trusted at capture time) — now backed by documentation confirming the market exists
+   and carries closing-price timestamps, not just a trial-tier guess. SportsGameOdds is
+   not recommended to pursue further absent a key showing real NASCAR coverage, given
+   zero documentation surface for it.
+3. **Primary book binding stays DEFERRED.** This probe did not produce grounds to name
+   FanDuel or DraftKings with more confidence than L5 already had (SportsDataIO's
+   confirmed feed still sources FanDuel per L5's original evidence) — no new
+   information changes that lean, it's just less speculative now.
+
+**Not authorized in this session:** no fetcher built (Step 2 stays gated on owner GO
+per this session's kickoff), no primary book bound, no spec/model touched. Plan/HANDOFF
+edits proposed below, not applied — owner review requested before commit, consistent
+with §7's parallel-session hygiene.
