@@ -265,6 +265,27 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   `DATA_DICTIONARY.md` §11. Cutover step 4 (re-pointing `predict_next.py`) is
   explicitly NOT done — owner-gated, needs two clean weekly cycles per §7.3
   step 5.
+- **2026-07-19 (F16 done):** domain-knowledge scan committed
+  (`research/domain_knowledge_scan.md`) — the complement to F6: what the
+  sport itself knows that the feature set ignores, admitted as hypotheses
+  with credibility discounting, kept only where a measurable
+  walk-forward-safe proxy exists in held data. Verified the in-feed
+  inventory directly against bronze/silver: crew_chief 100% populated
+  2022+ (the model's exact era; 185 within-season changes 2022–2025, 75
+  interim/suspension-pattern), points_position confirmed post-race
+  official standings 2017+, owner_id survives the SHR→Haas Factory rename
+  that team_name breaks (F2 input) — while pit_box (13/392 races),
+  winnings/purse/attendance (all-zero), points_delta (dead 2023+), and
+  infractions/pit_reports (2020–2022 relics) are verified dead or
+  era-limited. Externally confirmed (and cross-checked in our own feed:
+  playoff_points_earned = 0 all 2026) that NASCAR's 2026 Chase format
+  abolished playoff points and win-and-in — a format-era break flagged to
+  F9 that also breaks the backtest transfer of any bubble-desperation
+  feature. Proposals folded into the plan: C4 (silver breadth extension
+  #2: caution_segments 2017+/stage_results/race_leaders/playoff_round),
+  F18 (personnel-change A/B, gated), F19 (incentive-state analytics,
+  Tier A), plus F3/F9 tightenings. Proposes only — no model code, no
+  frozen spec touched.
 - **Next single step:** re-run the D2 checklist's scoring step once race 5618
   posts results: `bronze_fetch.py --update` → `--sync-legacy-cache 5618` →
   `score_race.py 5618`. No further gold build/gate engineering is required —
