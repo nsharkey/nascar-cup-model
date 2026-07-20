@@ -325,18 +325,48 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   primary-book binding until L2's free-trial probe; do admissible **manual** capture
   on the fixed early-commit workflow meanwhile; **no sportsbook scraping.** Plan:
   L5 → done, **L2 → next**.
-- **Next single step (plan `next` = L2):** free-trial probe of a licensed odds
-  aggregator (SportsGameOdds / SportsDataIO) to confirm NASCAR H2H matchup
-  depth/cost, then — on owner GO — build the fetcher; **no sportsbook scraping**,
-  and the primary-book binding stays deferred until the probe. Independently, the
-  standing weekly loop (E1) fires at the next Cup race — predict / seal / push
-  before the green flag, and record closing book prices **before the scheduled
-  flag** this time (5618's were post-flag, hence inadmissible), then score after
-  results post. No further gold build/gate engineering is required — D1's gate and
-  D2's dual-run check cover the mechanics; what remains is calendar-gated, not
-  code-gated. One scored race exists (5618); the D2 cutover still needs a
-  **second** scored, *admissibly-priced* race before its two-clean-cycle bar can be
-  assessed.
+- **2026-07-20 (L2 step-1 partial probe + owner request for a deeper spike):** ran
+  a free-trial probe (no sportsbook hit) and found real walls. SportsDataIO: its
+  docs page embeds real endpoint/schema data server-side even though the rendered
+  page is a loading shell — recovered it directly and confirmed `BettingMarketTypeID
+  3 = "Head To Head Prop"` is a genuine, actively-defined NASCAR market type,
+  present in real historical production rows (2 of 9 populated 2026 events). But the
+  free trial itself can't confirm current depth/latency: only 9 of 99 2026 events
+  have any market data at all, all frozen since 2026-04-16 (nothing for recent or
+  upcoming races), and every identifying field (market/bet type, driver name,
+  sportsbook name) is the literal string `"Scrambled"` with odds always empty.
+  SportsGameOdds: no key obtained; its own reference docs and cheat sheet return
+  real content but never mention NASCAR/motorsport/leagueID anywhere — a real
+  negative signal. Cross-project check (read-only, `~/Downloads/nflverseanalytics`):
+  that project's NFL odds vendor (The Odds API) is confirmed to have zero NASCAR
+  coverage at any tier, and is itself on a free tier with an adjudicated
+  ~$150/season upgrade trigger — no vendor consolidation possible there, but
+  SportsDataIO prices its full commercial access as one quote across all 13 sports
+  including NFL, so a future sales call should ask for an NFL+NASCAR bundle price.
+  Full write-up: `research/odds_source_evaluation.md` section 8 (commits `6f3cf9a`,
+  `a82b7ad`). **Owner asked for a much more in-depth spike** rather than continuing
+  piecemeal, and to explicitly cover historical vs. ongoing pricing with a
+  cost-conscious (hobby-project) lens. Plan updated: **L6** (new, comprehensive
+  vendor-research spike, Opus 4.8 · thinking on · xhigh) is now `next`; **L2**
+  demoted to `blocked`, reduced to "build the fetcher" once L6 recommends and the
+  owner gives GO. All 10 gates re-verified green after the plan edit.
+- **Next single step (plan `next` = L6):** comprehensive odds-vendor research spike
+  — actually sign up for SportsGameOdds and re-probe; chase a real SportsDataIO
+  number (Replay tool or sales quote, asking for an NFL+NASCAR bundle); resolve
+  L5's uncertain providers (OpticOdds, OddsMatrix, OddsJam) plus a fresh scan; try
+  to pin real per-race H2H depth from public non-scraped sources; price ongoing and
+  historical capture separately (historical can never feed the admissibility-gated
+  market-benchmark statistic, so it's descriptive-only at best); synthesize one
+  recommendation. Default prior is $0/manual — a recommendation to stay manual is a
+  fully valid outcome. STOP for owner GO before any purchase or primary-book
+  binding. Independently, the standing weekly loop (E1) fires at the next Cup
+  race — predict / seal / push before the green flag, and record closing book
+  prices **before the scheduled flag** this time (5618's were post-flag, hence
+  inadmissible), then score after results post. No further gold build/gate
+  engineering is required — D1's gate and D2's dual-run check cover the mechanics;
+  what remains is calendar-gated, not code-gated. One scored race exists (5618);
+  the D2 cutover still needs a **second** scored, *admissibly-priced* race before
+  its two-clean-cycle bar can be assessed.
 
 ## Roadmap (agreed order — do not skip ahead)
 
