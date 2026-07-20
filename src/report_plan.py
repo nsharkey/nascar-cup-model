@@ -130,6 +130,7 @@ def validate(plan):
     if len(ids) != len(set(ids)):
         errs.append("session ids are not unique")
     id_set = set(ids)
+    pos = {sid: i for i, sid in enumerate(ids)}  # file order == render order
     next_count = 0
     for s in sessions:
         sid = s.get("id")
@@ -153,6 +154,14 @@ def validate(plan):
         for dep in s.get("deps") or []:
             if dep not in id_set:
                 errs.append(f"session {sid!r}: dep {dep!r} does not resolve to a session")
+            elif pos[dep] > pos[sid]:
+                # Temporal-order regiment: a prerequisite must appear BEFORE its dependent
+                # in file order (which is render order). IDs are stable append-order labels
+                # and are never renumbered; a later-added prerequisite is REORDERED above its
+                # dependent instead (e.g. L5 sits before the L2 it feeds). See PLAN_FORMAT.md.
+                errs.append(f"session {sid!r}: dep {dep!r} appears AFTER it in file order — "
+                            f"prerequisites must precede dependents; move {dep!r}'s block above "
+                            f"{sid!r} (reorder, do NOT renumber)")
         if st == "next" and not s.get("kickoff_prompt"):
             errs.append(f"session {sid!r}: status 'next' requires a non-empty kickoff_prompt")
     if next_count > 1:

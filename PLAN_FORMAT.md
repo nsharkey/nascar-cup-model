@@ -54,7 +54,8 @@ Editing a rendered file by hand is a gate failure, not a workflow. The schema:
   - **`handoff_note`** — the model/settings + doctrine cue for the `next` session.
 - `phases[]`: `key` (unique), `num` (roman numeral for display), `title`,
   `model` (nominal tier as `"Model · thinking on · effort"`), `note`.
-- `sessions[]`: `id` (unique, sorts within phase), `phase` (→ a phase key),
+- `sessions[]`: `id` (unique; a **stable append-order label** — see "Ordering
+  regiment" below), `phase` (→ a phase key),
   `status` (enum below), `model`, `settings: {thinking: bool, effort: enum}`,
   `wall_clock` (kickoff→closeout, **not** babysit time), `exec_summary`
   (non-technical: plain outcome/blocker, no IDs or function names),
@@ -63,6 +64,23 @@ Editing a rendered file by hand is a gate failure, not a workflow. The schema:
   `dagger` (true when a session ran off its phase's nominal tier),
   `kickoff_prompt` (**required iff `status: next`** — the verbatim paste-ready
   prompt).
+
+### Ordering regiment — stable IDs, dependency-ordered file order
+
+- **IDs are stable, append-order labels. Never renumber.** A session's number
+  records *when it was added*, not its run-order; IDs are referenced from commits,
+  reports, memories, and prose, so renumbering breaks those references.
+- **File order IS render order.** The renderer lists sessions in `schedule.yml`
+  order within each phase (it does **not** sort by id), so the order the blocks sit
+  in the file is exactly what a reader sees.
+- **Prerequisites precede dependents in file order.** When a newly-added session is
+  a prerequisite of an existing one, **move its block above the dependent** instead
+  of appending it by number — e.g. L5 ("feeds L2") sits above L2 even though 5 > 2.
+  This keeps the render dependency-coherent without renumbering.
+- **Phases stay in logical/temporal order** (A→B→…→R); a `dep` may point to the
+  same or an earlier phase, never a later one.
+- **Gate-enforced:** `validate()` fails if any `dep` appears *after* its dependent
+  in file order. Fix a violation by **reordering the block, never by renumbering**.
 
 ## 2. Status enum → marker
 
@@ -96,7 +114,9 @@ Fails on: (1) **schema** — required fields + correct types, `effort` in
 one `next` while work is open, zero when complete; (3) **completeness** —
 `exec_summary`/`tech_summary`/`model`/`wall_clock` present on every row, the
 `next` session has a `kickoff_prompt`; (4) **referential** — every `phase` and
-every `dep` resolves; (5) **drift** — committed `PLAN.md` *and* `plan/PLAN.html`
+every `dep` resolves, **and every `dep` appears before its dependent in file
+order** (the ordering regiment in §1 — prerequisites precede dependents; reorder,
+never renumber); (5) **drift** — committed `PLAN.md` *and* `plan/PLAN.html`
 equal the render; (6) **verbosity** — each free-text field within its per-field
 word cap (below); (7) **shape sync** — `meta.shape_sig` matches the live plan
 shape (below). This is what makes the display model-independent: any session,
