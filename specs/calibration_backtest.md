@@ -353,6 +353,61 @@ differs by track type** (memo §2(d)). Route it correctly:
 
 ---
 
+# Amendment — F20 spec-conformance review, 2026-07-20 (pre-data: **no forward non-SS
+# race has reached the K ≥ 20 floor; K = 0 today**; the calibration numbers this rule
+# adjudicates do not yet exist, so this amendment is permitted per `specs/README.md`).
+
+## AMENDMENT (2026-07-20, pre-data): terminal-only primary verdict — fixes the §3 sequential-look α control (binds §3)
+
+**Defect patched (recorded).** §3 as written evaluates the primary verdict after every
+scored forward race and lets **CALIBRATED-SKILL fire at any interim look with `K ≥ 20`**
+at a one-sided 95 % bootstrap bound, while dropping an interim α-spending boundary on the
+stated rationale that *"interim p ≤ 0.001-strict is unnecessary for a bounded skill
+score."* **That rationale is unsound: boundedness of the statistic does not prevent
+repeated-looks type-I inflation** — taking many one-sided-95 % looks on an accumulating
+statistic is exactly the multiplicity the market spec's Haybittle–Peto boundary exists to
+control. Under the exact null (true `BSS = 0`) the cumulative probability that *some*
+interim look crosses "lower bound > 0 AND point ≥ `δ_prac`" exceeds the nominal 0.05 (the
+`δ_prac` floor mitigates but does not restore 0.05). "Haybittle–Peto style" was named
+without its mechanism.
+
+**The fix — the primary verdict is a single terminal decision (so no interim α-spending
+is needed).**
+
+1. **CALIBRATED-SKILL and NULL are evaluated ONLY at the terminal look** — the first of
+   `K ≥ 60` non-SS forward races (or `K ≥ 30` iff the owner exercises the §12 one-season
+   option, pre-registered before any look crosses it) **or** the first run on/after
+   2028-02-15. At that single look the §3 conditions apply unchanged: CALIBRATED-SKILL iff
+   `K ≥ 20` and the one-sided 95 % race-clustered bootstrap **lower** bound of `BSS` > 0
+   and point `BSS ≥ δ_prac`; NULL iff `K ≥ 20` and the one-sided 95 % **upper** bound
+   < `δ_prac`; else UNDERPOWERED (which a terminal look with `K < 20` necessarily returns).
+2. **Every look before the terminal look is UNDERPOWERED by definition.** The interim
+   `BSS`, its bootstrap bounds, `K`/`N`, and the reliability curves are **computed and
+   reported** each run for monitoring, but carry **no decision weight**; no interim look
+   may declare CALIBRATED-SKILL or NULL.
+3. **Consequence:** the primary is now a single pre-registered decision point, so its
+   one-sided type-I is the nominal 0.05 by construction with no look-multiplicity —
+   reaching the same rigor the market benchmark obtains via Haybittle–Peto α-spending, but
+   more simply, by not stopping early. Early stopping carries no value here: unlike an
+   EDGE (high-value to catch early, effort-gating), a CALIBRATED-SKILL verdict is
+   low-stakes — it re-labels the readout and is the precondition for opening
+   `specs/recalibration.md`, and **never unlocks roadmap #5**.
+4. **Unchanged:** the `BSS` statistic, the as-of Bradley–Terry baseline, `δ_prac = 0.01`,
+   the `K ≥ 20` floor, the race-clustered bootstrap mechanics (`B_CALIB = 10_000`,
+   `CALIB_SEED = 20260720`, add-one), the named consequences (§3), the §6 secondary family
+   with its Bonferroni / practical-floor / at-most-one discipline, and the terminal /
+   no-re-litigation rule (§6). Only the **timing** of the primary verdict changes:
+   terminal-only, not sequential.
+
+This supersedes the §3 sentence *"Sequential looks after each scored forward race,
+Haybittle–Peto style (interim p ≤ 0.001-strict is unnecessary for a bounded skill score;
+the binding interim rule is: no verdict below K = 20)"*, which is recorded here as the
+defect being patched. Reason: a single pre-registered decision point is the simplest
+exact control of look-multiplicity, and it costs nothing in a setting where early
+stopping has no value.
+
+---
+
 ## RESULT — calibration backtest (to be filled by M3, on run)
 
 *(dated run outcome: baseline replication asserted; the primary H2H BSS verdict on
