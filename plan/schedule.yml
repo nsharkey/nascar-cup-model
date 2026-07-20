@@ -15,25 +15,23 @@ meta:
     without a pre-registered, walk-forward-gated A/B, and the perishable weekly
     market capture never pauses. Rendered from data, kept here and nowhere else.
   bottom_line: >-
-    Bronze is built AND verified: B1-B3 all done as of 2026-07-19, with B3
-    confirming zero failed fetches and hash-clean sampled files. B4 (optional)
-    found more than expected: a full 2017 season, all 3 series, recovered,
-    verified clean, and wired into the warehouse like any other year (owner
-    decision: no 2017 special-casing). Next in the mainline is C1 — silver
-    driver-race parity (Sonnet) — which gates gold via the frozen C-gate and
-    carries one open item from B3 (no legacy-cache sha baseline for the 163
-    anchor races); it needs no 2017-specific logic. The perishable weekly
-    predict+odds capture never pauses for the rebuild, and it plus everything
-    downstream is re-homed as a Gold consumer. Governance and all three
-    research spikes are complete; nothing they propose enters the frozen
-    model without a gated A/B.
+    Bronze is built AND verified (B1-B4 done; 2017 recovered and wired in like
+    any other year). Silver parity C1 is done and PASSED the frozen C-gate. Per
+    owner decision 2026-07-19, the plan finishes the silver layer before gold:
+    C2 (silver lap/pit/flag breadth) is next, C3 (track reference tables) the
+    co-startable remainder; D1 (gold features + re-prove 0.413) is deferred to
+    pending but remains the gate-critical successor once silver is complete. The
+    perishable weekly predict+odds capture never pauses — race 5618's prediction
+    and its 3 DraftKings closing matchups are logged. Governance and all three
+    research spikes are complete; nothing they propose enters the frozen model
+    without a gated A/B.
   handoff_note: >-
-    C1 is a Sonnet build session executing the spec's section-10 C1 checklist
-    with zero design judgment calls (every choice is pre-resolved in the spec;
-    genuine ambiguity means stop and flag, not choose). Doctrine for the whole
-    rebuild: preserve the validated results and pre-registered decisions,
-    RE-PROVE the model on the new foundation rather than re-choosing it, and
-    never pause the perishable weekly odds capture.
+    C2 is a Sonnet build session (thinking on, high) executing the spec's §3.4
+    tables and section-10 C2 checklist with zero design judgment calls (every
+    choice is pre-resolved in the spec; genuine ambiguity means stop and flag,
+    not choose). Doctrine for the whole rebuild: preserve the validated results
+    and pre-registered decisions, RE-PROVE the model on the new foundation rather
+    than re-choosing it, and never pause the perishable weekly odds capture.
 
 phases:
   - key: "A"
@@ -534,7 +532,7 @@ sessions:
   - id: "C2"
     phase: "C"
     title: "Silver lap / pit / flag tables"
-    status: "pending"
+    status: "next"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~2-4 hr"
@@ -548,11 +546,46 @@ sessions:
       feeds; keyed to race+driver. Feeds roadmap-#5 pace work.
     deps: ["B2"]
     status_note: >-
-      2026-07-19 (B3 session): not blocked by anything — B2 is done and this
-      has no dependency on C1. Not picked as the plan's single 'next' only
-      because the plan format allows exactly one at a time and D1's gate
-      chain runs through C1, not C2 (see C1's status_note). Equally valid to
-      start now if the owner prefers breadth-first over the gate-critical path.
+      2026-07-19: promoted to 'next' — owner chose to finish the silver layer
+      (breadth) before the gold re-proof. Unblocked (B2 done; no C1 dep). C3 is
+      the remaining silver item and is co-startable (no hard dep). D1 (gold
+      re-proof) is demoted to pending but remains the gate-critical successor
+      once silver is complete.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md, then specs/medallion_architecture.md section 3.4 (new
+      silver tables) and section 10's "C2 — silver breadth" checklist IN FULL —
+      that is the execution contract for this session. Also read section 3's
+      common rules and section 3.5 (incremental build).
+
+      BUILD session C2 — silver breadth (lap / pit / flag / etc.). Zero design
+      judgment: every choice is pre-resolved in the spec; genuine ambiguity means
+      STOP and flag, not choose (exactly as C1 did for the fepace finding).
+      1. In src/silver_build.py, build the §3.4 tables in SQL over bronze:
+         silver.results, silver.laps, silver.lap_flags, silver.flag_events,
+         silver.pit_stops, silver.lap_notes, silver.practice_runs,
+         silver.live_final. Honor the common rules verbatim: snake_case names;
+         the key map (NASCARDriverID->driver_id, LapTime->lap_time, Lap->lap,
+         RunningPos->running_pos, FlagState->flag_state,
+         LapsCompleted->laps_completed); every table carries series_id, race_id;
+         additive columns OK, never drop/rename the listed ones.
+      2. Dedupe = drop exact-duplicate rows silently; keep-first + COUNT for
+         same-key-different-value conflicts. Unparseable/missing feed -> race
+         simply absent from that table; empty/stub feeds (seen for
+         live-flag-data) -> zero rows, not errors.
+      3. pit_stops.driver_id resolution per §3.4: join vehicle_number to
+         silver.results.car_number (trimmed strings, within race); else exact
+         driver_name==driver_fullname; else NULL. Report the unresolved count.
+      4. Wire the §3.5 incremental fingerprint (bump parser_v{N} if parse logic
+         changed). C2 adds NO parity obligation, but must not regress
+         silver.driver_race — the §4 C-gate still runs green on a --full build.
+      5. Emit a build-report section: per-table row counts, dedupe/conflict
+         counts, pit-stop driver_id resolution stats. Extend warehouse views +
+         DATA_DICTIONARY for the new tables.
+      6. Update plan/schedule.yml (C2 -> done; re-evaluate the single 'next' —
+         C3 finishes silver, then D1 is the gate-critical successor) and
+         re-render via python src/report_plan.py; commit; leave the tree clean.
+      If today is a race weekend, E1 duties (prediction + odds capture) first.
   - id: "C3"
     phase: "C"
     title: "Track reference tables from vendored audit"
@@ -578,12 +611,12 @@ sessions:
       test_track_audit.py hash gate stays green); extend that gate with
       re-derivation checks (row counts, banking parse, dim-xwalk integrity).
     deps: []
-    status_note: "NO hard dep on C1/C2 — reads only the vendored package (F5 report); benefits from C1's DuckDB warehouse conventions, so listed after C2 for tidy build order. Priors quarantined in their own table; nothing feeds the frozen model without a gated A/B"
+    status_note: "2026-07-19: part of the owner's silver-first sequence — C2 is 'next', C3 the co-startable remainder (NO hard dep on C1/C2; reads only the vendored package, F5 report). Benefits from C1's DuckDB warehouse conventions, so ordered after C2. Priors quarantined in their own table; nothing feeds the frozen model without a gated A/B"
 
   - id: "D1"
     phase: "D"
     title: "Gold features + re-point engine + re-prove 0.413"
-    status: "next"
+    status: "pending"
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~4-6 hr (incl. re-validation)"
@@ -598,12 +631,11 @@ sessions:
       reproduce 0.413 / 0.476 non-SS / 0.449 2026 before gold replaces the pkl path.
     deps: ["C1"]
     status_note: >-
-      2026-07-19: unblocked -- C1 (silver parity, the C-gate) is done, PASS
-      (see its status_note). Picked as the single plan 'next' per this row's
-      own pre-recorded intent: D1 is the only session on the gate-critical
-      path to gold (D-gate, section 6, blocks the pkl-to-gold cutover); C2
-      (silver breadth) remains equally startable and unblocked by B2, just
-      not gate-critical, so it stays 'pending'. Heads-up carried from C1: the
+      2026-07-19: DEFERRED to pending -- owner chose to finish the silver layer
+      (C2 then C3) before the gold re-proof; D1 becomes 'next' again once silver
+      is complete. It stays the gate-critical path to gold (D-gate, section 6,
+      blocks the pkl-to-gold cutover) and is unblocked now (C1 done, PASS) --
+      the only thing gating it is the owner's breadth-first sequencing choice. Heads-up carried from C1: the
       D-gate's R1 step already anticipates section 4.4's PASS-with-note list
       (per-race rho deltas reported individually for noted races) -- C1's
       162 PASS-with-note races are all the fepace-only environment exception
