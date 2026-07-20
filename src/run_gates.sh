@@ -63,6 +63,8 @@ GATES=(
   "conda|gate_track_reference.py|gold track reference tables"
   "conda|test_frozen_config.py|frozen production config"
   "conda|test_readme_numbers.py|README headline trio"
+  "conda|test_stand_down.py|superspeedway stand-down list"
+  "conda|test_medallion_invariants.py|bronze/silver data invariants"
 )
 
 LOGDIR="$(mktemp -d)"

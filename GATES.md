@@ -1,6 +1,6 @@
 # GATES.md — the repo's health surface (how to run every gate)
 
-This repo is guarded by **8 gates**. They are the standing proof that the
+This repo is guarded by **10 gates**. They are the standing proof that the
 medallion foundation still reproduces the validated model, that the frozen
 specs still bind the code, and that the plan/docs have not drifted. Run them
 whenever you touch anything, and always before a push.
@@ -11,7 +11,7 @@ whenever you touch anything, and always before a push.
 src/run_gates.sh
 ```
 
-Runs all 8 gates with the correct interpreter and working directory, prints a
+Runs all 10 gates with the correct interpreter and working directory, prints a
 pass/fail summary table, and exits:
 
 - `0` — all green
@@ -31,7 +31,7 @@ most common way to get a spurious red:
 | Interpreter | Version | Has | Used by |
 |---|---|---|---|
 | `.venv/bin/python` | 3.14.x | PyYAML | the **plan** gate only (`test_report_plan.py`) |
-| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 7** gates (all medallion / model gates) |
+| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 9** gates (all medallion / model gates) |
 
 - The plan gate reads `plan/schedule.yml`; it needs PyYAML but **not** the
   scientific stack.
@@ -56,7 +56,7 @@ Gates run **sequentially on purpose**: seven of them open the shared
 `data/nascar.duckdb`, and concurrent opens can contend on the file lock. The
 ~1 min saved by parallelizing a health check is not worth the flakiness.
 
-## The 8 gates
+## The 10 gates
 
 | # | Gate | Interp | What it proves | Source of truth |
 |---|------|--------|----------------|-----------------|
@@ -68,6 +68,8 @@ Gates run **sequentially on purpose**: seven of them open the shared
 | 6 | `gate_track_reference.py` | conda | Gold track-reference tables built and internally consistent (track_dim 43, xwalk 44, priors 430, similarity 193, rules_era 6) | gold track-reference build |
 | 7 | `test_frozen_config.py` | conda | Live production config (`predict_next.py` + `walkforward.pl_fit`) matches HANDOFF's frozen block on all seven fields + typology/typed | `HANDOFF.md` frozen block |
 | 8 | `test_readme_numbers.py` | conda | README headline trio equals `gate_gold.py`'s `EXPECTED_*` (which the D-gate reproves live); 2026-OOS row is the corrected 0.447 | `README.md`, `gate_gold.py` |
+| 9 | `test_stand_down.py` | conda | Doctrine's superspeedway stand-down set {Daytona, Talladega, Atlanta} == `walkforward.MY_TYPE`'s SS set == the tracks `predict_next` flags `stand_down` (`tt=='SS'`) | `HANDOFF.md` doctrine, `walkforward.py` (frozen) |
+| 10 | `test_medallion_invariants.py` | conda | Bronze has no `failed` terminal state; silver has exactly one winner and no duplicate driver per (series, race) on both `driver_race` and `results`; checkers self-validate against injected corruption | `specs/medallion_architecture.md` §2.9, silver structure |
 
 ## Notes
 
@@ -79,7 +81,10 @@ Gates run **sequentially on purpose**: seven of them open the shared
   `gate_silver.py --write` (its Environment block records the interpreter that
   generated it, so refresh it only on purpose). If `git status` shows any
   change after `run_gates.sh`, that is a bug in a gate, not expected output.
-- Gates 7 and 8 are "prose→gate" tests: they exist so a documented claim can
-  never silently drift from the code/data it describes. Add more of these when
-  a prose-only claim is cleanly and passingly encodable (each must also be
-  verified to go red on drift).
+- Gates 7–10 are "prose→gate" tests: they exist so a documented claim can
+  never silently drift from the code/data it describes (frozen config, README
+  numbers, the stand-down list, the bronze/silver invariants). Gates 9 and 10
+  are self-validating — 9's comparison runs against mutated temp copies at
+  build time, and 10 runs its checkers against injected corruption on every
+  invocation. Add more of these when a prose-only claim is cleanly and
+  passingly encodable (each must also be verified to go red on drift).
