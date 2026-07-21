@@ -590,22 +590,53 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   gated A/B, `walkforward.py`/`predict_next.py`/`gold_build.py` untouched,
   nothing joins `gold.wf_features`. Full detail:
   `report/LOOP_METRIC_HISTORIES.md`.
-- **Next single step (plan `next` = F14):** Next Gen equipment-share
-  decomposition, per `research/external_knowledge_scan.md` §3.6
-  (**Sonnet 5 · thinking on · xhigh**). Promoted off F13's close-out per
-  phase F's own enumerated order (F3/F4/F13/F14/F19); dep (D1) already
-  satisfied. Pre-register a spec, then build a hierarchical driver/team/
-  make variance decomposition on gold walk-forward data (2022+ Next Gen
-  era) per the van Kesteren & Bergkamp (JQAS 2023) rank-ordered-logit
-  template, with their own DNF-exclusion sensitivity check and
-  descriptive-not-forecasting warning imported verbatim, and satisfying
-  §3.2's standing requirement (a per-training-window strong-connectivity
-  diagnostic + an explicit regularization scheme) before estimating any
-  variance component. Descriptive only (Tier A) — never touches the
-  frozen model; its result is direct trigger evidence for or against ever
-  spec'ing F11 (the banked hierarchical-Bayesian-PL lane). The verbatim
-  kickoff is in `plan/schedule.yml` (session F14) and rendered in
-  `PLAN.md`.
+- **2026-07-20 (F14 done):** Next Gen equipment-share decomposition —
+  `specs/equipment_share_decomposition.md` pre-registered first (per
+  `specs/README.md` discipline), then `src/equip_share_build.py` fit a
+  hierarchical driver/team/make Plackett-Luce variance decomposition over
+  gold's 2022+ Cup scope (164 races), porting van Kesteren & Bergkamp
+  (JQAS 2023)'s rank-ordered-logit template per
+  `research/external_knowledge_scan.md` §3.6. Standing requirement (§3.2)
+  satisfied up front: a per-season + pooled strong-connectivity diagnostic
+  (2022 and 2024 **genuinely fail** Hunter's Assumption 1, each isolated by
+  a single always-last, single-race DNF driver — Andy Lally 2022, David
+  Starr 2024 — a real, not hypothetical, confirmation) and a block-ridge
+  regularization scheme selected by leave-one-season-out cross-validation
+  (the disclosed equivalent-shrinkage-prior alternative to Hunter/Turner's
+  ghost-item pseudo-ranking). **Headline: driver/team/make variance shares
+  71.4% / 21.4% / 7.1%** (primary variant, DNF included) — team share is
+  below the pre-registered 25% bar, so **the F11 trigger is NOT ARMED**, a
+  clean, well-reasoned documented null (NASCAR's Next Gen parity produces a
+  team effect far below F1's 64–88% constructor range, as expected). The
+  DNF-excluded sensitivity variant (83.3% / 8.3% / 8.3%) confirms the
+  source paper's own finding that DNF handling materially reorders the
+  shares. New gate `src/gate_equip_share.py` — PASS, including a full
+  re-derivation of both variants' entire CV+coordinate-descent pipeline
+  from scratch (not cached), a team-key canonicalization proof (the one
+  genuine case-variant string pair merged, every real organization rename —
+  including Stewart-Haas Racing/Haas Factory Team — kept distinct per
+  `team_mfr_pooling.md` §1's already-adopted policy), and a sign-direction
+  sanity check on all three factors. Full gate surface **18/18 green** (17
+  inherited + this session's new gate). Zero design-judgment escalations —
+  every choice (team-key definition, ridge-vs-ghost-item regularization,
+  CV/coordinate-descent procedure, trigger threshold) is disclosed with
+  reasoning in the spec. Analytics/reference tier — no gated A/B,
+  `walkforward.py`/`predict_next.py`/`gold_build.py` untouched, nothing
+  joins `gold.wf_features`. Full detail: `report/EQUIPMENT_SHARE.md`.
+- **Next single step (plan `next` = F17):** SMT broadcast-telemetry feed
+  feasibility + acquisition spike (**Fable 5 · thinking on · xhigh**).
+  Promoted off F14's close-out: phase F's analytics/reference group
+  (F3/F4/F13/F14/F19) is now fully done, and F17 is the sole unblocked
+  (`pending`, no deps) item left in phase F's own enumerated order — every
+  other non-done phase-F session is genuinely blocked (scored-race count,
+  owner licensing decision, or upstream A/B sequencing). Heavy multi-agent
+  deep-research spike in F6's mold, settling whether NASCAR's SMT
+  broadcast telemetry (GPS/throttle/brake/steering) can be obtained for
+  this project through any of three doors (team-credentialed SMT Team
+  Analytics, a candidate public NASCAR-app/Ably realtime channel, or a
+  licensing/relationship route) — ToS posture read FIRST, no endpoint hit
+  before it clears; proposes only, builds nothing. The verbatim kickoff is
+  in `plan/schedule.yml` (session F17) and rendered in `PLAN.md`.
   Independently, the standing weekly loop (E1) fires at the next Cup race
   (Brickyard 400, race 5619, 2026-07-26) — predict / seal / push before the
   green flag, record closing prices **before the scheduled flag** (5618's
@@ -651,8 +682,8 @@ research/           vendored external research (track_audit/ — immutable
 plan/               sprint plan: schedule.yml (source of truth) + PLAN.html
 PLAN.md             rendered sprint plan (source-of-record); do NOT hand-edit
 PLAN_FORMAT.md      the plan mechanism + anti-drift gate
-GATES.md            the 17-gate health surface + interpreter split;
-                    run `src/run_gates.sh` to prove all 17 green in one command
+GATES.md            the 18-gate health surface + interpreter split;
+                    run `src/run_gates.sh` to prove all 18 green in one command
 DATA_DICTIONARY.md  human-readable field reference (parsed store, prediction
                     JSON, CSV contracts, raw cf.nascar.com feeds)
 src/                pipeline: download.py, parse_lib.py, parse.py,
@@ -679,7 +710,10 @@ src/                pipeline: download.py, parse_lib.py, parse.py,
                     track_pltree*, build-graph isolated, gate_gold.py untouched --
                     Tier A/analytics, report/TRACK_SIMILARITY.md) -- loop_metrics_build.py +
                     gate_loop_metrics.py (F13, gold.driver_loop_race/driver_loop_history,
-                    build-graph isolated -- Tier A/analytics, report/LOOP_METRIC_HISTORIES.md)
+                    build-graph isolated -- Tier A/analytics, report/LOOP_METRIC_HISTORIES.md) --
+                    equip_share_build.py + gate_equip_share.py (F14, gold.equip_share_worths/
+                    summary/connectivity, build-graph isolated -- Tier A/analytics,
+                    report/EQUIPMENT_SHARE.md)
 predictions/        forward-test log: per-race prediction files,
                     predictions_log.csv, scores_log.csv (once scoring starts)
 data/               gitignored medallion foundation (bronze/silver/gold +
