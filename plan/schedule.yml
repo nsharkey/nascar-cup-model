@@ -22,24 +22,21 @@ meta:
     model-book pivot; owner chose DEMOTE + tether. M1-M4 shipped the pricer,
     calibration backtest, and three tether gates: the benchmark stays **sovereign
     and gate-protected**. C4 added silver caution/stage tables. F19 measured
-    incentive-state lore (mixed nulls/reals). F3 shipped gold.track_profiles (ten
-    empirical metrics). F4 shipped gold.track_dst/track_pltree (Driver Skill
-    Transferability). F13 shipped gold.driver_loop_race/driver_loop_history
-    (in-house loop-metric histories -- ARP + five more, self-built composite
-    replaces NASCAR's circular Driver Rating). All four analytics-only,
-    build-graph isolated. 17/17 gates green. 'next' is F14 (Next Gen
-    equipment-share decomposition). M5/F10/F1/F2 gated on >=8 scored non-SS races;
-    G2 gated on market EDGE. E1 never pauses.
+    incentive-state lore (mixed nulls/reals). F3/F4/F13 shipped track-profile,
+    track-similarity, and loop-metric-history gold tables. F14 shipped
+    gold.equip_share_worths/summary/connectivity (driver/team/make variance shares
+    71.4%/21.4%/7.1% -- F11 trigger NOT ARMED, a clean null). All five
+    analytics-only, build-graph isolated. 18/18 gates green. Phase F's
+    analytics/reference group (F3/F4/F13/F14/F19) is now fully done; 'next' is F17
+    (SMT broadcast-telemetry feasibility spike). M5/F10/F1/F2 gated on >=8 scored
+    non-SS races; G2 gated on market EDGE. E1 never pauses.
   handoff_note: >-
-    F14 is 'next' as of 2026-07-20 -- Next Gen equipment-share decomposition per
-    research/external_knowledge_scan.md section 3.6 (van Kesteren & Bergkamp JQAS
-    2023 template). Pre-register a spec, then build a hierarchical driver/team/make
-    variance decomposition over gold walk-forward data (2022+), satisfying section
-    3.2's standing requirement (strong-connectivity diagnostic + explicit
-    regularization) before estimating any variance component. Descriptive/Tier A --
-    never touches the frozen model; result is direct trigger evidence for or
-    against F11. Model: Sonnet 5, thinking on, effort xhigh. E1 preempts on a race
-    weekend.
+    F17 is 'next' as of 2026-07-20 -- SMT broadcast-telemetry feed feasibility +
+    acquisition spike, promoted off F14's close-out (phase F's analytics/reference
+    group F3/F4/F13/F14/F19 is now fully done; F17 has no deps and was the sole
+    'pending' item left in phase F). Heavy multi-agent research, ToS-first, no
+    endpoint hit before the terms read clears; proposes only, builds nothing.
+    Model: Fable 5, thinking on, effort xhigh. E1 preempts on a race weekend.
 
 phases:
   - key: "A"
@@ -1819,11 +1816,11 @@ sessions:
   - id: "F14"
     phase: "F"
     title: "Next Gen equipment-share decomposition"
-    status: "next"
+    status: "done"
     model: "Sonnet 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~3-5 hr"
-    ref: null
+    ref: "4f7a406"
     exec_summary: >-
       Measure how much of a Cup result is the team/manufacturer vs the driver
       under Next Gen parity — the NASCAR version of a famous F1 result (~64-88%
@@ -1841,11 +1838,27 @@ sessions:
       independent of F2's feature-pooling A/B, which runs first regardless.
     deps: ["D1"]
     status_note: >-
-      Promoted to 'next' 2026-07-20 (F13 close-out): dep (D1) was already
-      done; proposed by F6 (6d5e18e, scan §8.3/§9.1). Fourth-listed among
-      the analytics/reference group (F3/F4/F13/F14/F19 — phase F's own note
-      enumerates them in this order). Analytics-only; informs F11's trigger
-      and quantifies the parity premise behind Next Gen-era modeling.
+      2026-07-20: DONE. specs/equipment_share_decomposition.md pre-registered
+      first (external_knowledge_scan.md §3.6/§3.2 as source), then
+      src/equip_share_build.py fit a hierarchical driver/team/make PL variance
+      decomposition over gold's 2022+ Cup scope (164 races). Standing
+      requirement satisfied: per-season + pooled strong-connectivity
+      diagnostic (2022 and 2024 genuinely fail Hunter's Assumption 1, each
+      isolated by a single always-last DNF driver) and a block-ridge
+      regularization scheme selected by leave-one-season-out CV (the
+      disclosed equivalent-shrinkage-prior alternative to ghost-item
+      pseudo-ranking). Headline: driver/team/make variance shares
+      71.4%/21.4%/7.1% (primary, DNF included) — team share is below the
+      pre-registered 25% bar, so F11's trigger is NOT ARMED, a clean
+      documented null. DNF-excluded sensitivity variant (83.3%/8.3%/8.3%)
+      confirms the source paper's own DNF-handling-matters finding. New gate
+      src/gate_equip_share.py — PASS, full re-derivation of both variants'
+      entire CV pipeline, team-key canonicalization and sign-direction
+      checks both verified. Full gate surface 18/18 green (17 inherited +
+      this session's new gate). Zero design-judgment escalations. Full
+      detail: report/EQUIPMENT_SHARE.md. Promotes F17 to 'next' — phase F's
+      analytics/reference group (F3/F4/F13/F14/F19) is now fully done, and
+      F17 is the sole unblocked ('pending', no deps) item left in phase F.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md, specs/README.md (pre-registration discipline), then
@@ -2011,7 +2024,7 @@ sessions:
   - id: "F17"
     phase: "F"
     title: "SMT broadcast-telemetry feed feasibility + acquisition spike"
-    status: "pending"
+    status: "next"
     model: "Fable 5 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~4-6 hr"
@@ -2053,8 +2066,14 @@ sessions:
       the need. Proposes only; no endpoint hit before the ToS step clears.
     deps: []
     status_note: >-
-      Owner-directed 2026-07-19 ("too important — heavy, heavy research"),
-      authorized to run on Fable 5 · thinking on · xhigh. Origin: the owner's
+      Promoted to 'next' 2026-07-20 (F14 close-out): phase F's
+      analytics/reference group (F3/F4/F13/F14/F19) is now fully done, and
+      F17 is the sole remaining 'pending' (deps: [], unblocked) item in
+      phase F's own enumerated order — the other non-done phase-F sessions
+      (F1/F2/F8-F12/F15/F18) are all genuinely blocked (scored-race count,
+      owner licensing decision, or upstream A/B sequencing), not merely
+      unpromoted. Owner-directed 2026-07-19 ("too important — heavy, heavy
+      research"), authorized to run on Fable 5 · thinking on · xhigh. Origin: the owner's
       former-crew-chief source asserts SMT telemetry lives on broadcast-related
       servers; corroborated same day by Bastin & Healey 2024 (J. Data Science,
       NCSU+RCR collaboration) calling SMT feeds "public", and by the NASCAR/Ably
