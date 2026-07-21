@@ -718,6 +718,26 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   read-only advisory helper script as a **future build item** — not built
   this session, `schedule.yml` stays hand-edited as it already is today.
   `plan/schedule.yml`: E3 → done, `next` returned to E1.
+- **2026-07-21 (idle-week picks while E1 waits on qualifying — L1 retired, L4
+  half_done):** owner asked for something to do before Friday. **L1** (local
+  archive mirror) was checked before building and found to be a no-op: its
+  goal — retaining `live-pit-data`/`live-flag-data`/`lap-notes` — is already
+  met by the bronze medallion layer (B2's historical pull plus E1's own
+  `bronze_fetch.py --update` leftover step going forward), verified directly
+  against `bronze.coverage` and race 5618's stored feeds; retired in the plan
+  rather than built redundant. **L4** (local live-feed poller) checked out as
+  a real gap instead — NASCAR's archive only ever serves the live-feed's
+  *final* frame, so the in-progress time series is genuinely unrecoverable
+  without polling live — and was built: `src/live_feed_poller.py` (stdlib
+  only, gzip-JSONL to `data/live_capture/`, auto-stop on checkered flag),
+  `src/test_live_feed_poller.py` (offline, mocked), smoke-tested for real
+  against race 5618. `ops/README.md` + a launchd plist template document a
+  manual run path (no system changes, works today) and an optional
+  launchd+`pmset` unattended path — the latter deliberately **not activated**
+  this session (host-level, persistent, needs sudo — the owner's call).
+  `DATA_DICTIONARY.md` §12 added. Plan: L1 → retired, L4 → half_done. 18/18
+  gates green throughout (L4 sits outside the modeling gate surface by
+  design — no consumer yet). `next` stays E1.
 - **Next single step (plan `next` = E1):** the recurring weekly loop —
   predict / seal / push before the green flag for the next Cup race
   (Brickyard 400, race 5619, 2026-07-26), then record closing prices
