@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Template only -- not installed by any script in this repo. See ops/README.md
+  "Option B" for how to fill this in and load it. One race per copy: this is
+  meant to be loaded before a specific race and unloaded after, not left as a
+  recurring weekly schedule (race times vary week to week).
+
+  Before use, replace:
+    __RACE_ID__        the Cup race_id to poll (e.g. 5619)
+    __REPO_ROOT__       absolute path to this repo checkout
+    __PYTHON3__         absolute path to a system python3 (`which python3`) --
+                        launchd's environment does not have your shell's PATH
+                        or your conda env active
+    __YEAR__ __MONTH__ __DAY__ __HOUR__ __MINUTE__
+                        StartCalendarInterval fields, local time, ~10-15 min
+                        before the race's actual green flag
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.nascarcupmodel.livefeedpoller</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-i</string>
+    <string>__PYTHON3__</string>
+    <string>__REPO_ROOT__/src/live_feed_poller.py</string>
+    <string>--race-id</string>
+    <string>__RACE_ID__</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__REPO_ROOT__/src</string>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Year</key>   <integer>__YEAR__</integer>
+    <key>Month</key>  <integer>__MONTH__</integer>
+    <key>Day</key>    <integer>__DAY__</integer>
+    <key>Hour</key>   <integer>__HOUR__</integer>
+    <key>Minute</key> <integer>__MINUTE__</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__REPO_ROOT__/data/live_capture/__RACE_ID__/poller.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO_ROOT__/data/live_capture/__RACE_ID__/poller.err.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>

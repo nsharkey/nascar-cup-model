@@ -3193,7 +3193,7 @@ sessions:
   - id: "L4"
     phase: "H"
     title: "Local live-feed poller (pmset + caffeinate)"
-    status: "pending"
+    status: "half_done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1-2 hr"
@@ -3202,11 +3202,27 @@ sessions:
       Start recording the one race-day stream that is otherwise lost forever,
       accepting gaps when the laptop is asleep or off.
     tech_summary: >-
-      pmset wake pre-green -> launchd starts poller -> caffeinate held -> poll
-      live-feed.json @5-10 s -> gzip JSONL to data/. Log will have holes on
-      asleep/off race days; no roadmap item consumes it yet. planning/aws_solutions.md L4.
+      src/live_feed_poller.py (stdlib-only, no conda dependency so it works
+      unattended under launchd) polls live-feed.json @7s, writes gzip JSONL to
+      data/live_capture/{race_id}/, auto-stops on a stable checkered-flag
+      signature or a 6hr safety cap; --race-id or same-day auto-detect.
+      src/test_live_feed_poller.py covers is_finished/poll/autodetect offline
+      (no network). Verified against the real endpoint (race 5618, one
+      read-only smoke fetch). ops/README.md + ops/live_feed_poller.plist.template
+      document manual-run (Option A, no system changes) and optional
+      launchd+pmset unattended capture (Option B). DATA_DICTIONARY.md section
+      12 added. planning/aws_solutions.md L4.
     deps: []
-    status_note: "opportunistic — irreversibility argues for starting some snapshot log, but no consumer exists and awake-Mac fragility makes it better-than-nothing, not dependable"
+    status_note: >-
+      2026-07-21 (half_done): code built + tested this session (idle-week
+      pick while E1 waits on qualifying). The launchd/pmset activation step
+      (ops/README.md Option B) needs sudo and registers a persistent
+      background job -- deliberately NOT run this session without the
+      owner's go, per the standing rule on host-level/persistent-state
+      actions. Option A (manual `caffeinate -i python3 live_feed_poller.py`,
+      no system changes) works today and is the recommended way to try it
+      for race 5619 before ever bothering with Option B. Still opportunistic
+      -- no consumer exists for this data yet.
   - id: "H1"
     phase: "H"
     title: "S1 closing-odds capture (AWS — FROZEN)"

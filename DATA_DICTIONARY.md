@@ -918,3 +918,26 @@ per `race_list_basic.json`). Per the admissibility amendment this makes them ina
 actual green flag was delayed well past its scheduled time (results still weren't posted ~3h
 later), which is exactly the real-world edge the frozen rule's scheduled-time basis anticipates
 rather than tries to detect after the fact.
+
+## 12. Local live-feed capture — `data/live_capture/` (plan session L4)
+
+`src/live_feed_poller.py` polls the *live* (not archived) `live-feed.json` cacher
+endpoint every ~7s while a Cup race is green and appends each snapshot to a
+gzip-compressed JSONL log. This is a genuinely different thing from bronze's
+`live-feed` feed (§8): the bronze copy is fetched once, after the fact, and is
+always the **final frame only** — NASCAR's archive never serves intermediate
+laps once a race ends, so the intra-race time series is unrecoverable unless
+captured while the broadcast is live. Opportunistic / best-effort by design:
+gaps are expected whenever the machine sleeps or is off, and nothing in the
+pipeline consumes this data yet — it's a retention hedge, not a feature
+source. See `ops/README.md` for how to run it (manual, or optional
+launchd + `pmset` unattended capture — neither is auto-installed).
+
+| Path | Format | Notes |
+|---|---|---|
+| `data/live_capture/{race_id}/live-feed.jsonl.gz` | gzip, one JSON object per line | Each line is the raw `live-feed.json` payload plus one added field, `_captured_at_utc` (ISO 8601 UTC, poller's own clock — not a NASCAR-provided timestamp). Multiple gzip members per file (one per line, for crash-safety); standard `gzip`/Python `gzip.open` decompress concatenated members transparently. |
+| `data/live_capture/{race_id}/poller.log` / `poller.err.log` | plain text | Only present if run via the launchd recipe (stdout/stderr redirect); absent for manual runs (prints to the terminal instead). |
+
+Gitignored like every other `data/` path in this repo; nothing here is
+committed. Offline tests: `python src/test_live_feed_poller.py` (no network,
+no launchd/pmset touched).
