@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-21"
   spec_version: 1
-  shape_sig: "3280c82346cf845c"
+  shape_sig: "1fd0e4a120ade8a7"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order. It spans governance (audit, frozen specs, adversarial review),
@@ -3223,6 +3223,81 @@ sessions:
       no system changes) works today and is the recommended way to try it
       for race 5619 before ever bothering with Option B. Still opportunistic
       -- no consumer exists for this data yet.
+  - id: "L7"
+    phase: "H"
+    title: "Smoke-test the live-feed poller against a live race"
+    status: "pending"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~20-40 min (bounded by whatever live window exists)"
+    ref: null
+    exec_summary: >-
+      Prove the race-day recorder actually works on a real, moving race before it
+      matters on Brickyard Sunday -- by pointing it at some OTHER race that has a
+      live feed right now, since 5619 is dormant until race day.
+    tech_summary: >-
+      Discover a currently-live race_id from cf.nascar.com/cacher/{year}/
+      race_list_basic.json across series (Cup/Xfinity/Truck, and practice/qual
+      sessions all expose live-feed.json), run src/live_feed_poller.py --race-id
+      <that id> [--series-id N] with a short --max-duration against it, and confirm
+      end-to-end: gz JSONL at data/live_capture/{race_id}/ grows, lap_number
+      advances across snapshots (the thing a static final frame can't exercise),
+      and is_finished/checkered auto-stop fires when the feed reports it. Manual
+      Option A only (caffeinate); do NOT install the launchd/pmset job (L4 Option
+      B -- owner-gated). Clean up the throwaway smoke capture dir afterward.
+    deps: ["L4"]
+    status_note: >-
+      2026-07-21: opened so the poller gets a real dress rehearsal before race 5619
+      (Brickyard 400, 2026-07-26). Owner wants this run before Friday 2026-07-24.
+      Independent of E1 (E1 stays 'next'). The catch this session must handle: if
+      nothing is genuinely green at run time, a finished race's live-feed endpoint
+      only serves a static final frame (flag_state==9), which exercises fetch/write/
+      finish-detect but NOT lap-change capture -- so prefer an actually-in-progress
+      session (any series, including practice/qual) and say so plainly if none was
+      live. Does not touch bronze/silver/gold or any gate.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md first, then confirm with `git log --oneline -4` and `git status`.
+
+      This is L7: a smoke-test of the live-feed poller (src/live_feed_poller.py, built
+      in L4) against a currently-live race BEFORE the real Brickyard race (5619,
+      2026-07-26). Race 5619 is dormant until race day, so we cannot rehearse on it --
+      point the poller at whatever else NASCAR has a live feed for right now.
+
+      Goal: prove end-to-end capture of a MOVING race, not just a static frame.
+
+      1. Discover a live race_id. Read the poller and its autodetect logic first
+         (it only auto-detects Cup points races, series_1, today -- likely nothing
+         mid-week, so you will pass --race-id explicitly). Fetch
+         https://cf.nascar.com/cacher/2026/race_list_basic.json and look across
+         series_1/series_2/series_3 for an event happening now or very soon
+         (in-progress race, or a practice/qualifying session -- those also expose
+         .../live/series_{id}/{race_id}/live-feed.json). A quick read-only fetch of a
+         candidate's live-feed.json tells you if it's green (flag_state, laps_to_go,
+         lap_number changing between two fetches a few seconds apart).
+
+      2. If something IS live: run it, short and bounded, e.g.
+           caffeinate -i python3 src/live_feed_poller.py --race-id <ID> \
+             --series-id <N> --max-duration 300 --out-dir /tmp/l7_smoke
+         Watch the [poller] lap ... lines. Then verify the output: the gz JSONL at
+         /tmp/l7_smoke/<ID>/live-feed.jsonl.gz has multiple lines and lap_number
+         advances across them (zcat | python -c to parse). That is the real proof.
+
+      3. If NOTHING is live at run time: say so explicitly. Fall back to pointing at a
+         recently-finished race's live-feed endpoint just to exercise fetch -> gz write
+         -> is_finished auto-stop (the final frame is flag_state==9, so the stable-
+         finish stop should trigger within ~3 polls). Note plainly that this does NOT
+         validate lap-change capture, and recommend re-running step 2 during the
+         Brickyard practice/qual window (Sat 2026-07-25) if it fits before Sunday.
+
+      4. Do NOT install the launchd/pmset unattended job (ops/README.md Option B) --
+         that needs sudo + owner go per standing host-level-state doctrine. Manual
+         caffeinate (Option A) only.
+
+      5. Clean up: remove the throwaway /tmp/l7_smoke capture (it is a rehearsal, not
+         archive data). Report what was live, how many snapshots, whether laps moved,
+         and whether auto-stop fired. Then update plan/schedule.yml (L7 status + a
+         ref/status_note) and regenerate with `python src/report_plan.py --open`.
   - id: "H1"
     phase: "H"
     title: "S1 closing-odds capture (AWS — FROZEN)"
