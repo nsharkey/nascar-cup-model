@@ -2932,20 +2932,30 @@ sessions:
   - id: "L1"
     phase: "H"
     title: "Local archive mirror + archived-endpoint expansion"
-    status: "pending"
+    status: "retired"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
-    wall_clock: "~1 hr"
+    wall_clock: "—"
     ref: null
     exec_summary: >-
-      Back up all source data locally and start saving three extra archived feeds,
-      so nothing is lost if NASCAR stops serving old races.
+      Superseded — its goal (retain live-pit-data/live-flag-data/lap-notes so
+      nothing is lost) is already met by the bronze medallion layer, which
+      stores exactly those three feeds for the full history plus every race
+      going forward.
     tech_summary: >-
-      Extend the src/update_data.py fetch loop to also pull live-pit-data.json,
-      live-flag-data.json, lap-notes.json per race -> data/races/; one-time
-      backfill of ~163 races + fold into the weekly increment. planning/aws_solutions.md L1.
+      Written pre-B1 against the legacy src/update_data.py/data/races/ path.
+      Verified 2026-07-21 (idle-week check, no code change): B2's full
+      historical bronze pull already stores live-pit-data/live-flag-data/
+      lap-notes for every completed Cup points race (bronze.coverage: 'absent'
+      counts match the documented per-feed floors -- 2019/2020 -- not gaps);
+      race 5618 (the latest completed race) has all 6 feeds 'stored'; and
+      E1's own D2-leftover step 0 (bronze_fetch.py --update) keeps this
+      current going forward as part of the routine weekly loop, hash-verified
+      and gate-checked (18/18 green), which is strictly stronger retention
+      than a second untracked copy in data/races/ would have been. Building
+      L1 as originally scoped would duplicate this into a legacy path with no
+      remaining purpose. planning/aws_solutions.md L1 (original proposal).
     deps: []
-    status_note: "next LOCAL capture item (mainline next is still B2); owner go; trivial fetch-loop extension, immediate retention hedge"
   - id: "L5"
     phase: "H"
     title: "Odds-source research + book decision (feeds L2)"
