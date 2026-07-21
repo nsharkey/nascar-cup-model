@@ -3226,7 +3226,7 @@ sessions:
   - id: "L7"
     phase: "H"
     title: "Smoke-test the live-feed poller against a live race"
-    status: "pending"
+    status: "half_done"
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~20-40 min (bounded by whatever live window exists)"
@@ -3247,14 +3247,21 @@ sessions:
       B -- owner-gated). Clean up the throwaway smoke capture dir afterward.
     deps: ["L4"]
     status_note: >-
-      2026-07-21: opened so the poller gets a real dress rehearsal before race 5619
-      (Brickyard 400, 2026-07-26). Owner wants this run before Friday 2026-07-24.
-      Independent of E1 (E1 stays 'next'). The catch this session must handle: if
-      nothing is genuinely green at run time, a finished race's live-feed endpoint
-      only serves a static final frame (flag_state==9), which exercises fetch/write/
-      finish-detect but NOT lap-change capture -- so prefer an actually-in-progress
-      session (any series, including practice/qual) and say so plainly if none was
-      live. Does not touch bronze/silver/gold or any gate.
+      2026-07-21 (half_done): ran the fallback path, not the primary goal. Probed
+      race_list_basic.json across all 3 series -- nothing was green: 5619 (Brickyard,
+      7/26), 5654 (Xfinity, 7/25), and 5682 (Trucks, 7/24) all 403 (live-feed.json
+      object doesn't exist yet, consistent with the spec's absent-vs-throttled
+      finding); only 5618 (North Wilkesboro, finished 7/19) resolves, serving the
+      static final frame. Ran the poller (caffeinate, 3s interval, 60s cap) against
+      5618: 3 snapshots written, 0 errors, lap_number constant at 450 (as expected --
+      no motion to capture), and the stable-finish auto-stop fired correctly on the
+      3rd identical flag_state==9/laps_to_go==0 snapshot. This proves fetch -> gzip
+      JSONL write -> auto-stop end-to-end but explicitly does NOT prove lap-change
+      capture on a moving race -- that remains unvalidated. Smoke output
+      (/tmp/l7_smoke) was scratch and has been deleted, not archived. Re-run against
+      an actually-green session (Truck practice/qual likely opens 7/23-24, or
+      Brickyard's own Sat 7/25 practice/qual window) before fully trusting L4 for
+      race 5619. Does not touch bronze/silver/gold or any gate.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md first, then confirm with `git log --oneline -4` and `git status`.
