@@ -765,6 +765,65 @@ used by any of F13's six components (disclosed in the spec, not an oversight).
 
 ---
 
+### 10h. Next Gen equipment-share decomposition — `data/gold/*.parquet` (medallion rebuild, F14)
+
+Hierarchical driver/team/make variance decomposition of Cup finishing order built by
+`src/equip_share_build.py` per `specs/equipment_share_decomposition.md`, porting van Kesteren &
+Bergkamp (*JQAS* 2023)'s rank-ordered-logit template. Analytics/reference tier — build-graph-
+isolated from `gold.wf_features`/`gold_build.py`/`walkforward.py`/`predict_next.py` (gate-enforced,
+`src/gate_equip_share.py`); never feeds the frozen model. Full detail:
+`report/EQUIPMENT_SHARE.md`.
+
+Scope: same universe as `gold.wf_features` (`series_id=1, race_type_id=1, parse_status='ok',
+year>=2022`) — 164 races, 6,120 driver-race rows, 101 drivers, 31 canonical teams, 3 makes.
+
+| table | rows | grain | governance |
+|---|---:|---|---|
+| `gold.equip_share_worths` | 264 | `(variant, entity_type, entity_key)` | per-entity fitted worth (both variants); `variant` counts differ (`primary` 135 entities, `dnf_excluded` 129 — an entity with zero non-DNF races in scope is simply absent from that variant) |
+| `gold.equip_share_summary` | 2 | `(variant)` | headline variance-share decomposition; the deliverable |
+| `gold.equip_share_connectivity` | 18 | `(variant, window, factor)` | per-season + pooled strong-connectivity diagnostic (`primary` variant only) |
+
+Two variants: `primary` (DNF drivers included, ranked by `finish` — this project's own established
+convention) and `dnf_excluded` (the source paper's own sensitivity check, §6 of the spec).
+
+Model: full-order Plackett-Luce / rank-ordered logit, linear predictor `eta = alpha[driver] +
+beta[team] + gamma[make]`, fit by penalized MLE (L-BFGS-B) with a **block-diagonal ridge penalty**
+(one `lam` per entity type) — re-derived independently from `walkforward.pl_fit` rather than
+called (different penalty shape, one-hot dummy features instead of continuous ones, and a
+deliberately fresh sign convention avoiding a documented inversion trap this codebase already found
+once, `report/CALIBRATION_BACKTEST.md`/M3). `lam_driver`/`lam_team`/`lam_make` are chosen by
+leave-one-season-out cross-validated log-likelihood via coordinate descent over a shared 7-point
+log-spaced grid (spec §4.1) — the disclosed "equivalent shrinkage prior" to Hunter (2004)/Turner et
+al. (2020)'s ghost-item pseudo-ranking, satisfying `external_knowledge_scan.md` §3.2's standing
+regularization requirement. `SD_X = sqrt(1/(2*lam_X))` is the headline, prior-implied variance
+component; `var_share_X = SD_X^2 / sum(SD^2)`.
+
+**Team key** (`gold.equip_share_worths.entity_key` where `entity_type='team'`):
+`lower(trim(silver.results.team_name))` — merges exactly one case-only artifact (`TrackHouse
+Racing`/`Trackhouse Racing`) while keeping every genuine organization rename distinct
+(`Stewart-Haas Racing`/`Haas Factory Team`, etc.), per `team_mfr_pooling.md` §1's already-adopted
+organization-key policy, imported verbatim rather than re-derived. `silver.results.owner_id` was
+considered and rejected as the team key: verified to fragment a single organization into
+charter-pair entities (Stewart-Haas/Haas Factory Team's four cars split across two `owner_id`s
+despite sharing one shop) — a finer grain than the shared-competitive-resource unit this
+decomposition's "team" component measures.
+
+**Connectivity diagnostic** (`external_knowledge_scan.md` §3.2's standing requirement, part (i)):
+per-season + pooled strongly-connected-components check
+(`scipy.sparse.csgraph.connected_components`) on the "finished-ahead-of" digraph, computed
+generically for all three factors. Empirically confirmed real (not hypothetical): 2022 and 2024
+each fail Hunter's Assumption 1, isolated by a single always-last, single-race DNF driver each
+(Andy Lally 2022, David Starr 2024) — Hunter's own canonical pathology. Informational only; the
+block-ridge penalty (part (ii) of the standing requirement) makes every fit finite and unique
+regardless.
+
+**Headline finding (2026-07-20):** primary-variant variance shares driver/team/make = **71.4% /
+21.4% / 7.1%** — below the spec's pre-registered 25% team-share bar, so the F11 (banked
+hierarchical-Bayesian-PL lane) trigger is **NOT ARMED**. Full numbers, sensitivity-variant result,
+and named spot-checks: `report/EQUIPMENT_SHARE.md`.
+
+---
+
 ## 11. Scoring and market-benchmark consumers — `src/score_race.py`, `src/market_benchmark.py` (medallion rebuild, D2)
 
 Implement `scoring_methodology.md` and `market_benchmark_decision_rule.md` verbatim (incl. every

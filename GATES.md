@@ -1,6 +1,6 @@
 # GATES.md — the repo's health surface (how to run every gate)
 
-This repo is guarded by **17 gates**. They are the standing proof that the
+This repo is guarded by **18 gates**. They are the standing proof that the
 medallion foundation still reproduces the validated model, that the frozen
 specs still bind the code, that the market benchmark stays alive under the
 model-book DEMOTE, and that the plan/docs have not drifted. Run them whenever
@@ -12,7 +12,7 @@ you touch anything, and always before a push.
 src/run_gates.sh
 ```
 
-Runs all 17 gates with the correct interpreter and working directory, prints a
+Runs all 18 gates with the correct interpreter and working directory, prints a
 pass/fail summary table, and exits:
 
 - `0` — all green
@@ -32,7 +32,7 @@ most common way to get a spurious red:
 | Interpreter | Version | Has | Used by |
 |---|---|---|---|
 | `.venv/bin/python` | 3.14.x | PyYAML | the **plan** gate only (`test_report_plan.py`) |
-| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 14** gates (all medallion / model / tether gates) |
+| Anaconda `python` | 3.13.x | duckdb, numpy, scipy, pyarrow | the **other 17** gates (all medallion / model / tether gates) |
 
 - The plan gate reads `plan/schedule.yml`; it needs PyYAML but **not** the
   scientific stack.
@@ -53,11 +53,11 @@ VENV_PY=/path/to/venv/python CONDA_PY=/path/to/conda/python src/run_gates.sh
 either is wrong — so a mis-set interpreter fails loudly (exit 2) instead of
 looking like a real gate failure.
 
-Gates run **sequentially on purpose**: seven of them open the shared
+Gates run **sequentially on purpose**: several of them open the shared
 `data/nascar.duckdb`, and concurrent opens can contend on the file lock. The
 ~1 min saved by parallelizing a health check is not worth the flakiness.
 
-## The 17 gates
+## The 18 gates
 
 | # | Gate | Interp | What it proves | Source of truth |
 |---|------|--------|----------------|-----------------|
@@ -70,41 +70,45 @@ Gates run **sequentially on purpose**: seven of them open the shared
 | 7 | `gate_track_profiles.py` | conda | **F3:** `gold.track_profiles`/`track_profiles_asof` internally consistent; build-graph isolated from `gold_build.py`/`walkforward.py`/`predict_next.py`; every `below_floor` row equals its family value exactly; as-of aggregates re-derive from strictly-prior races; TPP/RVS labels present; FVS-model sourced from the frozen engine, not reimplemented | `specs/track_profiles.md` §5 |
 | 8 | `gate_track_similarity.py` | conda | **F4:** `gold.track_dst`/`track_dst_edges`/`track_pltree*` internally consistent; build-graph isolated from `gold_build.py`/`walkforward.py`/`predict_next.py`; `gate_gold.py` itself unedited; every `below_floor` row equals its family-pair value exactly; a sample of pairs and the pltree root split re-derive exactly from stored residuals/covariates; frozen-engine replay sourced from `pl_fit`/`wmean`/`znan`, not reimplemented | `specs/track_similarity.md` §6 |
 | 9 | `gate_loop_metrics.py` | conda | **F13:** `gold.driver_loop_race`/`driver_loop_history` internally consistent; build-graph isolated from `gold_build.py`/`walkforward.py`/`predict_next.py`; green-flag-lap/pass machinery confirmed imported from `track_profiles_build` (not reimplemented); full re-derivation exact (raw + AS-OF, every row, not a sample); closers nullability rule proven applied; composite_h re-derives exactly from stored history columns | `specs/loop_metric_histories.md` §5 |
-| 10 | `test_frozen_config.py` | conda | Live production config (`predict_next.py` + `walkforward.pl_fit`) matches HANDOFF's frozen block on all seven fields + typology/typed | `HANDOFF.md` frozen block |
-| 11 | `test_readme_numbers.py` | conda | README headline trio equals `gate_gold.py`'s `EXPECTED_*` (which the D-gate reproves live); 2026-OOS row is the corrected 0.447 | `README.md`, `gate_gold.py` |
-| 12 | `test_stand_down.py` | conda | Doctrine's superspeedway stand-down set {Daytona, Talladega, Atlanta} == `walkforward.MY_TYPE`'s SS set == the tracks `predict_next` flags `stand_down` (`tt=='SS'`) | `HANDOFF.md` doctrine, `walkforward.py` (frozen) |
-| 13 | `test_medallion_invariants.py` | conda | Bronze has no `failed` terminal state; silver has exactly one winner and no duplicate driver per (series, race) on both `driver_race` and `results`; checkers self-validate against injected corruption | `specs/medallion_architecture.md` §2.9, silver structure |
-| 14 | `gate_pricing.py` | conda | Pricing layer: §4 coherence invariants (internal self-consistency only, not correctness), §5.4 committed-fixture reprove (bit-exact, numpy version recorded), §6 faithful-read (priced win/top5/top10/h2h reproduce every committed prediction JSON's own numbers within MC error) | `specs/pricing_layer.md` §§4, 5.4, 6 (frozen) |
-| 15 | `gate_benchmark_liveness.py` | conda | **Gate A (liveness, state-dependent):** the market benchmark is still alive under the model-book DEMOTE -- reuses `market_benchmark.py`'s own functions verbatim; prints N/K/verdict/last-admissible-priced-race/capture-debt; RED iff predictions are active and capture-debt (scored non-SS races with no admissible priced pick) exceeds 2. **May legitimately red** when capture is genuinely behind -- that is its job, unlike every other gate here | `specs/tether_gates.md` Gate A (frozen) |
-| 16 | `gate_calibration_not_edge.py` | conda | **Gate B (hermetic):** no document asserts an edge on the strength of calibration evidence -- doctrine sentinels present verbatim + a token co-occurrence scan (EDGE-token + CALIBRATION-token + no SEPARATION-phrase) over README/HANDOFF/specs/report | `specs/tether_gates.md` Gate B (frozen) |
-| 17 | `gate_five_market_gated.py` | conda | **Gate C (hermetic):** roadmap #5's execution gate reads only the market benchmark, never calibration -- asserts `clean_air_causal_pace.md` §0's market-gate text + no calibration token, plus a #5-token + UNLOCK-token + CALIBRATION-token co-occurrence scan | `specs/tether_gates.md` Gate C (frozen) |
+| 10 | `gate_equip_share.py` | conda | **F14:** `gold.equip_share_worths`/`equip_share_summary`/`equip_share_connectivity` internally consistent; build-graph isolated from `gold_build.py`/`walkforward.py`/`predict_next.py`; full re-derivation (both variants' entire CV+coordinate-descent λ-selection pipeline) reproduces every stored λ/worth/summary number within `rel_tol=1e-6`, connectivity table exactly; team-key canonicalization proven narrow (one case-variant merged, genuine renames kept distinct); sign-direction sanity check on all three factors | `specs/equipment_share_decomposition.md` §9 |
+| 11 | `test_frozen_config.py` | conda | Live production config (`predict_next.py` + `walkforward.pl_fit`) matches HANDOFF's frozen block on all seven fields + typology/typed | `HANDOFF.md` frozen block |
+| 12 | `test_readme_numbers.py` | conda | README headline trio equals `gate_gold.py`'s `EXPECTED_*` (which the D-gate reproves live); 2026-OOS row is the corrected 0.447 | `README.md`, `gate_gold.py` |
+| 13 | `test_stand_down.py` | conda | Doctrine's superspeedway stand-down set {Daytona, Talladega, Atlanta} == `walkforward.MY_TYPE`'s SS set == the tracks `predict_next` flags `stand_down` (`tt=='SS'`) | `HANDOFF.md` doctrine, `walkforward.py` (frozen) |
+| 14 | `test_medallion_invariants.py` | conda | Bronze has no `failed` terminal state; silver has exactly one winner and no duplicate driver per (series, race) on both `driver_race` and `results`; checkers self-validate against injected corruption | `specs/medallion_architecture.md` §2.9, silver structure |
+| 15 | `gate_pricing.py` | conda | Pricing layer: §4 coherence invariants (internal self-consistency only, not correctness), §5.4 committed-fixture reprove (bit-exact, numpy version recorded), §6 faithful-read (priced win/top5/top10/h2h reproduce every committed prediction JSON's own numbers within MC error) | `specs/pricing_layer.md` §§4, 5.4, 6 (frozen) |
+| 16 | `gate_benchmark_liveness.py` | conda | **Gate A (liveness, state-dependent):** the market benchmark is still alive under the model-book DEMOTE -- reuses `market_benchmark.py`'s own functions verbatim; prints N/K/verdict/last-admissible-priced-race/capture-debt; RED iff predictions are active and capture-debt (scored non-SS races with no admissible priced pick) exceeds 2. **May legitimately red** when capture is genuinely behind -- that is its job, unlike every other gate here | `specs/tether_gates.md` Gate A (frozen) |
+| 17 | `gate_calibration_not_edge.py` | conda | **Gate B (hermetic):** no document asserts an edge on the strength of calibration evidence -- doctrine sentinels present verbatim + a token co-occurrence scan (EDGE-token + CALIBRATION-token + no SEPARATION-phrase) over README/HANDOFF/specs/report | `specs/tether_gates.md` Gate B (frozen) |
+| 18 | `gate_five_market_gated.py` | conda | **Gate C (hermetic):** roadmap #5's execution gate reads only the market benchmark, never calibration -- asserts `clean_air_causal_pace.md` §0's market-gate text + no calibration token, plus a #5-token + UNLOCK-token + CALIBRATION-token co-occurrence scan | `specs/tether_gates.md` Gate C (frozen) |
 
 ## Notes
 
 - Gate 5 (`gate_gold.py`) is the slow one (~30–60 s: it runs the walk-forward
-  engine R0→R3). Everything else is seconds.
+  engine R0→R3). Gate 10 (`gate_equip_share.py`) is the other slow one
+  (~2–3 min: its re-derivation check re-runs both variants' full
+  leave-one-season-out CV + coordinate-descent λ-selection from scratch, not
+  a cached shortcut). Everything else is seconds.
 - Running the full surface leaves the working tree **clean**. A bare
   `gate_silver.py` run is read-only and does **not** rewrite
   `report/SILVER_REGRESSION.md`; regenerate that report deliberately with
   `gate_silver.py --write` (its Environment block records the interpreter that
   generated it, so refresh it only on purpose). If `git status` shows any
   change after `run_gates.sh`, that is a bug in a gate, not expected output.
-- Gates 10–13 are "prose→gate" tests: they exist so a documented claim can
+- Gates 11–14 are "prose→gate" tests: they exist so a documented claim can
   never silently drift from the code/data it describes (frozen config, README
-  numbers, the stand-down list, the bronze/silver invariants). Gates 12 and 13
-  are self-validating — 12's comparison runs against mutated temp copies at
-  build time, and 13 runs its checkers against injected corruption on every
+  numbers, the stand-down list, the bronze/silver invariants). Gates 13 and 14
+  are self-validating — 13's comparison runs against mutated temp copies at
+  build time, and 14 runs its checkers against injected corruption on every
   invocation. Add more of these when a prose-only claim is cleanly and
   passingly encodable (each must also be verified to go red on drift).
-  (Renumbered from "9 and 10" as F3/F4/F13 each inserted a new gate before
+  (Renumbered from "9 and 10" as F3/F4/F13/F14 each inserted a new gate before
   this group — a reminder that these are position numbers, re-derived from
   `run_gates.sh`'s actual array order at wiring/edit time, never hard-coded
   elsewhere; see the tether-gate note below for the same discipline.)
-- Gates 15–17 are the **tether gates** (`specs/tether_gates.md`) that ship the
-  model-book DEMOTE: 16 (B) and 17 (C) are hermetic prose→gate scans in the
-  gates-10–13 idiom (B and C share their CALIBRATION-token and
+- Gates 16–18 are the **tether gates** (`specs/tether_gates.md`) that ship the
+  model-book DEMOTE: 17 (B) and 18 (C) are hermetic prose→gate scans in the
+  gates-11–14 idiom (B and C share their CALIBRATION-token and
   SEPARATION-phrase lists via a single import, so the two can never drift
-  apart); 15 (A) is different in kind — a **liveness** gate that reconstructs
+  apart); 16 (A) is different in kind — a **liveness** gate that reconstructs
   live benchmark state (predictions + git history + the local race-schedule
   cache) and may legitimately go red if weekly odds capture falls behind,
   which is its entire purpose. Gate B's negative scan strips text inside

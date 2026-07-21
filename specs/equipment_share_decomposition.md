@@ -604,7 +604,36 @@ joined entity keys in every non-giant component, `NULL` if connected).
 
 ---
 
-## RESULT — F14
+## RESULT — F14 (2026-07-20)
 
-*(filled in after the build; only permitted edit to this file besides a
-dated `## AMENDMENT` per `specs/README.md`'s pre-registration discipline)*
+Built exactly per this spec, zero design-judgment escalations. **Primary variant (DNF included)
+variance shares: driver 71.4% / team 21.4% / make 7.1%** (`lam_driver=3.0, lam_team=10.0,
+lam_make=30.0`, CV-selected via §4.1's coordinate descent, converged before the 4-sweep cap).
+**§5.1 trigger verdict: NOT ARMED** — team share 21.4% is below the pre-registered 25% bar. A
+clean, well-reasoned null: NASCAR's Next Gen team/equipment share is real (far from zero) but
+clearly smaller than F1's cross-method 64–88% range, consistent with the parity rules' intent, and
+not large enough on its own evidence to justify F11 (the banked hierarchical-Bayesian-PL lane).
+
+§3's connectivity diagnostic, run pre-data at spec-write time, reproduced identically at build
+time: pooled 2022–2026 is strongly connected (101 drivers, 1 component); 2022 and 2024 each fail
+(2 components), both isolated by a single always-last, single-race DNF driver (Andy Lally 2022;
+David Starr 2024) — Hunter's canonical pathology, empirically confirmed twice in real windows, not
+a hypothetical. Team/make connectivity trivially holds in every window, checked generically (not
+assumed).
+
+DNF-exclusion sensitivity variant (§6): driver/team/make = 83.3% / 8.3% / 8.3%
+(`lam=3.0,30.0,30.0`) — confirms the source paper's own finding that DNF handling materially moves
+the shares, here shifting weight *toward* driver and *away* from team/make relative to the primary
+variant (mechanical-failure patterns correlated with team/equipment are exactly what dropping DNFs
+removes from the likelihood). Does not change the §5.1 decision, which keys off the primary variant
+only.
+
+`gate_equip_share.py` — **PASS**: build-graph isolation verified (0 references in
+`gold_build.py`/`walkforward.py`/`predict_next.py`); full re-derivation (both variants' entire
+CV+coordinate-descent pipeline, re-run from scratch) reproduced every stored λ/worth/summary number
+within `rel_tol=1e-6`, connectivity table reproduced exactly; team-key canonicalization verified
+(the one genuine case-variant pair merged, all real renames — including Stewart-Haas Racing/Haas
+Factory Team — kept distinct); sign-direction sanity check passed for all three factors. Gate
+surface **18/18 green** (17 inherited + this session's new gate). No frozen-model file touched;
+`gold.equip_share_worths`/`equip_share_summary`/`equip_share_connectivity` referenced zero times in
+`gold_build.py`/`walkforward.py`/`predict_next.py`. Full detail: `report/EQUIPMENT_SHARE.md`.
