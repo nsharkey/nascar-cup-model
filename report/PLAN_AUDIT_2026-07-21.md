@@ -1,0 +1,99 @@
+# Sprint-plan verification audit — 2026-07-21
+
+**Session type:** quality / verification checkpoint (NOT feature velocity — no backlog
+advanced, no model change, no frozen spec touched). This is a *quality timestamp*: a
+dated, evidence-backed record that on 2026-07-21 the living plan was audited
+end-to-end and found accurate.
+**Model:** Opus 4.8 (1M), thinking on.
+**Discipline:** verify, don't trust — every status was checked against git, disk, and
+a **live** gate re-run rather than read off the plan.
+
+---
+
+## TL;DR
+
+- **The plan is accurate and current.** All 59 sessions' statuses match reality. No
+  wrong statuses, no missing artifacts, no failing gates, no render drift.
+- **All 30 `done`-session refs resolve** to real commits with matching subjects.
+- **18/18 gates green** on a live `src/run_gates.sh` re-run (including the D-gate
+  reproducing the model trio **0.413 / 0.476 / 0.447**).
+- **Render + shape in sync** — `report_plan.py --check` clean; `PLAN.md` / `plan/PLAN.html`
+  byte-match the YAML; the L7 addition was properly shape-synced.
+- **Single-`next` invariant holds** — exactly one `next` (E1).
+- **Four minor gaps found and fixed this session** (below). None were correctness bugs.
+
+---
+
+## 1. Verification coverage (what was checked, and how)
+
+| Check | Method | Result |
+|---|---|---|
+| All 35 `done` refs are real commits | `git cat-file -e` on 30 distinct hashes + subject match | ✅ 30/30 resolve |
+| 18/18 gates green | **re-ran** `src/run_gates.sh` (2-interpreter split) | ✅ ALL 18 GREEN |
+| D-gate reproduces 0.413 / 0.476 / 0.447 | live `gate_gold.py` | ✅ pass |
+| Render / shape in sync | `report_plan.py --check` | ✅ renders match, shape in sync |
+| Single-`next` rule | status tally over `plan/schedule.yml` | ✅ exactly one (E1) |
+| Headline numbers | grep `report/GOLD_REPROOF.md`, `report/EQUIPMENT_SHARE.md` | ✅ trio; equip-share 71.4/21.4/7.1; 2026-OOS correctly 0.447 not 0.449 |
+| Race 5618 scored / benchmark N=0 | `predictions/scores_log.csv` | ✅ rho=0.5458, post-flag/inadmissible |
+
+**Status tally (59 sessions):** 35 done · 15 blocked · 3 half-done (D2, L4, L7) ·
+1 next (E1) · 1 pending (L3) · 4 retired (L1, R1–R3). Ties out exactly.
+
+### Ref map for the four previously-unrecorded `done` sessions
+| Session | Commit | Subject |
+|---|---|---|
+| C3 | `2e28b69` | C3: track reference tables from vendored audit package |
+| E3 | `70ff3b1` | A6 decisions recorded + E3 done: E1 next-suggestion timing logic |
+| L5 | `53cb43b` | L5 done: odds-source ledger + book recommendation |
+| L6 | `f995e07` | L6 done: odds-vendor ledger (stay-manual) + F20 pivot-vetting |
+
+`A2` and `A6` remain intentionally ref-less: A2's frozen-config values folded into
+A1's `472d43c` and are gated by `test_frozen_config.py`; A6 was an owner-led decision
+with no code commit of its own.
+
+---
+
+## 2. Findings and fixes applied this session
+
+1. **Four `done` sessions carried `ref: null` despite having real commits** —
+   traceability gap (schema-legal, since `ref` is optional, so the gate passed). **FIXED:**
+   backfilled C3→`2e28b69`, E3→`70ff3b1`, L5→`53cb43b`, L6→`f995e07` in `plan/schedule.yml`.
+
+2. **`bottom_line` lagged the three most recent sessions.** It was written at the E3
+   close-out and predated the poller housekeeping (L1 retirement, L4/L7). The session
+   *rows* were present and correct; only the status wrap-up was stale. **FIXED:** refreshed
+   `bottom_line` to record L1 retired, the L4/L7 local live-feed poller (half-done,
+   smoke-tested on a static final frame only), and this audit stamp. (The `standfirst`
+   was correctly left unchanged — no scope change occurred.)
+
+3. **`test_live_feed_poller.py` lives outside the gate harness** (18 gates in
+   `run_gates.sh`; this makes 19 test files). **NOT changed — observation only.** The
+   plan's "18/18 green" is *true*, so this is not a plan inaccuracy. The poller is a
+   half-done (L4/L7), consumer-less, opportunistic feature whose `status_note` explicitly
+   says it "does not touch any gate"; the offline unit test passes today. Wiring it into
+   the canonical health surface is a reasonable future tidy once L4/L7 close (i.e. once
+   the poller is validated against a moving race), but coupling the "18 gates" invariant
+   to a not-yet-validated feature was judged out of scope for this verification pass.
+
+4. **Wording nuance:** `bottom_line` retains "Bronze/silver/gold complete" while D2 is
+   formally `half_done`. Accurate in the build sense — only the owner-gated cutover
+   (re-point `predict_next.py`, needs two clean weekly cycles) remains; no build/gate
+   work is left, per D2's own `status_note`. Left as-is (true), noted here for the record.
+
+---
+
+## 3. What was NOT touched
+
+No model code, no frozen spec section, no `research/track_audit/` package, no gate logic,
+no `scores_log.csv`, no rendered file by hand. Only `plan/schedule.yml` (source of truth)
+was edited, then `PLAN.md` / `plan/PLAN.html` regenerated by the renderer, plus this new
+report. All 18 gates green before and after the edits.
+
+---
+
+## Bottom line
+
+The plan can be trusted as of 2026-07-21. The only real gaps were cosmetic-provenance
+(four missing refs) and a status-line that had fallen one housekeeping beat behind — both
+now corrected. Everything substantive — statuses, dependencies, gates, headline numbers,
+the single-`next` invariant, and render/shape sync — was independently verified green.

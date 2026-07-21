@@ -18,16 +18,16 @@ meta:
   bottom_line: >-
     Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green.
     Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible — market benchmark at
-    N=0, capture_debt=1. L5+L6 DONE — STAY MANUAL; L2 moot. F20's pivot: DEMOTE +
-    tether; M1-M4 shipped the pricer, calibration backtest, and tether gates. C4,
-    F19, F3/F4/F13/F14 delivered the silver/gold analytics group (equip-share
-    71.4/21.4/7.1 — F11 NOT ARMED). 18/18 gates green. F17 DONE: no public
-    SMT-telemetry surface, no capture proposed. A6 DONE: owner kept the
-    cf.nascar.com posture, will send the ERDP request, parked the team route.
-    E3 DONE: E1's naive always-on promotion was researched; a schedule-driven
-    design is recommended (research/e1_scheduling_logic.md), not yet built.
-    'next' is E1 (race 5619, Brickyard, 2026-07-26). M5/F10/F1/F2 gated on
-    >=8 scored non-SS; G2 on market EDGE.
+    N=0, capture_debt=1. L5+L6 DONE — STAY MANUAL; L2 moot; L1 retired (bronze
+    supersedes it). F20's pivot: DEMOTE + tether; M1-M4 shipped the pricer,
+    calibration backtest, and tether gates. C4/F19/F3/F4/F13/F14 delivered the
+    silver/gold analytics group (equip-share 71.4/21.4/7.1 — F11 NOT ARMED).
+    A6/F17/E3 DONE (ToS posture kept; no public SMT surface; E1 timing spike ->
+    research/e1_scheduling_logic.md, not yet built). L4/L7 built a local live-feed
+    poller (half-done; smoke-tested on a static final frame only, live-race capture
+    unvalidated). Plan verify-audit 2026-07-21: 30/30 done-refs, 18/18 gates, render
+    + shape all green (report/PLAN_AUDIT_2026-07-21.md). 'next' is E1 (race 5619,
+    Brickyard, 2026-07-26); M5/F10/F1/F2 gated on >=8 scored non-SS, G2 on market EDGE.
   handoff_note: >-
     E1 is 'next' as of 2026-07-21 (E3 close-out) -- the recurring weekly
     predict/odds-capture loop for race 5619 (Brickyard 400, 2026-07-26).
@@ -664,7 +664,7 @@ sessions:
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1-2 hr"
-    ref: null
+    ref: "2e28b69"
     exec_summary: >-
       Materialize the vendored track audit into queryable reference tables —
       physical facts, crosswalk, and quarantined analyst priors — so every
@@ -1080,7 +1080,7 @@ sessions:
     model: "Sonnet 5 · thinking on · high"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~45min-1.5hr"
-    ref: null
+    ref: "70ff3b1"
     exec_summary: >-
       Figure out the smartest rule for when the weekly prediction step should
       actually be suggested as the next thing to do, instead of always being
@@ -2963,7 +2963,7 @@ sessions:
     model: "Opus 4.8 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~2-3 hr"
-    ref: null
+    ref: "53cb43b"
     exec_summary: >-
       Decide where betting odds come from programmatically, and which book to
       standardize on, instead of reading a phone screen against the green-flag
@@ -3025,7 +3025,7 @@ sessions:
     model: "Opus 4.8 · thinking on · xhigh"
     settings: {thinking: true, effort: "xhigh"}
     wall_clock: "~4-6 hr"
-    ref: null
+    ref: "f995e07"
     exec_summary: >-
       A deeper, wider pass at the odds-vendor question than L2's step-1 probe managed --
       this is a hobby project, so the deliverable is an honest cost/benefit picture (paid
