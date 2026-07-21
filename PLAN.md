@@ -1,6 +1,6 @@
 # NASCAR Cup Model — sprint plan
 
-*As of 2026-07-20 · format v1 · source `plan/schedule.yml`, rendered by `src/report_plan.py` — do not hand-edit.*
+*As of 2026-07-21 · format v1 · source `plan/schedule.yml`, rendered by `src/report_plan.py` — do not hand-edit.*
 
 The single living plan for a walk-forward Plackett-Luce model of Cup Series finishing order. It spans governance (audit, frozen specs, adversarial review), a bronze/silver/gold foundation, a gated backlog of feature/likelihood/causal/ Bayesian experiments, and a co-equal model-book thread — diagnostic Monte-Carlo pricing plus a pre-registered calibration backtest — under three invariants: the frozen model changes only via a pre-registered walk-forward-gated A/B; the perishable market capture never pauses and stays the sovereign, gate-tethered external judge; calibration is model-quality, never edge.
 
@@ -54,8 +54,8 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 
 | # | Session | Status | Model + settings | Wall clock | Executive summary | Technical summary |
 |---|---------|--------|------------------|------------|-------------------|-------------------|
-| E1 | Weekly pre-race: predict + commit + push + record odds | pending | Sonnet 5 · thinking on · high | ~15-30 min (recurring) | Every race weekend, log the public prediction and record closing prices BEFORE the green flag — the one thing that can never be recovered later, so it runs no matter what else is in progress. | predict_next -> commit -> push -> record ALL primary-book matchups per the market-spec full-board amendment. Perishable; never paused for the rebuild. |
-| E3 | E1 next-suggestion timing logic — research spike | ⬅ next | Sonnet 5 · thinking on · high | ~45min-1.5hr | Figure out the smartest rule for when the weekly prediction step should actually be suggested as the next thing to do, instead of always being on. E1 got promoted to 'next' this session with no awareness of the actual race calendar — it would show as due on a Tuesday when there's nothing to do yet. Research only; no implementation. | Evaluate: (a) a static day-of-week guard (NASCAR qualifying is always Fri/Sat, races Sat/Sun — is "never Mon-Thu" sufficient, checked against real past/upcoming schedule exceptions?); (b) a live check against already-ingested bronze/silver schedule/weekend-feed data to detect whether qualifying has actually posted for the upcoming race_id, vs. guessing off day-of-week alone; (c) off-week/bye-week/exhibition-race handling (Clash, Duels, All-Star) that break the normal weekly cadence; (d) fallback behavior if a live check can't run (stale/absent data) — default to suppress or to show; (e) the cardinality tension this creates — test_report_plan.py requires exactly one 'next' whenever open work exists, so if E1 is suppressed Mon-Thu, what (if anything) holds 'next' meanwhile. Deliverable is a research memo with a recommended design, not code — a future BUILD session implements whatever this spike recommends. |
+| E1 | Weekly pre-race: predict + commit + push + record odds | ⬅ next | Sonnet 5 · thinking on · high | ~15-30 min (recurring) | Every race weekend, log the public prediction and record closing prices BEFORE the green flag — the one thing that can never be recovered later, so it runs no matter what else is in progress. | predict_next -> commit -> push -> record ALL primary-book matchups per the market-spec full-board amendment. Perishable; never paused for the rebuild. |
+| E3 | E1 next-suggestion timing logic — research spike | ✅ done | Sonnet 5 · thinking on · high | ~45min-1.5hr | Figure out the smartest rule for when the weekly prediction step should actually be suggested as the next thing to do, instead of always being on. E1 got promoted to 'next' this session with no awareness of the actual race calendar — it would show as due on a Tuesday when there's nothing to do yet. Research only; no implementation. | Evaluate: (a) a static day-of-week guard (NASCAR qualifying is always Fri/Sat, races Sat/Sun — is "never Mon-Thu" sufficient, checked against real past/upcoming schedule exceptions?); (b) a live check against already-ingested bronze/silver schedule/weekend-feed data to detect whether qualifying has actually posted for the upcoming race_id, vs. guessing off day-of-week alone; (c) off-week/bye-week/exhibition-race handling (Clash, Duels, All-Star) that break the normal weekly cadence; (d) fallback behavior if a live check can't run (stale/absent data) — default to suppress or to show; (e) the cardinality tension this creates — test_report_plan.py requires exactly one 'next' whenever open work exists, so if E1 is suppressed Mon-Thu, what (if anything) holds 'next' meanwhile. Deliverable is a research memo with a recommended design, not code — a future BUILD session implements whatever this spike recommends. |
 | E2 | Create GitHub remote + first push | ✅ done | Fable 5 · thinking on · xhigh | ~10 min | Published the repo so the pre-race prediction timestamps are independently verifiable — the first public push landed hours before the race it needed to precede. | Public repo nsharkey/nascar-cup-model created (owner-run gh one-liner after the agent-side create was permission-blocked); all commits through a50bc9c pushed ~16:45 UTC on 2026-07-19, ~6h15m before race 5618's 23:00 UTC green flag — prediction #1's sealed files are publicly timestamped pre-race. Unblocks H automation. Architecture-independent. |
 
 ## Phase F — Feature experiments (gated: >=8 scored, on gold)
@@ -132,66 +132,38 @@ The single living plan for a walk-forward Plackett-Luce model of Cup Series fini
 | R2 | Standalone market_benchmark.py (old pipeline) | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — a standalone market-benchmark script. The edge test is now built on the new foundation instead. | Retired 2026-07-19; folded into Gold consumer D2. The amended market-benchmark spec carries over unchanged. |
 | R3 | Standalone weekly scoring step | ⊘ retired | Sonnet 5 · thinking on · high | — | Superseded — the standalone weekly scoring step, now part of the new foundation's scoring and the running loop. | Retired 2026-07-19; scoring runs as a Gold consumer (D2) reading bronze results. The perishable capture that remains is E1 (predict + odds). |
 
-## Handoff — next session (E3)
+## Handoff — next session (E1)
 
 **Model & settings:** Sonnet 5, thinking on, effort high.
 
-A6 is 'next' as of 2026-07-20 (F17 close-out) -- the owner-led NASCAR ToS posture review, now carrying two research inputs: F6 §6.5 (NDM clauses + cf.nascar.com coverage gap) and F17 §3/§7.1 (the NASCAR App IS an enumerated covered service; recorded no-automated-access posture for app/Ably surfaces; the ERDP written-consent route). Owner-led, ~1 hr, any model as reader; three decisions to record (posture / consent ask / team route). Every other open item is gated or awaits an owner go. E1 preempts on a race weekend.
+E1 is 'next' as of 2026-07-21 (E3 close-out) -- the recurring weekly predict/odds-capture loop for race 5619 (Brickyard 400, 2026-07-26). Sonnet 5, thinking on, high, ~15-30 min. predict_next -> commit -> push before the green flag, then record ALL primary-book matchups and commit+push BEFORE the SCHEDULED flag (5618's were post-flag, inadmissible). E3's research (research/e1_scheduling_logic.md) recommends a smarter future promotion check but it isn't built yet -- this promotion is still the same manual, doctrine-driven call as always.
 
 ```
 Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
-Read HANDOFF.md first, confirm with `git log --oneline -6` and `git status`.
+Read HANDOFF.md first, confirm with `git log --oneline -4` and `git status`.
 
-E3 — research spike: E1 next-suggestion timing logic (Sonnet 5 · thinking
-on · high, ~45min-1.5hr). Research only — propose a design, do not
-implement it or touch report_plan.py/schedule.yml's mechanism.
+This is the recurring weekly loop (E1), not a one-off build session -- run it
+every race weekend regardless of what else is in progress (doctrine, HANDOFF
+section 7.2: the perishable capture never pauses for the rebuild).
 
-Context: E1 (the weekly predict/odds-capture loop) currently gets
-promoted to plan 'next' with no awareness of the actual race calendar —
-it could show as 'next' on a Tuesday when nothing has happened yet. The
-owner wants smarter logic for WHEN E1 should actually be surfaced as the
-actionable next step.
-
-Investigate and recommend:
-1. A static day-of-week guard — NASCAR qualifying is always Fri/Sat,
-   races Sat/Sun; Mon-Thu there is structurally nothing to do for E1. Is
-   a hardcoded "never Mon-Thu" rule sufficient, or too rigid (check it
-   against a few real past/upcoming Cup weekends, including any
-   schedule exceptions)?
-2. A live check against actual schedule/qualifying data — this project
-   already ingests bronze/silver schedules and weekend-feed data. Can a
-   check determine, for the upcoming race_id, whether qualifying
-   results have actually posted (vs. guessing off day-of-week alone)?
-   Evaluate feasibility using existing bronze/silver tables
-   (silver.games, bronze weekend-feed) — read-only investigation, no
-   new fetches beyond what's already ingested.
-3. Off-week / bye-week / exhibition-race handling — Clash, Duels,
-   All-Star Race, and any points-race calendar gaps don't follow the
-   normal weekly cadence; the logic must not misfire on those weeks.
-4. Fallback behavior if the live check can't run (stale data, feed
-   down) — default safe (suppress) or permissive (show anyway)?
-5. The cardinality tension this creates: test_report_plan.py requires
-   exactly one session marked 'next' whenever open work exists. If E1
-   is suppressed from 'next' Mon-Thu, what (if anything) holds 'next'
-   meanwhile? Propose a concrete answer — e.g., a rotating placeholder,
-   a different recurring item, or a documented exception to the
-   one-next rule for calendar-gated items.
-
-Deliverable: a research memo (e.g. research/e1_scheduling_logic.md) with
-a recommended design, evaluated tradeoffs, and open questions for the
-owner — per specs/README.md discipline, no code/spec/schedule.yml
-mechanism change happens in this session. Fill in E3's status_note with
-the outcome; hand a build recommendation to a future session. Update
-HANDOFF's current-status + next-single-step and plan/schedule.yml
-(E3 -> done, re-evaluate the single 'next' — likely back to E1, or the
-new build item this spike recommends); re-render via
-`python src/report_plan.py`; commit; leave the tree clean.
-
-Doctrine reminder: regardless of this spike's outcome, the actual E1
-weekly loop still fires on real race weekends per HANDOFF's existing
-"perishable capture never pauses" doctrine — this spike only concerns
-the plan's automatic 'next' suggestion, not whether the capture itself
-happens.
+0. First check: has race 5618 posted results yet? If so, run D2's leftover
+   step before anything else: `bronze_fetch.py --update` ->
+   `--sync-legacy-cache 5618` -> `score_race.py 5618`. Commit the score.
+1. After qualifying posts for the next race: `python3 update_data.py` then
+   `python3 predict_next.py`.
+2. `git add -A && git commit -m "pre-race: <track>" && git push` -- before
+   the green flag. The public timestamp is the point.
+3. Record book head-to-head matchup prices at close into the JSON's
+   `book_prices.entries[]` per specs/scoring_methodology.md section 5.1 and
+   the market spec's full-board recording duty (ALL primary-book matchups,
+   not a subset) -- commit and push before the scheduled green flag, or the
+   provenance amendment makes them inadmissible for the market benchmark
+   (as happened to race 5618's prices this session -- see D2's status_note).
+4. Superspeedway stand-down still applies (log, never act). No post-hoc
+   predictions -- predict_next.py refuses once results exist.
+Zero design judgment calls: this is a mechanical, well-worn loop; if
+anything about the live feed or grid looks structurally different from
+prior weeks, STOP and flag rather than improvising.
 ```
 
-**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible — market benchmark at N=0, capture_debt=1. L5+L6 DONE — STAY MANUAL; L2 moot. F20's pivot: owner chose DEMOTE + tether; M1-M4 shipped the pricer, calibration backtest, and tether gates — the benchmark stays sovereign and gate-protected. C4, F19, and F3/F4/F13/F14 delivered the silver/gold analytics group (equip-share 71.4/21.4/7.1 — F11 trigger NOT ARMED). 18/18 gates green. F17 DONE 2026-07-20: no public unauth SMT-telemetry surface (NASCAR App is a covered NDM service; every fan telemetry tier gated; the "public feed" claim resolved team-credentialed); no capture proposed; F13+F15 fallback stands; relationship routes recorded. 'next' is A6 (owner ToS review, fed by F6 §6.5 + F17 §3). M5/F10/F1/F2 gated on >=8 scored non-SS; G2 on market EDGE. E1 never pauses.
+**Bottom line:** Bronze/silver/gold complete; D1 re-proved 0.413/0.476/0.447; D2 consumers green. Race 5618 SCORED (rho=0.5458) but post-flag/inadmissible — market benchmark at N=0, capture_debt=1. L5+L6 DONE — STAY MANUAL; L2 moot. F20's pivot: DEMOTE + tether; M1-M4 shipped the pricer, calibration backtest, and tether gates. C4, F19, F3/F4/F13/F14 delivered the silver/gold analytics group (equip-share 71.4/21.4/7.1 — F11 NOT ARMED). 18/18 gates green. F17 DONE: no public SMT-telemetry surface, no capture proposed. A6 DONE: owner kept the cf.nascar.com posture, will send the ERDP request, parked the team route. E3 DONE: E1's naive always-on promotion was researched; a schedule-driven design is recommended (research/e1_scheduling_logic.md), not yet built. 'next' is E1 (race 5619, Brickyard, 2026-07-26). M5/F10/F1/F2 gated on >=8 scored non-SS; G2 on market EDGE.

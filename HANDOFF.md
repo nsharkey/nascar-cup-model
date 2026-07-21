@@ -698,20 +698,39 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   this does **not** defer the real weekly loop, which still fires on race
   weekends per the perishable-capture doctrine above regardless of plan
   status.
-- **Next single step (plan `next` = E3):** the research spike above —
-  design the logic for when E1 should actually surface as `next` (Sonnet
-  5 · thinking on · high, ~45min–1.5hr). Deliverable is a research memo
-  recommending a design, not code. Independently, and regardless of E3's
-  status, the **actual E1 weekly loop still must run** for the next Cup
-  race (Brickyard 400, race 5619, 2026-07-26) — predict / seal / push
-  before the green flag, then record closing prices **before the
-  scheduled flag** (5618's were post-flag → inadmissible), then score
-  after results post. The D2 cutover still needs a **second** scored,
-  *admissibly-priced* race before its two-clean-cycle bar can be assessed.
-  The calibration backtest (M3) should be re-run periodically as the
-  forward stream accrues non-SS races toward K≥20 (interim, no decision
-  weight) and K≥60 (terminal, decision-grade) — no new session is
-  required, just `python3 calibration_backtest.py` from `src/`.
+- **2026-07-21 (E3 done — E1 timing-logic spike):** `research/e1_scheduling_logic.md`
+  landed (read-only, no new fetches). Findings, all evidence-grounded against
+  `bronze.races_index`: (1) a static Mon–Thu day-of-week suppression is wrong,
+  not just rigid — 21/432 (4.9%) historical Cup points races landed
+  Mon/Wed/Thu, every one a weather delay, most recently 2025-11-17 Talladega;
+  (2) a live "has qualifying posted" check is schema-feasible
+  (`weekend_runs[].run_type==2` results, verified on race 5618) but not
+  purely read-only — race 5619's `weekend-feed` isn't fetched yet (bronze has
+  no cron), so the check needs a fresh targeted fetch as a precondition;
+  (3) `race_type_id` already separates points races (1) from exhibitions (2 —
+  Clash/Duels/All-Star) for free, and a confirmed 2026-07-26→08-09 bye week
+  shows a schedule-driven "next unscored points race" query absorbs both
+  off-weeks and exhibitions without hardcoding a calendar; (4) fallback
+  should surface `NEEDS_FRESH_FETCH`/unknown rather than silently suppress
+  or promote; (5) cardinality: rotate `next` onto the plan's existing
+  recurring/analytics roster during dead weeks rather than a new status
+  value or a `test_report_plan.py` gate exception. Recommends a small
+  read-only advisory helper script as a **future build item** — not built
+  this session, `schedule.yml` stays hand-edited as it already is today.
+  `plan/schedule.yml`: E3 → done, `next` returned to E1.
+- **Next single step (plan `next` = E1):** the recurring weekly loop —
+  predict / seal / push before the green flag for the next Cup race
+  (Brickyard 400, race 5619, 2026-07-26), then record closing prices
+  **before the scheduled flag** (5618's were post-flag → inadmissible),
+  then score after results post. Per E3 above, this promotion is still the
+  same manual, doctrine-driven call as always (the smarter check E3
+  recommends hasn't been built yet). The D2 cutover still needs a
+  **second** scored, *admissibly-priced* race before its two-clean-cycle
+  bar can be assessed. The calibration backtest (M3) should be re-run
+  periodically as the forward stream accrues non-SS races toward K≥20
+  (interim, no decision weight) and K≥60 (terminal, decision-grade) — no
+  new session is required, just `python3 calibration_backtest.py` from
+  `src/`.
 
 ## Roadmap (agreed order — do not skip ahead)
 
