@@ -623,30 +623,60 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   reasoning in the spec. Analytics/reference tier — no gated A/B,
   `walkforward.py`/`predict_next.py`/`gold_build.py` untouched, nothing
   joins `gold.wf_features`. Full detail: `report/EQUIPMENT_SHARE.md`.
-- **Next single step (plan `next` = F17):** SMT broadcast-telemetry feed
-  feasibility + acquisition spike (**Fable 5 · thinking on · xhigh**).
-  Promoted off F14's close-out: phase F's analytics/reference group
-  (F3/F4/F13/F14/F19) is now fully done, and F17 is the sole unblocked
-  (`pending`, no deps) item left in phase F's own enumerated order — every
-  other non-done phase-F session is genuinely blocked (scored-race count,
-  owner licensing decision, or upstream A/B sequencing). Heavy multi-agent
-  deep-research spike in F6's mold, settling whether NASCAR's SMT
-  broadcast telemetry (GPS/throttle/brake/steering) can be obtained for
-  this project through any of three doors (team-credentialed SMT Team
-  Analytics, a candidate public NASCAR-app/Ably realtime channel, or a
-  licensing/relationship route) — ToS posture read FIRST, no endpoint hit
-  before it clears; proposes only, builds nothing. The verbatim kickoff is
-  in `plan/schedule.yml` (session F17) and rendered in `PLAN.md`.
-  Independently, the standing weekly loop (E1) fires at the next Cup race
-  (Brickyard 400, race 5619, 2026-07-26) — predict / seal / push before the
-  green flag, record closing prices **before the scheduled flag** (5618's
-  were post-flag → inadmissible), then score after results post. The D2
-  cutover still needs a **second** scored, *admissibly-priced* race before
-  its two-clean-cycle bar can be assessed. The calibration backtest (M3)
-  should be re-run periodically as the forward stream accrues non-SS races
-  toward K≥20 (interim, no decision weight) and K≥60 (terminal,
-  decision-grade) — no new session is required to re-run it, just
-  `python3 calibration_backtest.py` from `src/`.
+- **2026-07-20 — F17 done (`05de08c`): SMT broadcast-telemetry feed
+  feasibility + acquisition spike** (Fable 5 · thinking on · xhigh, ~1.5 hr).
+  Deliverable `research/smt_feed_feasibility.md` — a 73-agent
+  adversarially-verified research workflow (8 research agents, 64
+  refute-prompted verification votes over 41 claims, completeness critic),
+  with **zero NASCAR endpoints touched**: the ToS posture was decided first,
+  no surface cleared it, and the probe step resolved to no-probe by rule.
+  Door verdicts: **(1) SMT Team Analytics — NO-GO as a transfer**; NASCAR,
+  not teams, controls telemetry distribution (2018 pooling precedent over
+  driver objections), the restriction instrument (rule book) is
+  members-only, so a former crew chief's access does not transfer — the
+  legitimate variant is a scoped written team partnership (RCR × NC State
+  precedent, code-public/data-private), with six scoping questions for the
+  crew-chief contact in report §4.4. **(2) Fan feed (NASCAR app / Ably) —
+  NO-GO, no public surface exists**: the telemetry-bearing fan feed is real
+  (2 Hz downsample of the ~120/s stream; speed/RPM/throttle/brake/fuel) but
+  every surface rendering it is gated (Race Tracker = free account, Live
+  Telemetry = paid Premium since 2024, in-car = Max), the **NASCAR App is an
+  explicitly enumerated covered service of the NDM Network Terms**
+  (2026-07-16 Wayback capture; no 2026 revision; cf.nascar.com still absent
+  from the covered list), and Ably has no unauthenticated mode with ~2-min
+  default retention (zero backfill). **(3) The Bastin & Healey "public SMT
+  feed" claim — resolved not-public**: access ran through their RCR/GM
+  collaboration (dissertation-confirmed; no data-availability statement).
+  Found en route: NASCAR's **ERDP developer platform** is a documented
+  request-based access channel — the one designed written-consent route,
+  folded into A6 as an optional free owner-led email; a Sportradar B2B
+  channel exists (corrects the "Genius-only licensing" claim) but fails the
+  hobby cost doctrine. **No capture session proposed** — the L-series has
+  nothing admissible to capture; the F13 (done) + F15 (owner-gated)
+  fallback stands. Four verification corrections banked in report §9.
+  Frozen model, forward test, and E1 untouched.
+- **Next single step (plan `next` = A6):** owner ToS review — NASCAR NDM
+  terms posture (**owner-led, any model as reader**, ~1 hr). Promoted at
+  F17's close-out: it is the sole unblocked non-recurring open item (all
+  other open sessions are gated on scored-race count, A/B sequencing,
+  market EDGE, or owner licensing; Phase-H locals await their own owner
+  go), and F17 materially fed it: the review now covers **both** F6 §6.5
+  (NDM clauses + the cf.nascar.com coverage gap) **and** F17 §3/§7.1 (the
+  NASCAR App IS a covered service; the recorded no-automated-access posture
+  for app/Ably surfaces; the ERDP written-consent route). Three decisions
+  to record (posture / consent ask / team route) — the verbatim kickoff is
+  in `plan/schedule.yml` (session A6) and rendered in `PLAN.md`; the agent
+  assembles the packet, the owner decides. Independently, the standing
+  weekly loop (E1) fires at the next Cup race (Brickyard 400, race 5619,
+  2026-07-26) — predict / seal / push before the green flag, record closing
+  prices **before the scheduled flag** (5618's were post-flag →
+  inadmissible), then score after results post. The D2 cutover still needs
+  a **second** scored, *admissibly-priced* race before its two-clean-cycle
+  bar can be assessed. The calibration backtest (M3) should be re-run
+  periodically as the forward stream accrues non-SS races toward K≥20
+  (interim, no decision weight) and K≥60 (terminal, decision-grade) — no
+  new session is required, just `python3 calibration_backtest.py` from
+  `src/`.
 
 ## Roadmap (agreed order — do not skip ahead)
 
