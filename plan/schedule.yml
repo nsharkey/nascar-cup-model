@@ -5,7 +5,7 @@ meta:
   plan_name: "NASCAR Cup Model"
   as_of: "2026-07-20"
   spec_version: 1
-  shape_sig: "c09998956a055c42"
+  shape_sig: "3280c82346cf845c"
   standfirst: >-
     The single living plan for a walk-forward Plackett-Luce model of Cup Series
     finishing order. It spans governance (audit, frozen specs, adversarial review),
@@ -231,7 +231,7 @@ sessions:
   - id: "A6"
     phase: "A"
     title: "Owner ToS review — NASCAR NDM terms posture"
-    status: "next"
+    status: "done"
     model: "owner-led (any model as reader)"
     settings: {thinking: true, effort: "high"}
     wall_clock: "~1 hr (owner)"
@@ -255,21 +255,17 @@ sessions:
       polite fetch protocol) already matches the conservative reading.
     deps: []
     status_note: >-
-      Proposed by F6 (6d5e18e, scan §8.5/§9.2). Runnable now, owner-led;
-      blocks nothing mechanically but is the right hygiene before any
-      betting-adjacent or commercial framing hardens. Promoted to 'next'
-      2026-07-20 at F17's close-out: F17 (05de08c) added two inputs the
-      review should absorb — research/smt_feed_feasibility.md §3 (the NASCAR
-      App IS an enumerated covered NDM service per the 2026-07-16 capture; no
-      2026 revision, so F6's clause analysis stays current; cf.nascar.com
-      still absent from the covered list; the spike's recorded posture: no
-      automated access to app/Ably surfaces without written consent) and §7.1
-      (NASCAR's ERDP developer platform as the one designed written-consent
-      route — an optional, free, owner-led email). Promotion rationale: sole
-      unblocked non-recurring open item; every other open session is gated
-      (scored-race count, F10/F2 sequencing, market EDGE, owner licensing)
-      or awaits an owner go (Phase-H locals); E1 preempts on race weekends
-      as always.
+      Proposed by F6 (6d5e18e, scan §8.5/§9.2); promoted to 'next' 2026-07-20 at
+      F17's close-out (05de08c), which added the app-coverage finding (§3) and
+      the ERDP written-consent route (§7.1) for the review to absorb.
+      2026-07-21 (DONE — owner decisions recorded): packet assembled and
+      presented per the kickoff below; owner returned three decisions. (a)
+      POSTURE: keep the current conservative cf.nascar.com posture unchanged,
+      no tightening needed. (b) CONSENT: send the free ERDP access-request
+      email (§7.1). (c) TEAM ROUTE: parked, no action (report's own verdict was
+      NO-GO as a data transfer). Recorded verbatim in HANDOFF.md's doctrine
+      section. No code, no model change. 'next' promoted to E1 at this
+      close-out (sole recurring, always-imminent open item).
     kickoff_prompt: |
       Owner-led session (any model as reader — this is a reading-and-decision
       task, ~1 hr; the agent's job is to assemble the packet, then the owner
@@ -1037,15 +1033,19 @@ sessions:
       market-spec full-board amendment. Perishable; never paused for the rebuild.
     deps: []
     status_note: >-
-      2026-07-20: 'pending' (recurring). D2's leftover scoring step is DONE -- race 5618
-      scored (rho=0.5458, e8725cf), so E1's only pending trigger now is the next race
-      weekend, ~1 week out. It stays the perishable priority and fires the moment
-      qualifying posts. Per the L5 decision (done 2026-07-20): do admissible MANUAL
-      capture on the fixed early-commit workflow -- record ALL primary-book matchups and
-      commit+push BEFORE the SCHEDULED green flag (5618's were post-flag and inadmissible).
-      The permanent primary-book binding is DEFERRED until L2's trial probe, so a purely
-      anecdotal capture does not force it. 'next' is held meanwhile by L2 (trial-probe +
-      fetcher build).
+      2026-07-20: 'pending' (recurring). D2's leftover scoring step is DONE -- race
+      5618 scored (rho=0.5458, e8725cf); E1's only trigger now is the next race
+      weekend. Per L5 (done): admissible MANUAL odds capture on the fixed
+      early-commit workflow -- record ALL primary-book matchups, commit+push
+      BEFORE the SCHEDULED green flag (5618's were post-flag, inadmissible).
+      Primary-book binding stays DEFERRED until L2's trial probe.
+      2026-07-21: briefly promoted to 'next' at A6's close-out, then immediately
+      REDIRECTED to E3 (new spike) the same session -- the owner wants E1's
+      *suggestion timing* itself researched before trusting a naive always-on
+      promotion. This does NOT defer the actual weekly loop: E1 still fires on
+      real race weekends per the perishable-capture doctrine (HANDOFF section
+      7.2) regardless of plan 'next' status; race 5619 (2026-07-26) still needs
+      it run manually/by session as always.
     kickoff_prompt: |
       Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
       Read HANDOFF.md first, confirm with `git log --oneline -4` and `git status`.
@@ -1072,6 +1072,100 @@ sessions:
       Zero design judgment calls: this is a mechanical, well-worn loop; if
       anything about the live feed or grid looks structurally different from
       prior weeks, STOP and flag rather than improvising.
+  - id: "E3"
+    phase: "E"
+    title: "E1 next-suggestion timing logic — research spike"
+    status: "next"
+    model: "Sonnet 5 · thinking on · high"
+    settings: {thinking: true, effort: "high"}
+    wall_clock: "~45min-1.5hr"
+    ref: null
+    exec_summary: >-
+      Figure out the smartest rule for when the weekly prediction step should
+      actually be suggested as the next thing to do, instead of always being
+      on. E1 got promoted to 'next' this session with no awareness of the
+      actual race calendar — it would show as due on a Tuesday when there's
+      nothing to do yet. Research only; no implementation.
+    tech_summary: >-
+      Evaluate: (a) a static day-of-week guard (NASCAR qualifying is always
+      Fri/Sat, races Sat/Sun — is "never Mon-Thu" sufficient, checked against
+      real past/upcoming schedule exceptions?); (b) a live check against
+      already-ingested bronze/silver schedule/weekend-feed data to detect
+      whether qualifying has actually posted for the upcoming race_id, vs.
+      guessing off day-of-week alone; (c) off-week/bye-week/exhibition-race
+      handling (Clash, Duels, All-Star) that break the normal weekly cadence;
+      (d) fallback behavior if a live check can't run (stale/absent data) —
+      default to suppress or to show; (e) the cardinality tension this
+      creates — test_report_plan.py requires exactly one 'next' whenever open
+      work exists, so if E1 is suppressed Mon-Thu, what (if anything) holds
+      'next' meanwhile. Deliverable is a research memo with a recommended
+      design, not code — a future BUILD session implements whatever this
+      spike recommends.
+    deps: []
+    status_note: >-
+      2026-07-21: opened at the owner's request, same session that closed A6
+      and first promoted E1 to 'next'. The owner immediately flagged that E1's
+      promotion logic itself needs scrutiny (naive always-on suggestion, no
+      calendar awareness) before trusting it going forward — hence this spike,
+      set as 'next' in E1's place. E1 reverts to 'pending' until this lands a
+      recommendation; the actual weekly capture is unaffected (perishable-
+      capture doctrine, HANDOFF section 7.2) and still fires on race weekends
+      regardless of plan status.
+    kickoff_prompt: |
+      Continuing the NASCAR Cup model project (repo at ~/Downloads/nascar-cup-model).
+      Read HANDOFF.md first, confirm with `git log --oneline -6` and `git status`.
+
+      E3 — research spike: E1 next-suggestion timing logic (Sonnet 5 · thinking
+      on · high, ~45min-1.5hr). Research only — propose a design, do not
+      implement it or touch report_plan.py/schedule.yml's mechanism.
+
+      Context: E1 (the weekly predict/odds-capture loop) currently gets
+      promoted to plan 'next' with no awareness of the actual race calendar —
+      it could show as 'next' on a Tuesday when nothing has happened yet. The
+      owner wants smarter logic for WHEN E1 should actually be surfaced as the
+      actionable next step.
+
+      Investigate and recommend:
+      1. A static day-of-week guard — NASCAR qualifying is always Fri/Sat,
+         races Sat/Sun; Mon-Thu there is structurally nothing to do for E1. Is
+         a hardcoded "never Mon-Thu" rule sufficient, or too rigid (check it
+         against a few real past/upcoming Cup weekends, including any
+         schedule exceptions)?
+      2. A live check against actual schedule/qualifying data — this project
+         already ingests bronze/silver schedules and weekend-feed data. Can a
+         check determine, for the upcoming race_id, whether qualifying
+         results have actually posted (vs. guessing off day-of-week alone)?
+         Evaluate feasibility using existing bronze/silver tables
+         (silver.games, bronze weekend-feed) — read-only investigation, no
+         new fetches beyond what's already ingested.
+      3. Off-week / bye-week / exhibition-race handling — Clash, Duels,
+         All-Star Race, and any points-race calendar gaps don't follow the
+         normal weekly cadence; the logic must not misfire on those weeks.
+      4. Fallback behavior if the live check can't run (stale data, feed
+         down) — default safe (suppress) or permissive (show anyway)?
+      5. The cardinality tension this creates: test_report_plan.py requires
+         exactly one session marked 'next' whenever open work exists. If E1
+         is suppressed from 'next' Mon-Thu, what (if anything) holds 'next'
+         meanwhile? Propose a concrete answer — e.g., a rotating placeholder,
+         a different recurring item, or a documented exception to the
+         one-next rule for calendar-gated items.
+
+      Deliverable: a research memo (e.g. research/e1_scheduling_logic.md) with
+      a recommended design, evaluated tradeoffs, and open questions for the
+      owner — per specs/README.md discipline, no code/spec/schedule.yml
+      mechanism change happens in this session. Fill in E3's status_note with
+      the outcome; hand a build recommendation to a future session. Update
+      HANDOFF's current-status + next-single-step and plan/schedule.yml
+      (E3 -> done, re-evaluate the single 'next' — likely back to E1, or the
+      new build item this spike recommends); re-render via
+      `python src/report_plan.py`; commit; leave the tree clean.
+
+      Doctrine reminder: regardless of this spike's outcome, the actual E1
+      weekly loop still fires on real race weekends per HANDOFF's existing
+      "perishable capture never pauses" doctrine — this spike only concerns
+      the plan's automatic 'next' suggestion, not whether the capture itself
+      happens.
+
   - id: "E2"
     phase: "E"
     title: "Create GitHub remote + first push"
