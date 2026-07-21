@@ -94,6 +94,25 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   weekly odds capture alive, forbid any document from claiming
   calibration establishes an edge, and forbid roadmap #5 from ever being
   re-pointed at a calibration verdict. See `research/pivot_model_book_vetting.md`.
+- **NASCAR ToS posture (A6, owner decision 2026-07-21) — no change to the
+  cf.nascar.com cacher.** The owner reviewed the NDM Network Terms' scraping/
+  data-mining and model/algorithm-development clauses (both consent-conditioned,
+  `research/external_knowledge_scan.md` §6.5) alongside F17's app-coverage
+  finding (`research/smt_feed_feasibility.md` §3/§7.1) and decided: (1)
+  **POSTURE — keep as-is.** The current conservative posture (code-only
+  redistribution, raw data never committed, polite fetch protocol, non-commercial
+  research framing) is fine and needs no tightening; cf.nascar.com is not on the
+  Terms' covered-services list and carries no ToS link or bot-block, unlike
+  www.nascar.com. This governs the bronze cacher only — it does not touch the
+  separate, already-settled posture that the NASCAR App/Ably surfaces (which
+  ARE covered) get no automated access without written consent. (2) **CONSENT —
+  send the ERDP request.** Owner will send NASCAR's free, no-commitment
+  developer/ERDP access-request email (§7.1) asking about telemetry access; a
+  "no" changes nothing. (3) **TEAM ROUTE — parked.** The SMT crew-chief
+  relationship route (report §4.4's six scoping questions) is not being pursued
+  now; the report's own verdict was NO-GO as a data transfer anyway (NASCAR, not
+  teams, controls telemetry distribution). No code, no model change; nothing in
+  the pipeline or fetch protocol changed as a result of this review.
 
 ## Current status (update this section every session)
 
@@ -655,28 +674,44 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   nothing admissible to capture; the F13 (done) + F15 (owner-gated)
   fallback stands. Four verification corrections banked in report §9.
   Frozen model, forward test, and E1 untouched.
-- **Next single step (plan `next` = A6):** owner ToS review — NASCAR NDM
-  terms posture (**owner-led, any model as reader**, ~1 hr). Promoted at
-  F17's close-out: it is the sole unblocked non-recurring open item (all
-  other open sessions are gated on scored-race count, A/B sequencing,
-  market EDGE, or owner licensing; Phase-H locals await their own owner
-  go), and F17 materially fed it: the review now covers **both** F6 §6.5
-  (NDM clauses + the cf.nascar.com coverage gap) **and** F17 §3/§7.1 (the
-  NASCAR App IS a covered service; the recorded no-automated-access posture
-  for app/Ably surfaces; the ERDP written-consent route). Three decisions
-  to record (posture / consent ask / team route) — the verbatim kickoff is
-  in `plan/schedule.yml` (session A6) and rendered in `PLAN.md`; the agent
-  assembles the packet, the owner decides. Independently, the standing
-  weekly loop (E1) fires at the next Cup race (Brickyard 400, race 5619,
-  2026-07-26) — predict / seal / push before the green flag, record closing
-  prices **before the scheduled flag** (5618's were post-flag →
-  inadmissible), then score after results post. The D2 cutover still needs
-  a **second** scored, *admissibly-priced* race before its two-clean-cycle
-  bar can be assessed. The calibration backtest (M3) should be re-run
-  periodically as the forward stream accrues non-SS races toward K≥20
-  (interim, no decision weight) and K≥60 (terminal, decision-grade) — no
-  new session is required, just `python3 calibration_backtest.py` from
-  `src/`.
+- **2026-07-21 (A6 done — ToS posture review, owner decisions recorded):**
+  owner-led review packet assembled (F6 §6.5 verbatim NDM clauses +
+  cf.nascar.com coverage gap, F17 §3/§7.1 app-coverage + ERDP route),
+  presented, and closed with three decisions: **POSTURE** — keep the
+  current conservative cf.nascar.com posture unchanged, no tightening;
+  **CONSENT** — owner will send the free ERDP access-request email
+  (§7.1); **TEAM ROUTE** — parked, no action. Full reasoning recorded in
+  the doctrine section above. No code, no model change; dated note also
+  added to `plan/schedule.yml` session A6.
+- **2026-07-21 (E3 opened — E1 next-suggestion timing logic, research
+  spike):** immediately after E1 was promoted to `next` at A6's close-out,
+  the owner flagged that the promotion logic itself is naive (no calendar
+  awareness — E1 could get suggested on a Tuesday with nothing to do yet)
+  and asked for a research spike into the best logic before trusting it:
+  a static day-of-week guard (never Mon–Thu), a live check against
+  already-ingested bronze/silver schedule/weekend-feed data to detect
+  whether qualifying has actually posted, off-week/exhibition-race
+  handling, fallback behavior, and the cardinality tension it creates
+  (`test_report_plan.py` requires exactly one `next`). `plan/schedule.yml`
+  session E3 added, research-only (no code, no mechanism change this
+  session) — full kickoff prompt lives there. E1 reverted to `pending`;
+  this does **not** defer the real weekly loop, which still fires on race
+  weekends per the perishable-capture doctrine above regardless of plan
+  status.
+- **Next single step (plan `next` = E3):** the research spike above —
+  design the logic for when E1 should actually surface as `next` (Sonnet
+  5 · thinking on · high, ~45min–1.5hr). Deliverable is a research memo
+  recommending a design, not code. Independently, and regardless of E3's
+  status, the **actual E1 weekly loop still must run** for the next Cup
+  race (Brickyard 400, race 5619, 2026-07-26) — predict / seal / push
+  before the green flag, then record closing prices **before the
+  scheduled flag** (5618's were post-flag → inadmissible), then score
+  after results post. The D2 cutover still needs a **second** scored,
+  *admissibly-priced* race before its two-clean-cycle bar can be assessed.
+  The calibration backtest (M3) should be re-run periodically as the
+  forward stream accrues non-SS races toward K≥20 (interim, no decision
+  weight) and K≥60 (terminal, decision-grade) — no new session is
+  required, just `python3 calibration_backtest.py` from `src/`.
 
 ## Roadmap (agreed order — do not skip ahead)
 
