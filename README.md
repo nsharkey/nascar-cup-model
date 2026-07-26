@@ -106,8 +106,12 @@ gate: `cd src && python3 test_track_audit.py`.
 - Absolute win probabilities are conservative (regularization-induced
   underconfidence, measured in the audit). The ordering and head-to-head
   probabilities are the calibrated product.
-- Timing data is NASCAR's; this repo redistributes code only. Respect the
-  source's terms when downloading.
+- Timing data is NASCAR's. This repo is code-first, with one exception:
+  `data/live_capture/` holds raw live-feed snapshot captures, retained because
+  NASCAR's cacher serves only the *current* frame — once a race ends the
+  intra-race series is unrecoverable from any source. Everything else derived
+  from NASCAR feeds is still fetched, never committed. Respect the source's
+  terms when downloading.
 - Nothing here is betting advice. The forward test exists precisely because
   no one yet knows whether this clears the market — a negative result is a
   valid outcome.

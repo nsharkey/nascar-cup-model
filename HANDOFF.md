@@ -113,6 +113,21 @@ is needed. `update_data.py` appends any newly completed races in seconds.
   now; the report's own verdict was NO-GO as a data transfer anyway (NASCAR, not
   teams, controls telemetry distribution). No code, no model change; nothing in
   the pipeline or fetch protocol changed as a result of this review.
+- **A6 AMENDMENT (owner decision 2026-07-26) — "raw data never committed" is
+  narrowed, not dropped.** Live-feed captures (`data/live_capture/`) ARE now
+  committed to this public repo; every other NASCAR-derived raw feed remains
+  fetch-only. Rationale: the capture is irreplaceable (the cacher serves only
+  the current frame, so an unbacked-up local file is a single point of total
+  loss), and §6.5's own finding is that formal ToS coverage of cf.nascar.com is
+  *textually unsupported* — it is absent from the Terms' covered-services list
+  and serves no ToS link or bot-block. Note the asymmetry that makes this
+  low-marginal-risk: if the Terms did reach the cacher, their
+  model/algorithm-development clause would already bar the entire project, not
+  merely this file. Explicitly acknowledged as a **reversal of the 2026-07-21
+  posture on the redistribution axis**, taken with the clauses in view; the
+  polite fetch protocol, non-commercial framing, and the no-automated-access
+  rule for the covered NASCAR App/Ably surfaces are all unchanged. Revisit if
+  the pending ERDP consent request (item 2 above) gets a substantive reply.
 
 ## Current status (update this section every session)
 

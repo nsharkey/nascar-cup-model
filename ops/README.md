@@ -77,6 +77,29 @@ ls -la data/live_capture/<race_id>/
 python3 -c "import gzip,json; print(sum(1 for _ in gzip.open('data/live_capture/<race_id>/live-feed.jsonl.gz','rt')))"
 ```
 
+### STANDING RULE — commit and push every completed capture
+
+**As soon as a capture completes, commit it and push.** Owner rule, 2026-07-26.
+
+```bash
+gzip -t data/live_capture/<race_id>/live-feed.jsonl.gz   # must pass before committing
+git add -f data/live_capture/<race_id>/live-feed.jsonl.gz
+git commit -m "capture: race <race_id> live-feed snapshot stream"
+git push
+```
+
+`-f` is required because `.gitignore` blanket-ignores `data/`; live-feed captures
+are the one deliberate exception (see the A6 amendment in `HANDOFF.md`). This
+overrides the usual batch-the-pushes cadence — the file is irreplaceable and
+exists nowhere else, so it does not wait for a session-end milestone. Confirm
+the gzip stream closed cleanly first: a capture killed mid-write has no
+end-of-stream marker, and while its contents are still recoverable, that fact
+belongs in the commit message.
+
+Expect ~18 MB per race (~650 MB/season if every race is captured). Well inside
+GitHub's 100 MB/file limit, but revisit the storage approach if this becomes a
+full-season habit.
+
 ### Offline tests
 
 `python src/test_live_feed_poller.py` — no network, no launchd/pmset touched;
