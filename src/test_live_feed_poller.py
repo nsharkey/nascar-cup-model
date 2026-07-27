@@ -5,9 +5,13 @@ any failure.
 
 Fails on:
   1. is_finished   — correctly reads the checkered-flag signature off a snapshot.
-  2. poll()        — writes one gzip-JSONL line per fetch, stamps _captured_at_utc,
-                      preserves the original payload, and stops once the finish
-                      signature is stable for STABLE_FINISH_SNAPSHOTS in a row.
+  2. poll()        — writes one gzip-JSONL line per DISTINCT state (identical
+                      consecutive payloads are polled but not written), stamps
+                      _captured_at_utc, preserves the original payload, and stops
+                      once the finish signature is stable for
+                      STABLE_FINISH_SNAPSHOTS in a row.
+  2b. dedup        — a long run of unchanged payloads collapses to one record,
+                      while the heartbeat still forces periodic writes.
   3. autodetect    — finds today's Cup race_id from a faked race_list_basic payload,
                       returns None when nothing matches, and never lets a fetch
                       error propagate as an exception.
@@ -49,13 +53,21 @@ def main():
     calls = iter(snapshots)
     tmp_dir = tempfile.mkdtemp(prefix='live_feed_poller_test_')
     try:
-        with mock.patch.object(lfp, 'fetch_live_feed', side_effect=lambda *a, **k: next(calls)):
+        with mock.patch.object(lfp, 'fetch_live_feed',
+                                side_effect=lambda *a, **k: next(calls)) as fetch_mock:
             n_written, n_errors = lfp.poll(
-                race_id=9999, interval=0, out_dir=tmp_dir, sleep_fn=lambda s: None)
+                race_id=9999, interval=0, out_dir=tmp_dir, sleep_fn=lambda s: None,
+                heartbeat=1e9)
 
-        expected_n = 5 + lfp.STABLE_FINISH_SNAPSHOTS
+        # 5 distinct green states + the checkered state once; the 2nd and 3rd
+        # identical checkered payloads are polled (to satisfy the stable-finish
+        # counter) but deduplicated away rather than written.
+        expected_n = 6
         check(n_written == expected_n,
-              f'poll: expected {expected_n} snapshots written, got {n_written}')
+              f'poll: expected {expected_n} distinct states written, got {n_written}')
+        check(fetch_mock.call_count == 5 + lfp.STABLE_FINISH_SNAPSHOTS,
+              f'poll: expected {5 + lfp.STABLE_FINISH_SNAPSHOTS} fetches (dedup must not '
+              f'skip the polling itself), got {fetch_mock.call_count}')
         check(n_errors == 0, f'poll: expected 0 errors, got {n_errors}')
 
         out_path = os.path.join(tmp_dir, '9999', 'live-feed.jsonl.gz')
@@ -70,6 +82,33 @@ def main():
               'poll: original payload fields must survive verbatim alongside the stamp')
         check(not any('lap_number' not in rec for rec in lines),
               'poll: original payload fields must survive verbatim')
+        check([r['lap_number'] for r in lines] == [1, 2, 3, 4, 5, 10],
+              f'poll: expected one record per distinct state, got '
+              f'{[r["lap_number"] for r in lines]}')
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    # 2b. dedup — a stalled feed collapses to one record; the heartbeat forces more
+    stalled = [{'lap_number': 3, 'laps_to_go': 7, 'flag_state': 2}] * 12
+    tmp_dir = tempfile.mkdtemp(prefix='live_feed_poller_dedup_')
+    try:
+        calls = iter(stalled)
+        with mock.patch.object(lfp, 'fetch_live_feed',
+                                side_effect=lambda *a, **k: next(calls)):
+            # The scripted feed never reports the checkered flag, so the loop ends
+            # by exhausting the iterator (StopIteration is deliberately NOT in
+            # poll()'s caught-exception tuple). heartbeat is huge so that only
+            # genuine state changes get written.
+            try:
+                n_written, _ = lfp.poll(race_id=8888, interval=0, out_dir=tmp_dir,
+                                         sleep_fn=lambda s: None, heartbeat=1e9)
+            except StopIteration:
+                n_written = None
+        out_path = os.path.join(tmp_dir, '8888', 'live-feed.jsonl.gz')
+        with gzip.open(out_path, 'rt', encoding='utf-8') as f:
+            lines = [json.loads(line) for line in f]
+        check(len(lines) == 1,
+              f'dedup: 12 identical payloads must collapse to 1 record, got {len(lines)}')
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 

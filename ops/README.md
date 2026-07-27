@@ -10,17 +10,37 @@ explicit step.
 ## live_feed_poller.py (plan session L4)
 
 `src/live_feed_poller.py` records the in-progress `live-feed.json` stream for
-one Cup race. NASCAR's cacher only ever serves the *current* snapshot — once
-a race ends, every earlier lap's live state is gone for good (confirmed:
-`silver.live_final` is built from "the latest stored snapshot", i.e. the
-post-race final frame only). Capturing the intra-race time series is only
-possible while the race is actually green.
+one Cup race. NASCAR's cacher only ever serves the *current* snapshot, so how
+the race state **evolved** is only observable while the race is running
+(`silver.live_final` is built from "the latest stored snapshot", i.e. the
+post-race final frame only).
 
-This is opportunistic and best-effort by design (matches the plan's own L4
+**Read this before investing more effort here.** Measured on race 5619
+(2026-07-26, the first real capture — full numbers in `DATA_DICTIONARY.md`
+§12a): most of what this feed carries **is** recoverable after the race, at
+equal or better resolution. Archived `lap-times.json` gives per-driver,
+per-lap running position, lap time and lap speed for every lap; `lap-notes`,
+`live-pit-data` and `live-flag-data` cover pit stops and flags; and the live
+final frame was still being served a day later. What only live capture gets
+you is `delta` (gap to leader) and `average_running_position` as time series,
+`fastest_laps_run`, the `is_on_track`/`status`/`is_on_dvp` transitions, and
+true wall-clock anchoring of flag changes. If the goal is per-lap running
+order, **skip this and read the archive the next morning.**
+
+Two consequences worth knowing:
+
+- **The cacher refreshes about every 36s** (5619: p50 36.4s, min 29s, max
+  73s). Polling faster buys nothing, so the poller writes only when the
+  payload actually changes — 5619 would have been 1,990 records / 18 MB, and
+  is 390 records / ~2 MB deduplicated, with identical lap coverage.
+- **A green lap is often shorter than one refresh**, so some `lap_number`
+  values are simply never served (three of 161 on 5619). That is the source,
+  not a dropped poll.
+
+Still opportunistic and best-effort by design (matches the plan's own L4
 note): the log will have gaps whenever the machine sleeps or is off, and
-nothing in the pipeline consumes this data yet — it's a retention hedge
-against an otherwise-permanent loss, nothing more. Don't over-invest in
-making it bulletproof.
+nothing in the pipeline consumes this data yet. Don't over-invest in making
+it bulletproof.
 
 ### Option A — just run it manually (recommended to start)
 

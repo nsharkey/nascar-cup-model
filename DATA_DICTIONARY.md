@@ -922,22 +922,75 @@ rather than tries to detect after the fact.
 ## 12. Local live-feed capture — `data/live_capture/` (plan session L4)
 
 `src/live_feed_poller.py` polls the *live* (not archived) `live-feed.json` cacher
-endpoint every ~7s while a Cup race is green and appends each snapshot to a
-gzip-compressed JSONL log. This is a genuinely different thing from bronze's
+endpoint every ~7s while a Cup race is green and appends each **distinct** state
+to a gzip-compressed JSONL log. This is a genuinely different thing from bronze's
 `live-feed` feed (§8): the bronze copy is fetched once, after the fact, and is
-always the **final frame only** — NASCAR's archive never serves intermediate
-laps once a race ends, so the intra-race time series is unrecoverable unless
-captured while the broadcast is live. Opportunistic / best-effort by design:
-gaps are expected whenever the machine sleeps or is off, and nothing in the
-pipeline consumes this data yet — it's a retention hedge, not a feature
-source. See `ops/README.md` for how to run it (manual, or optional
-launchd + `pmset` unattended capture — neither is auto-installed).
+always the **final frame only**, so how the state *evolved* is only observable
+live. See `ops/README.md` for how to run it (manual, or optional launchd +
+`pmset` unattended capture — neither is auto-installed).
+
+**Marginal value — measured on race 5619, 2026-07-26 (§12a).** An earlier version
+of this section claimed the intra-race series is flatly "unrecoverable" without
+live capture. That is **too strong** and was corrected after the first real
+capture. Most of the content is recoverable post-race, at equal or better
+resolution: archived `lap-times.json` carries per-driver, per-lap `RunningPos` /
+`LapTime` / `LapSpeed` for **every** lap (161/161 on 5619, vs the poller's ~1
+state per green lap), `lap-notes` / `live-pit-data` / `live-flag-data` cover pit
+stops and flag segments, and the live **final** frame was still being served a
+full day after the race. Genuinely capture-only: `delta` (gap to leader) and
+`average_running_position` as time series, `fastest_laps_run`, the
+`is_on_track` / `status` / `is_on_dvp` transitions, and true wall-clock anchoring
+of flag changes including under caution. The cumulative loop stats
+(`passes_made`, `quality_passes`, `times_passed`, `passing_differential`) do
+**not** stream — they hold `0` until NASCAR populates them in the post-race final
+frame, so there is no trajectory there to capture.
 
 | Path | Format | Notes |
 |---|---|---|
-| `data/live_capture/{race_id}/live-feed.jsonl.gz` | gzip, one JSON object per line | Each line is the raw `live-feed.json` payload plus one added field, `_captured_at_utc` (ISO 8601 UTC, poller's own clock — not a NASCAR-provided timestamp). Multiple gzip members per file (one per line, for crash-safety); standard `gzip`/Python `gzip.open` decompress concatenated members transparently. |
+| `data/live_capture/{race_id}/live-feed.jsonl.gz` | gzip, one JSON object per line | Each line is the raw `live-feed.json` payload plus one added field, `_captured_at_utc` (ISO 8601 UTC, poller's own clock — not a NASCAR-provided timestamp). **One line per distinct state, not per poll:** identical consecutive payloads are fetched but not written, plus a forced heartbeat record every `HEARTBEAT_SECONDS` (default 300) so a stalled feed stays distinguishable from a dead poller. A state's dwell time is the next record's `_captured_at_utc` minus its own. Multiple gzip members per file (one per line, for crash-safety); standard `gzip`/Python `gzip.open` decompress concatenated members transparently. |
 | `data/live_capture/{race_id}/poller.log` / `poller.err.log` | plain text | Only present if run via the launchd recipe (stdout/stderr redirect); absent for manual runs (prints to the terminal instead). |
 
-Gitignored like every other `data/` path in this repo; nothing here is
-committed. Offline tests: `python src/test_live_feed_poller.py` (no network,
-no launchd/pmset touched).
+**Committed, unlike every other `data/` path** — `.gitignore` blanket-ignores
+`data/`, and these captures are the one deliberate exception, added with
+`git add -f` (see the A6 amendment in `HANDOFF.md`, owner decision 2026-07-26).
+Offline tests: `python src/test_live_feed_poller.py` (no network, no
+launchd/pmset touched).
+
+### 12a. Race 5619 capture — measured characteristics (2026-07-26)
+
+First complete capture; the numbers below are what the source actually supports,
+and they are the reason §12's original premise was narrowed.
+
+| Property | Measured |
+|---|---|
+| Snapshots polled (race run) | 1,990 at ~7s |
+| **Distinct states** | **390 (19.6%)** — the other 1,600 polls were byte-identical |
+| **Cacher refresh interval** | **p50 36.4s**, min 29s, max 73s |
+| Lap values seen | 158 of 161 (`lap_number` 6, 67, 133 never served) |
+| Vehicles per frame | 39, stable throughout |
+
+The cacher refreshes about every 36s while an IMS green lap runs ~52s, so the
+median green lap yields **one** distinct state and some yield none — the three
+absent `lap_number` values each sit inside a ~102–109s window between neighbouring
+laps, i.e. two green laps crossed by a single refresh. **This is a property of the
+source, not a capture gap**; polling faster cannot fix it.
+
+**`flag_state` values observed** (NASCAR publishes no mapping; `1` and `9` are
+corroborated by `loop_metrics_build.py` and `live_feed_poller.is_finished`, the
+rest are inferred from position in the race):
+
+| Value | Reading | Evidence on 5619 |
+|---|---|---|
+| `1` | green | 934 snapshots; used as the green filter in `loop_metrics_build.py` |
+| `2` | caution | 621 snapshots; 5 segments matching `number_of_caution_segments` |
+| `4` | checkered (waving) | 18 snapshots, all at lap 160 / `laps_to_go 0`, for ~2 min immediately before `9` |
+| `8` | warm-up / pace | 414 snapshots, all pre-green |
+| `9` | finished / official | terminal state; `is_finished()` keys on `9` + `laps_to_go == 0` |
+
+**JOIN CAVEAT — `lap_number` is the *leader's* lap, not the car's.** Joining a
+capture snapshot to per-car lap-indexed data (e.g. `lap-times.json`) on
+`lap_number` is only valid for lead-lap cars. Verified on 5619: of 5,791 shared
+`(car, lap)` keys, 5,321 running positions agree and **all 470 disagreements are
+cars off the leader's lap** (against a 21.5% off-lead-lap base rate) — zero
+disagreements among lead-lap cars. Use each vehicle's own `laps_completed` as the
+join key instead.
